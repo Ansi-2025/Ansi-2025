@@ -334,9 +334,10 @@ function AudioDemo() {
                 }`}
               >
                 <span
+                  style={active ? GRADIENT_GOLD : undefined}
                   className={`grid h-12 w-12 shrink-0 place-items-center rounded-full transition-all ${
                     active
-                      ? "bg-[var(--gradient-gold)] text-primary shadow-[var(--shadow-gold)]"
+                      ? "text-primary shadow-[var(--shadow-gold)]"
                       : "bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]"
                   }`}
                 >
@@ -543,7 +544,7 @@ function FinalCTA() {
   return (
     <section className="px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <div className="reveal relative overflow-hidden rounded-[2.5rem] px-6 py-20 text-center shadow-[var(--shadow-glow)] md:px-16 md:py-28">
+        <div style={GRADIENT_HERO} className="reveal relative overflow-hidden rounded-[2.5rem] px-6 py-20 text-center shadow-[var(--shadow-glow)] md:px-16 md:py-28">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.78_0.13_85/0.18),transparent_60%)]" />
           <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[var(--sky-blue)]/20 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[var(--gold)]/15 blur-3xl" />
@@ -559,6 +560,7 @@ function FinalCTA() {
             </p>
             <a
               href={CREATE_URL}
+              style={GRADIENT_GOLD}
               className="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
             >
               <Sparkles className="h-5 w-5" /> Criar Minha Música
@@ -577,7 +579,7 @@ function Footer() {
       <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-full text-primary">
+            <span style={GRADIENT_GOLD} className="grid h-9 w-9 place-items-center rounded-full text-primary">
               <Music className="h-4 w-4" />
             </span>
             <div className="leading-tight">
