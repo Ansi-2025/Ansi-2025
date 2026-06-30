@@ -65,6 +65,7 @@ function Index() {
         <Occasions />
         <Differentials />
         <Testimonials />
+        <OrderForm />
         <FAQ />
         <FinalCTA />
       </main>
