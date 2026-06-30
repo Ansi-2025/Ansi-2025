@@ -520,6 +520,7 @@ function OrderForm() {
   const send = useServerFn(sendOrder);
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [orderId, setOrderId] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState("");
   const [form, setForm] = useState<OrderFormState>({
     nome_completo: "",
@@ -557,7 +558,8 @@ function OrderForm() {
     setErrorMsg("");
     setStatus("loading");
     try {
-      await send({ data: form });
+      const res = await send({ data: form });
+      setOrderId(res.id);
       setStatus("ok");
     } catch (e) {
       setStatus("error");
@@ -596,14 +598,26 @@ function OrderForm() {
               </div>
               <h3 className="mt-6 font-display text-2xl font-semibold text-primary">Pedido recebido! 🎉</h3>
               <p className="mt-3 text-sm text-muted-foreground">
-                Em breve entraremos em contato pelo WhatsApp para começar a criar sua canção.
+                Em breve entraremos em contato pelo WhatsApp. Guarde o código abaixo para acompanhar seu pedido:
               </p>
-              <button
-                onClick={reset}
-                className="mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-primary hover:border-[var(--gold)]"
-              >
-                Fazer outro pedido
-              </button>
+              <div className="mx-auto mt-5 max-w-md rounded-2xl border border-border bg-[var(--soft-gray)] px-4 py-3 font-mono text-xs break-all text-primary">
+                {orderId}
+              </div>
+              <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
+                <a
+                  href={`/acompanhar?id=${orderId}`}
+                  style={GRADIENT_GOLD}
+                  className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
+                >
+                  <Sparkles className="h-4 w-4" /> Acompanhar meu pedido
+                </a>
+                <button
+                  onClick={reset}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-primary hover:border-[var(--gold)]"
+                >
+                  Fazer outro pedido
+                </button>
+              </div>
             </div>
           ) : (
             <>
