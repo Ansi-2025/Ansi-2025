@@ -1,4 +1,4 @@
-import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -488,115 +488,234 @@ function Testimonials() {
   );
 }
 
-/* ---------------- Order Form ---------------- */
+/* ---------------- Order Form (multi-step) ---------------- */
+const TIPOS_MUSICA = [
+  "Adoração",
+  "Congregacional",
+  "Intimista / Acústica",
+  "Romântica Gospel",
+  "Infantil",
+  "Sertanejo Gospel",
+  "Pop Gospel",
+  "Outro",
+];
+
+type OrderFormState = {
+  nome_completo: string;
+  para_quem: string;
+  tipo_musica: string;
+  descricao: string;
+  whatsapp: string;
+};
+
+const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
+  { key: "nome_completo", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
+  { key: "para_quem", label: "Para quem é a música?", eyebrow: "Passo 2 de 5" },
+  { key: "tipo_musica", label: "Qual o tipo da música?", eyebrow: "Passo 3 de 5" },
+  { key: "descricao", label: "Descreva o que deve ter na música", eyebrow: "Passo 4 de 5" },
+  { key: "whatsapp", label: "Seu WhatsApp (obrigatório)", eyebrow: "Passo 5 de 5" },
+];
+
 function OrderForm() {
   const send = useServerFn(sendOrder);
-  const router = useRouter();
+  const [step, setStep] = useState(0);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
-  const [form, setForm] = useState({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
+  const [form, setForm] = useState<OrderFormState>({
+    nome_completo: "",
+    para_quem: "",
+    tipo_musica: TIPOS_MUSICA[0],
+    descricao: "",
+    whatsapp: "",
+  });
 
-  const onSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setStatus("loading");
+  const current = STEPS[step];
+  const progress = ((step + 1) / STEPS.length) * 100;
+
+  const validateStep = (): string | null => {
+    const v = form[current.key].trim();
+    if (current.key === "descricao" && v.length < 10) return "Conte um pouco mais (mínimo 10 caracteres).";
+    if (current.key === "whatsapp") {
+      const digits = v.replace(/\D/g, "");
+      if (digits.length < 10) return "Informe um WhatsApp válido com DDD.";
+    }
+    if (v.length < 2) return "Preencha este campo para continuar.";
+    return null;
+  };
+
+  const next = () => {
+    const err = validateStep();
+    if (err) { setErrorMsg(err); return; }
     setErrorMsg("");
+    setStep((s) => Math.min(s + 1, STEPS.length - 1));
+  };
+  const prev = () => { setErrorMsg(""); setStep((s) => Math.max(s - 1, 0)); };
+
+  const submit = async () => {
+    const err = validateStep();
+    if (err) { setErrorMsg(err); return; }
+    setErrorMsg("");
+    setStatus("loading");
     try {
       await send({ data: form });
       setStatus("ok");
-      setForm({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
-      router.invalidate();
-    } catch (err) {
+    } catch (e) {
       setStatus("error");
-      setErrorMsg(err instanceof Error ? err.message : "Erro ao enviar pedido.");
+      setErrorMsg(e instanceof Error ? e.message : "Erro ao enviar pedido.");
+    }
+  };
+
+  const reset = () => {
+    setForm({ nome_completo: "", para_quem: "", tipo_musica: TIPOS_MUSICA[0], descricao: "", whatsapp: "" });
+    setStep(0);
+    setStatus("idle");
+    setErrorMsg("");
+  };
+
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && current.key !== "descricao") {
+      e.preventDefault();
+      if (step === STEPS.length - 1) submit(); else next();
     }
   };
 
   return (
     <section id="pedido" className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-2xl">
         <SectionHeader
           eyebrow="Criar minha música"
-          title="Conte sua história"
-          subtitle="Preencha os detalhes abaixo e receberemos seu pedido imediatamente para começar a criar sua canção exclusiva."
+          title="Conte sua história em poucos passos"
+          subtitle="Responda uma pergunta de cada vez. Leva menos de 2 minutos."
         />
-        <form
-          onSubmit={onSubmit}
-          className="reveal mt-12 space-y-5 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10"
-        >
-          <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Seu nome">
-              <input
-                required
-                minLength={2}
-                value={form.nome}
-                onChange={(e) => setForm({ ...form, nome: e.target.value })}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
-                placeholder="Ex.: Maria Silva"
-              />
-            </Field>
-            <Field label="WhatsApp ou e-mail">
-              <input
-                required
-                value={form.contato}
-                onChange={(e) => setForm({ ...form, contato: e.target.value })}
-                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
-                placeholder="(00) 00000-0000 ou seu@email.com"
-              />
-            </Field>
-          </div>
-          <Field label="Ocasião">
-            <select
-              value={form.ocasiao}
-              onChange={(e) => setForm({ ...form, ocasiao: e.target.value })}
-              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
-            >
-              {["Gratidão a Deus","Homenagem para Esposa","Família","Nascimento","Aniversário","Casamento","Formatura","Batismo","Testemunho","Ministério","Outro"].map((o) => (
-                <option key={o}>{o}</option>
-              ))}
-            </select>
-          </Field>
-          <Field label="Sua história">
-            <textarea
-              required
-              minLength={10}
-              rows={6}
-              value={form.historia}
-              onChange={(e) => setForm({ ...form, historia: e.target.value })}
-              className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
-              placeholder="Conte o que deseja transformar em canção…"
-            />
-          </Field>
-          <button
-            type="submit"
-            disabled={status === "loading"}
-            style={GRADIENT_GOLD}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
-          >
-            {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-            {status === "loading" ? "Enviando…" : "Enviar Meu Pedido"}
-          </button>
-          {status === "ok" && (
-            <p className="rounded-xl bg-[var(--sky-blue)]/10 px-4 py-3 text-center text-sm text-primary">
-              ✨ Pedido recebido! Entraremos em contato em breve.
-            </p>
+
+        <div className="reveal mt-12 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10">
+          {status === "ok" ? (
+            <div className="py-10 text-center">
+              <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">
+                <CheckCircle2 className="h-8 w-8" />
+              </div>
+              <h3 className="mt-6 font-display text-2xl font-semibold text-primary">Pedido recebido! 🎉</h3>
+              <p className="mt-3 text-sm text-muted-foreground">
+                Em breve entraremos em contato pelo WhatsApp para começar a criar sua canção.
+              </p>
+              <button
+                onClick={reset}
+                className="mt-8 inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-primary hover:border-[var(--gold)]"
+              >
+                Fazer outro pedido
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="mb-8">
+                <div className="flex items-center justify-between text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                  <span>{current.eyebrow}</span>
+                  <span>{Math.round(progress)}%</span>
+                </div>
+                <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-border">
+                  <div
+                    style={{ ...GRADIENT_GOLD, width: `${progress}%` }}
+                    className="h-full rounded-full transition-all duration-500"
+                  />
+                </div>
+              </div>
+
+              <label className="block">
+                <span className="mb-3 block font-display text-xl font-semibold text-primary sm:text-2xl">
+                  {current.label}
+                </span>
+
+                {current.key === "descricao" ? (
+                  <textarea
+                    autoFocus
+                    rows={6}
+                    value={form.descricao}
+                    onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                    onKeyDown={onKeyDown}
+                    className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                    placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
+                  />
+                ) : current.key === "tipo_musica" ? (
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {TIPOS_MUSICA.map((t) => {
+                      const active = form.tipo_musica === t;
+                      return (
+                        <button
+                          key={t}
+                          type="button"
+                          onClick={() => setForm({ ...form, tipo_musica: t })}
+                          className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
+                            active
+                              ? "border-[var(--gold)] bg-[var(--gold)]/10 text-primary shadow-[var(--shadow-soft)]"
+                              : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
+                          }`}
+                        >
+                          {t}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <input
+                    autoFocus
+                    type={current.key === "whatsapp" ? "tel" : "text"}
+                    value={form[current.key]}
+                    onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
+                    onKeyDown={onKeyDown}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                    placeholder={
+                      current.key === "nome_completo"
+                        ? "Ex.: Maria Silva Souza"
+                        : current.key === "para_quem"
+                          ? "Ex.: Para minha esposa, Ana"
+                          : "(00) 00000-0000"
+                    }
+                  />
+                )}
+              </label>
+
+              {errorMsg && status !== "loading" && (
+                <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {errorMsg}
+                </p>
+              )}
+
+              <div className="mt-8 flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={prev}
+                  disabled={step === 0 || status === "loading"}
+                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-primary transition-colors hover:border-[var(--sky-blue)]/40 disabled:opacity-40"
+                >
+                  Voltar
+                </button>
+                {step < STEPS.length - 1 ? (
+                  <button
+                    type="button"
+                    onClick={next}
+                    style={GRADIENT_GOLD}
+                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                  >
+                    Continuar <Sparkles className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={submit}
+                    disabled={status === "loading"}
+                    style={GRADIENT_GOLD}
+                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                  >
+                    {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                    {status === "loading" ? "Enviando…" : "Enviar meu pedido"}
+                  </button>
+                )}
+              </div>
+            </>
           )}
-          {status === "error" && (
-            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
-              {errorMsg || "Não foi possível enviar agora. Tente novamente."}
-            </p>
-          )}
-        </form>
+        </div>
       </div>
     </section>
-  );
-}
-
-function Field({ label, children }: { label: string; children: React.ReactNode }) {
-  return (
-    <label className="block">
-      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</span>
-      {children}
-    </label>
   );
 }
 
