@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Play,
   Pause,
@@ -15,9 +16,11 @@ import {
   ShieldCheck,
   Headphones,
   Send,
+  Loader2,
 } from "lucide-react";
 import heroImg from "@/assets/hero-family.jpg";
 import { useReveal } from "@/hooks/use-reveal";
+import { sendOrder } from "@/lib/order.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
