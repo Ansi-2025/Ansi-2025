@@ -46,8 +46,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const CREATE_URL = "https://vita-core-music-dos-feras.lovable.app/";
-const WHATSAPP_URL = "https://wa.me/5500000000000?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
+const CREATE_URL = "#pedido";
+const WHATSAPP_URL = "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
+const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
+const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
 function Index() {
   useReveal();
