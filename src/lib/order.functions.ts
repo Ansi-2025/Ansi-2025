@@ -11,10 +11,9 @@ const OrderSchema = z.object({
 export const sendOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => OrderSchema.parse(data))
   .handler(async ({ data }) => {
-    const lovableKey = process.env.LOVABLE_API_KEY;
-    const telegramKey = process.env.TELEGRAM_API_KEY;
+    const botToken = process.env.TELEGRAM_BOT_TOKEN;
     const chatId = process.env.TELEGRAM_OWNER_CHAT_ID;
-    if (!lovableKey || !telegramKey) throw new Error("Integração Telegram indisponível.");
+    if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN não configurado.");
     if (!chatId) throw new Error("TELEGRAM_OWNER_CHAT_ID não configurado.");
 
     const text =
@@ -24,13 +23,9 @@ export const sendOrder = createServerFn({ method: "POST" })
       `<b>Ocasião:</b> ${escapeHtml(data.ocasiao)}\n\n` +
       `<b>História:</b>\n${escapeHtml(data.historia)}`;
 
-    const res = await fetch("https://connector-gateway.lovable.dev/telegram/sendMessage", {
+    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${lovableKey}`,
-        "X-Connection-Api-Key": telegramKey,
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML" }),
     });
     if (!res.ok) {
