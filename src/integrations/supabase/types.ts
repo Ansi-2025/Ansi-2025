@@ -21,6 +21,8 @@ export type Database = {
           id: string
           nome_completo: string
           para_quem: string
+          status: Database["public"]["Enums"]["pedido_status"]
+          status_atualizado_em: string
           tipo_musica: string
           whatsapp: string
         }
@@ -30,6 +32,8 @@ export type Database = {
           id?: string
           nome_completo: string
           para_quem: string
+          status?: Database["public"]["Enums"]["pedido_status"]
+          status_atualizado_em?: string
           tipo_musica: string
           whatsapp: string
         }
@@ -39,6 +43,8 @@ export type Database = {
           id?: string
           nome_completo?: string
           para_quem?: string
+          status?: Database["public"]["Enums"]["pedido_status"]
+          status_atualizado_em?: string
           tipo_musica?: string
           whatsapp?: string
         }
@@ -52,7 +58,12 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
-      [_ in never]: never
+      pedido_status:
+        | "recebido"
+        | "em_producao"
+        | "em_revisao"
+        | "pronto"
+        | "entregue"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -179,6 +190,14 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      pedido_status: [
+        "recebido",
+        "em_producao",
+        "em_revisao",
+        "pronto",
+        "entregue",
+      ],
+    },
   },
 } as const
