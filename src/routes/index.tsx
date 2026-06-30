@@ -488,6 +488,118 @@ function Testimonials() {
   );
 }
 
+/* ---------------- Order Form ---------------- */
+function OrderForm() {
+  const send = useServerFn(sendOrder);
+  const router = useRouter();
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [form, setForm] = useState({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      await send({ data: form });
+      setStatus("ok");
+      setForm({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
+      router.invalidate();
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao enviar pedido.");
+    }
+  };
+
+  return (
+    <section id="pedido" className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
+      <div className="mx-auto max-w-3xl">
+        <SectionHeader
+          eyebrow="Criar minha música"
+          title="Conte sua história"
+          subtitle="Preencha os detalhes abaixo e receberemos seu pedido imediatamente para começar a criar sua canção exclusiva."
+        />
+        <form
+          onSubmit={onSubmit}
+          className="reveal mt-12 space-y-5 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10"
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Seu nome">
+              <input
+                required
+                minLength={2}
+                value={form.nome}
+                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                placeholder="Ex.: Maria Silva"
+              />
+            </Field>
+            <Field label="WhatsApp ou e-mail">
+              <input
+                required
+                value={form.contato}
+                onChange={(e) => setForm({ ...form, contato: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                placeholder="(00) 00000-0000 ou seu@email.com"
+              />
+            </Field>
+          </div>
+          <Field label="Ocasião">
+            <select
+              value={form.ocasiao}
+              onChange={(e) => setForm({ ...form, ocasiao: e.target.value })}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+            >
+              {["Gratidão a Deus","Homenagem para Esposa","Família","Nascimento","Aniversário","Casamento","Formatura","Batismo","Testemunho","Ministério","Outro"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Sua história">
+            <textarea
+              required
+              minLength={10}
+              rows={6}
+              value={form.historia}
+              onChange={(e) => setForm({ ...form, historia: e.target.value })}
+              className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+              placeholder="Conte o que deseja transformar em canção…"
+            />
+          </Field>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            style={GRADIENT_GOLD}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+          >
+            {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {status === "loading" ? "Enviando…" : "Enviar Meu Pedido"}
+          </button>
+          {status === "ok" && (
+            <p className="rounded-xl bg-[var(--sky-blue)]/10 px-4 py-3 text-center text-sm text-primary">
+              ✨ Pedido recebido! Entraremos em contato em breve.
+            </p>
+          )}
+          {status === "error" && (
+            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
+              {errorMsg || "Não foi possível enviar agora. Tente novamente."}
+            </p>
+          )}
+        </form>
+      </div>
+    </section>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
+
 /* ---------------- FAQ ---------------- */
 function FAQ() {
   const items = [
