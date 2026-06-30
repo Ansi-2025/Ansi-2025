@@ -91,7 +91,7 @@ function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
         <a href="#top" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-full text-primary shadow-[var(--shadow-gold)]">
+          <span style={GRADIENT_GOLD} className="grid h-9 w-9 place-items-center rounded-full text-primary shadow-[var(--shadow-gold)]">
             <Music className="h-4 w-4" />
           </span>
           <span className="flex flex-col leading-tight">
@@ -109,6 +109,7 @@ function Header() {
         </nav>
         <a
           href={CREATE_URL}
+          style={GRADIENT_GOLD}
           className="hidden md:inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
         >
           <Sparkles className="h-4 w-4" /> Criar Minha Música
@@ -157,7 +158,8 @@ function Hero() {
         >
           <a
             href={CREATE_URL}
-            className="inline-flex items-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            style={GRADIENT_GOLD}
+            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
           >
             <Sparkles className="h-4 w-4" /> Criar Minha Música
           </a>
