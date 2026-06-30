@@ -1,5 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useServerFn } from "@tanstack/react-start";
 import {
   Play,
   Pause,
@@ -15,9 +16,11 @@ import {
   ShieldCheck,
   Headphones,
   Send,
+  Loader2,
 } from "lucide-react";
 import heroImg from "@/assets/hero-family.jpg";
 import { useReveal } from "@/hooks/use-reveal";
+import { sendOrder } from "@/lib/order.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -46,8 +49,10 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const CREATE_URL = "https://vita-core-music-dos-feras.lovable.app/";
-const WHATSAPP_URL = "https://wa.me/5500000000000?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
+const CREATE_URL = "#pedido";
+const WHATSAPP_URL = "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
+const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
+const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
 function Index() {
   useReveal();
@@ -63,6 +68,7 @@ function Index() {
         <Occasions />
         <Differentials />
         <Testimonials />
+        <OrderForm />
         <FAQ />
         <FinalCTA />
       </main>
@@ -89,7 +95,7 @@ function Header() {
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
         <a href="#top" className="flex items-center gap-2">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gradient-gold)] text-primary shadow-[var(--shadow-gold)]">
+          <span style={GRADIENT_GOLD} className="grid h-9 w-9 place-items-center rounded-full text-primary shadow-[var(--shadow-gold)]">
             <Music className="h-4 w-4" />
           </span>
           <span className="flex flex-col leading-tight">
@@ -107,7 +113,8 @@ function Header() {
         </nav>
         <a
           href={CREATE_URL}
-          className="hidden md:inline-flex items-center gap-2 rounded-full bg-[var(--gradient-gold)] px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+          style={GRADIENT_GOLD}
+          className="hidden md:inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
         >
           <Sparkles className="h-4 w-4" /> Criar Minha Música
         </a>
@@ -155,7 +162,8 @@ function Hero() {
         >
           <a
             href={CREATE_URL}
-            className="inline-flex items-center gap-2 rounded-full bg-[var(--gradient-gold)] px-7 py-3.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            style={GRADIENT_GOLD}
+            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
           >
             <Sparkles className="h-4 w-4" /> Criar Minha Música
           </a>
@@ -330,9 +338,10 @@ function AudioDemo() {
                 }`}
               >
                 <span
+                  style={active ? GRADIENT_GOLD : undefined}
                   className={`grid h-12 w-12 shrink-0 place-items-center rounded-full transition-all ${
                     active
-                      ? "bg-[var(--gradient-gold)] text-primary shadow-[var(--shadow-gold)]"
+                      ? "text-primary shadow-[var(--shadow-gold)]"
                       : "bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]"
                   }`}
                 >
@@ -479,6 +488,118 @@ function Testimonials() {
   );
 }
 
+/* ---------------- Order Form ---------------- */
+function OrderForm() {
+  const send = useServerFn(sendOrder);
+  const router = useRouter();
+  const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [form, setForm] = useState({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus("loading");
+    setErrorMsg("");
+    try {
+      await send({ data: form });
+      setStatus("ok");
+      setForm({ nome: "", contato: "", ocasiao: "Gratidão a Deus", historia: "" });
+      router.invalidate();
+    } catch (err) {
+      setStatus("error");
+      setErrorMsg(err instanceof Error ? err.message : "Erro ao enviar pedido.");
+    }
+  };
+
+  return (
+    <section id="pedido" className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
+      <div className="mx-auto max-w-3xl">
+        <SectionHeader
+          eyebrow="Criar minha música"
+          title="Conte sua história"
+          subtitle="Preencha os detalhes abaixo e receberemos seu pedido imediatamente para começar a criar sua canção exclusiva."
+        />
+        <form
+          onSubmit={onSubmit}
+          className="reveal mt-12 space-y-5 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10"
+        >
+          <div className="grid gap-5 sm:grid-cols-2">
+            <Field label="Seu nome">
+              <input
+                required
+                minLength={2}
+                value={form.nome}
+                onChange={(e) => setForm({ ...form, nome: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                placeholder="Ex.: Maria Silva"
+              />
+            </Field>
+            <Field label="WhatsApp ou e-mail">
+              <input
+                required
+                value={form.contato}
+                onChange={(e) => setForm({ ...form, contato: e.target.value })}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                placeholder="(00) 00000-0000 ou seu@email.com"
+              />
+            </Field>
+          </div>
+          <Field label="Ocasião">
+            <select
+              value={form.ocasiao}
+              onChange={(e) => setForm({ ...form, ocasiao: e.target.value })}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+            >
+              {["Gratidão a Deus","Homenagem para Esposa","Família","Nascimento","Aniversário","Casamento","Formatura","Batismo","Testemunho","Ministério","Outro"].map((o) => (
+                <option key={o}>{o}</option>
+              ))}
+            </select>
+          </Field>
+          <Field label="Sua história">
+            <textarea
+              required
+              minLength={10}
+              rows={6}
+              value={form.historia}
+              onChange={(e) => setForm({ ...form, historia: e.target.value })}
+              className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+              placeholder="Conte o que deseja transformar em canção…"
+            />
+          </Field>
+          <button
+            type="submit"
+            disabled={status === "loading"}
+            style={GRADIENT_GOLD}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+          >
+            {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+            {status === "loading" ? "Enviando…" : "Enviar Meu Pedido"}
+          </button>
+          {status === "ok" && (
+            <p className="rounded-xl bg-[var(--sky-blue)]/10 px-4 py-3 text-center text-sm text-primary">
+              ✨ Pedido recebido! Entraremos em contato em breve.
+            </p>
+          )}
+          {status === "error" && (
+            <p className="rounded-xl bg-destructive/10 px-4 py-3 text-center text-sm text-destructive">
+              {errorMsg || "Não foi possível enviar agora. Tente novamente."}
+            </p>
+          )}
+        </form>
+      </div>
+    </section>
+  );
+}
+
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <label className="block">
+      <span className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">{label}</span>
+      {children}
+    </label>
+  );
+}
+
 /* ---------------- FAQ ---------------- */
 function FAQ() {
   const items = [
@@ -539,7 +660,7 @@ function FinalCTA() {
   return (
     <section className="px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
-        <div className="reveal relative overflow-hidden rounded-[2.5rem] bg-[var(--gradient-hero)] px-6 py-20 text-center shadow-[var(--shadow-glow)] md:px-16 md:py-28">
+        <div style={GRADIENT_HERO} className="reveal relative overflow-hidden rounded-[2.5rem] px-6 py-20 text-center shadow-[var(--shadow-glow)] md:px-16 md:py-28">
           <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.78_0.13_85/0.18),transparent_60%)]" />
           <div className="absolute -left-20 -top-20 h-72 w-72 rounded-full bg-[var(--sky-blue)]/20 blur-3xl" />
           <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[var(--gold)]/15 blur-3xl" />
@@ -555,7 +676,8 @@ function FinalCTA() {
             </p>
             <a
               href={CREATE_URL}
-              className="mt-10 inline-flex items-center gap-2 rounded-full bg-[var(--gradient-gold)] px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              style={GRADIENT_GOLD}
+              className="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
             >
               <Sparkles className="h-5 w-5" /> Criar Minha Música
             </a>
@@ -573,7 +695,7 @@ function Footer() {
       <div className="mx-auto grid max-w-6xl gap-10 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gradient-gold)] text-primary">
+            <span style={GRADIENT_GOLD} className="grid h-9 w-9 place-items-center rounded-full text-primary">
               <Music className="h-4 w-4" />
             </span>
             <div className="leading-tight">
