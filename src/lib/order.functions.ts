@@ -10,75 +10,183 @@ const OrderSchema = z.object({
   whatsapp: z.string().trim().min(8).max(40),
 });
 
-export const sendOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => OrderSchema.parse(data))
-  .handler(async ({ data }) => {
-    const botToken = process.env.TELEGRAM_BOT_TOKEN;
-    const chatId = process.env.TELEGRAM_OWNER_CHAT_ID;
-    if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN não configurado.");
-    if (!chatId) throw new Error("TELEGRAM_OWNER_CHAT_ID não configurado.");
+export const STATUS_FLOW = [
+  "recebido",
+  "em_producao",
+  "em_revisao",
+  "pronto",
+  "entregue",
+] as const;
+export type PedidoStatus = (typeof STATUS_FLOW)[number];
 
-    // 1) Salva no banco usando service role (RLS permite INSERT anônimo de qualquer forma)
-    const supabaseUrl = process.env.SUPABASE_URL!;
-    const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const admin = createClient(supabaseUrl, serviceKey, {
-      auth: { persistSession: false, autoRefreshToken: false },
-    });
+export const STATUS_LABELS: Record<PedidoStatus, string> = {
+  recebido: "Pedido recebido",
+  em_producao: "Em produção",
+  em_revisao: "Em revisão",
+  pronto: "Música pronta",
+  entregue: "Entregue 🎉",
+};
 
-    const { data: inserted, error } = await admin
-      .from("pedidos")
-      .insert({
-        nome_completo: data.nome_completo,
-        para_quem: data.para_quem,
-        tipo_musica: data.tipo_musica,
-        descricao: data.descricao,
-        whatsapp: data.whatsapp,
-      })
-      .select("id, created_at")
-      .single();
-
-    if (error) {
-      throw new Error(`Falha ao salvar pedido: ${error.message}`);
-    }
-
-    // 2) Monta mensagem detalhada e bonita para o Telegram
-    const criadoEm = new Date(inserted.created_at).toLocaleString("pt-BR", {
-      timeZone: "America/Sao_Paulo",
-    });
-    const waDigits = data.whatsapp.replace(/\D/g, "");
-    const waLink = waDigits.length >= 10 ? `https://wa.me/${waDigits}` : null;
-
-    const text =
-      `🎵✨ <b>NOVO PEDIDO DE MÚSICA</b> ✨🎵\n` +
-      `━━━━━━━━━━━━━━━━━━━━━\n\n` +
-      `👤 <b>Nome completo</b>\n${escapeHtml(data.nome_completo)}\n\n` +
-      `💝 <b>Para quem é a música</b>\n${escapeHtml(data.para_quem)}\n\n` +
-      `🎼 <b>Tipo da música</b>\n${escapeHtml(data.tipo_musica)}\n\n` +
-      `📝 <b>Descrição / O que deve ter</b>\n<i>${escapeHtml(data.descricao)}</i>\n\n` +
-      `📱 <b>WhatsApp</b>\n${escapeHtml(data.whatsapp)}` +
-      (waLink ? ` — <a href="${waLink}">Chamar no WhatsApp</a>` : "") +
-      `\n\n━━━━━━━━━━━━━━━━━━━━━\n` +
-      `🆔 <code>${inserted.id}</code>\n` +
-      `🕒 ${escapeHtml(criadoEm)}`;
-
-    const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        chat_id: chatId,
-        text,
-        parse_mode: "HTML",
-        disable_web_page_preview: true,
-      }),
-    });
-    if (!res.ok) {
-      const body = await res.text();
-      // Pedido já está salvo no banco; apenas registramos a falha do Telegram.
-      throw new Error(`Pedido salvo, mas falha ao notificar Telegram [${res.status}]: ${body.slice(0, 200)}`);
-    }
-    return { ok: true, id: inserted.id };
+function admin() {
+  return createClient(process.env.SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!, {
+    auth: { persistSession: false, autoRefreshToken: false },
   });
+}
 
 function escapeHtml(s: string) {
   return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" })[c] as string);
 }
+
+type PedidoRow = {
+  id: string;
+  created_at: string;
+  nome_completo: string;
+  para_quem: string;
+  tipo_musica: string;
+  descricao: string;
+  whatsapp: string;
+  status: PedidoStatus;
+};
+
+function buildTelegramText(p: PedidoRow, opts?: { resent?: boolean }) {
+  const criadoEm = new Date(p.created_at).toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" });
+  const waDigits = p.whatsapp.replace(/\D/g, "");
+  const waLink = waDigits.length >= 10 ? `https://wa.me/${waDigits}` : null;
+  const header = opts?.resent
+    ? "🔁 <b>REENVIO — PEDIDO DE MÚSICA</b>"
+    : "🎵✨ <b>NOVO PEDIDO DE MÚSICA</b> ✨🎵";
+  return (
+    `${header}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n\n` +
+    `👤 <b>Nome completo</b>\n${escapeHtml(p.nome_completo)}\n\n` +
+    `💝 <b>Para quem é a música</b>\n${escapeHtml(p.para_quem)}\n\n` +
+    `🎼 <b>Tipo da música</b>\n${escapeHtml(p.tipo_musica)}\n\n` +
+    `📝 <b>Descrição / O que deve ter</b>\n<i>${escapeHtml(p.descricao)}</i>\n\n` +
+    `📱 <b>WhatsApp</b>\n${escapeHtml(p.whatsapp)}` +
+    (waLink ? ` — <a href="${waLink}">Chamar no WhatsApp</a>` : "") +
+    `\n\n📌 <b>Status</b>: ${STATUS_LABELS[p.status]}\n` +
+    `━━━━━━━━━━━━━━━━━━━━━\n` +
+    `🆔 <code>${p.id}</code>\n` +
+    `🕒 ${escapeHtml(criadoEm)}`
+  );
+}
+
+async function sendTelegram(text: string) {
+  const botToken = process.env.TELEGRAM_BOT_TOKEN;
+  const chatId = process.env.TELEGRAM_OWNER_CHAT_ID;
+  if (!botToken) throw new Error("TELEGRAM_BOT_TOKEN não configurado.");
+  if (!chatId) throw new Error("TELEGRAM_OWNER_CHAT_ID não configurado.");
+  const res = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ chat_id: chatId, text, parse_mode: "HTML", disable_web_page_preview: true }),
+  });
+  if (!res.ok) {
+    const body = await res.text();
+    throw new Error(`Telegram [${res.status}]: ${body.slice(0, 200)}`);
+  }
+}
+
+export const sendOrder = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => OrderSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { data: inserted, error } = await admin()
+      .from("pedidos")
+      .insert({ ...data })
+      .select("*")
+      .single();
+    if (error) throw new Error(`Falha ao salvar pedido: ${error.message}`);
+    try {
+      await sendTelegram(buildTelegramText(inserted as PedidoRow));
+    } catch (e) {
+      // pedido já está salvo; apenas registra falha
+      console.error("Telegram error:", e);
+    }
+    return { ok: true, id: inserted.id as string };
+  });
+
+/* ---------------- Tracking (público, somente status) ---------------- */
+export const getOrderStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .select("id, nome_completo, para_quem, tipo_musica, status, status_atualizado_em, created_at")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!row) throw new Error("Pedido não encontrado.");
+    return row as {
+      id: string;
+      nome_completo: string;
+      para_quem: string;
+      tipo_musica: string;
+      status: PedidoStatus;
+      status_atualizado_em: string;
+      created_at: string;
+    };
+  });
+
+/* ---------------- Admin (gated by ADMIN_PASSWORD) ---------------- */
+function assertAdmin(password: string) {
+  const expected = process.env.ADMIN_PASSWORD;
+  if (!expected) throw new Error("ADMIN_PASSWORD não configurado.");
+  if (password !== expected) throw new Error("Senha incorreta.");
+}
+
+export const adminLogin = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ password: z.string().min(1) }).parse(data))
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    return { ok: true };
+  });
+
+export const adminListOrders = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ password: z.string().min(1) }).parse(data))
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: rows, error } = await admin()
+      .from("pedidos")
+      .select("*")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows as PedidoRow[];
+  });
+
+export const adminUpdateStatus = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        password: z.string().min(1),
+        id: z.string().uuid(),
+        status: z.enum(STATUS_FLOW),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .update({ status: data.status, status_atualizado_em: new Date().toISOString() })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row as PedidoRow;
+  });
+
+export const adminResendTelegram = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z.object({ password: z.string().min(1), id: z.string().uuid() }).parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .select("*")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    await sendTelegram(buildTelegramText(row as PedidoRow, { resent: true }));
+    return { ok: true };
+  });
