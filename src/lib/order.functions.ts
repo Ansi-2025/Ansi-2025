@@ -15,6 +15,8 @@ export const STATUS_FLOW = [
   "em_producao",
   "em_revisao",
   "pronto",
+  "previa",
+  "pagamento",
   "entregue",
 ] as const;
 export type PedidoStatus = (typeof STATUS_FLOW)[number];
@@ -24,6 +26,8 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   em_producao: "Em produção",
   em_revisao: "Em revisão",
   pronto: "Música pronta",
+  previa: "Prévia (45 segundos)",
+  pagamento: "Aguardando pagamento",
   entregue: "Entregue 🎉",
 };
 
@@ -111,7 +115,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: row, error } = await admin()
       .from("pedidos")
-      .select("id, nome_completo, para_quem, tipo_musica, status, status_atualizado_em, created_at")
+      .select("id, nome_completo, para_quem, tipo_musica, status, status_atualizado_em, created_at, url_previa, url_musica, pix_qr_code")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -124,6 +128,9 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       status: PedidoStatus;
       status_atualizado_em: string;
       created_at: string;
+      url_previa: string | null;
+      url_musica: string | null;
+      pix_qr_code: string | null;
     };
   });
 
@@ -189,4 +196,52 @@ export const adminResendTelegram = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     await sendTelegram(buildTelegramText(row as PedidoRow, { resent: true }));
     return { ok: true };
+  });
+
+export const adminUpdateMusicUrl = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        password: z.string().min(1),
+        id: z.string().uuid(),
+        url_previa: z.string().url().optional(),
+        url_musica: z.string().url().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const updateData: Record<string, unknown> = { status_atualizado_em: new Date().toISOString() };
+    if (data.url_previa) updateData.url_previa = data.url_previa;
+    if (data.url_musica) updateData.url_musica = data.url_musica;
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .update(updateData)
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row as PedidoRow;
+  });
+
+export const adminUpdatePixQrCode = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        password: z.string().min(1),
+        id: z.string().uuid(),
+        pix_qr_code: z.string(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .update({ pix_qr_code: data.pix_qr_code, status_atualizado_em: new Date().toISOString() })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row as PedidoRow;
   });

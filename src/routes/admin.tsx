@@ -1,12 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Copy, Send, RefreshCw, Lock, LogOut, Check, Loader2 } from "lucide-react";
+import { Copy, Send, RefreshCw, Lock, LogOut, Check, Loader2, Upload, Music } from "lucide-react";
 import {
   adminLogin,
   adminListOrders,
   adminUpdateStatus,
   adminResendTelegram,
+  adminUpdateMusicUrl,
+  adminUpdatePixQrCode,
   STATUS_FLOW,
   STATUS_LABELS,
   type PedidoStatus,
@@ -26,6 +28,9 @@ type Pedido = {
   descricao: string;
   whatsapp: string;
   status: PedidoStatus;
+  url_previa?: string | null;
+  url_musica?: string | null;
+  pix_qr_code?: string | null;
 };
 
 const STORAGE_KEY = "admin_pwd";
@@ -87,11 +92,15 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
   const list = useServerFn(adminListOrders);
   const updateStatus = useServerFn(adminUpdateStatus);
   const resend = useServerFn(adminResendTelegram);
+  const updateMusicUrl = useServerFn(adminUpdateMusicUrl);
+  const updatePixQrCode = useServerFn(adminUpdatePixQrCode);
   const [orders, setOrders] = useState<Pedido[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editForm, setEditForm] = useState<{ [key: string]: { previa?: string; musica?: string; pix?: string } }>({});
 
   const load = async () => {
     setLoading(true); setErr("");
@@ -132,6 +141,36 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
     setBusy(p.id);
     try { await resend({ data: { password, id: p.id } }); alert("Notificação reenviada ao Telegram."); }
     catch (e) { alert(e instanceof Error ? e.message : "Erro"); }
+    finally { setBusy(null); }
+  };
+
+  const onUpdateMusic = async (p: Pedido) => {
+    const form = editForm[p.id] || {};
+    if (!form.previa && !form.musica) { alert("Adicione pelo menos uma URL."); return; }
+    setBusy(p.id);
+    try {
+      const updated = await updateMusicUrl({
+        data: { password, id: p.id, url_previa: form.previa, url_musica: form.musica },
+      });
+      setOrders((all) => all.map((o) => (o.id === p.id ? (updated as Pedido) : o)));
+      setEditForm((f) => ({ ...f, [p.id]: {} }));
+      alert("Música(s) adicionada(s) com sucesso!");
+    } catch (e) { alert(e instanceof Error ? e.message : "Erro"); }
+    finally { setBusy(null); }
+  };
+
+  const onUpdatePix = async (p: Pedido) => {
+    const form = editForm[p.id] || {};
+    if (!form.pix) { alert("Adicione o QR Code PIX."); return; }
+    setBusy(p.id);
+    try {
+      const updated = await updatePixQrCode({
+        data: { password, id: p.id, pix_qr_code: form.pix },
+      });
+      setOrders((all) => all.map((o) => (o.id === p.id ? (updated as Pedido) : o)));
+      setEditForm((f) => ({ ...f, [p.id]: {} }));
+      alert("QR Code PIX adicionado com sucesso!");
+    } catch (e) { alert(e instanceof Error ? e.message : "Erro"); }
     finally { setBusy(null); }
   };
 
@@ -187,22 +226,31 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
                 </div>
 
                 <div className="mt-5 flex flex-wrap items-center gap-2">
-                  <select
-                    value={p.status}
-                    disabled={busy === p.id}
-                    onChange={(e) => onStatus(p, e.target.value as PedidoStatus)}
-                    className="rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold text-primary"
-                  >
-                    {STATUS_FLOW.map((s) => (
-                      <option key={s} value={s}>{STATUS_LABELS[s]}</option>
-                    ))}
-                  </select>
+                  <label className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                    Status:
+                    <select
+                      value={p.status}
+                      disabled={busy === p.id}
+                      onChange={(e) => onStatus(p, e.target.value as PedidoStatus)}
+                      className="ml-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold text-primary"
+                    >
+                      {STATUS_FLOW.map((s) => (
+                        <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+                      ))}
+                    </select>
+                  </label>
                   <button onClick={() => onCopy(p)} className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold text-primary hover:border-[var(--sky-blue)]/40">
                     {copied === p.id ? <Check className="h-3.5 w-3.5 text-[var(--sky-blue)]" /> : <Copy className="h-3.5 w-3.5" />}
                     {copied === p.id ? "Copiado" : "Copiar detalhes"}
                   </button>
                   <button onClick={() => onResend(p)} disabled={busy === p.id} className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-4 py-2 text-xs font-semibold text-primary hover:border-[var(--gold)]/40 disabled:opacity-50">
                     <Send className="h-3.5 w-3.5" /> Reenviar Telegram
+                  </button>
+                  <button 
+                    onClick={() => setExpandedId(expandedId === p.id ? null : p.id)}
+                    className="inline-flex items-center gap-2 rounded-full border border-[var(--sky-blue)] bg-[var(--sky-blue)]/10 px-4 py-2 text-xs font-semibold text-[var(--sky-blue)] hover:bg-[var(--sky-blue)]/20"
+                  >
+                    <Music className="h-3.5 w-3.5" /> {expandedId === p.id ? "Fechar" : "Adicionar Música"}
                   </button>
                   <a
                     href={`/acompanhar?id=${p.id}`}
@@ -213,6 +261,62 @@ function Dashboard({ password, onLogout }: { password: string; onLogout: () => v
                     Ver acompanhamento
                   </a>
                 </div>
+
+                {expandedId === p.id && (
+                  <div className="mt-5 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4 space-y-4">
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                        URL da Prévia (45 segundos)
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={editForm[p.id]?.previa || ""}
+                        onChange={(e) => setEditForm((f) => ({ ...f, [p.id]: { ...f[p.id], previa: e.target.value } }))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-primary outline-none focus:border-[var(--sky-blue)]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                        URL da Música Final
+                      </label>
+                      <input
+                        type="url"
+                        placeholder="https://..."
+                        value={editForm[p.id]?.musica || ""}
+                        onChange={(e) => setEditForm((f) => ({ ...f, [p.id]: { ...f[p.id], musica: e.target.value } }))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-primary outline-none focus:border-[var(--sky-blue)]"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground mb-2">
+                        QR Code PIX (Brcode)
+                      </label>
+                      <textarea
+                        placeholder="00020126810014BR.GOV.BCB.PIX..."
+                        value={editForm[p.id]?.pix || ""}
+                        onChange={(e) => setEditForm((f) => ({ ...f, [p.id]: { ...f[p.id], pix: e.target.value } }))}
+                        className="w-full rounded-lg border border-border bg-background px-3 py-2 text-xs text-primary outline-none focus:border-[var(--sky-blue)] resize-none h-20"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => onUpdateMusic(p)}
+                        disabled={busy === p.id}
+                        className="inline-flex items-center gap-2 rounded-full bg-[var(--sky-blue)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--sky-blue)]/90 disabled:opacity-50"
+                      >
+                        <Upload className="h-3.5 w-3.5" /> Salvar Música
+                      </button>
+                      <button
+                        onClick={() => onUpdatePix(p)}
+                        disabled={busy === p.id}
+                        className="inline-flex items-center gap-2 rounded-full bg-[var(--gold)] px-4 py-2 text-xs font-semibold text-primary hover:bg-[var(--gold)]/90 disabled:opacity-50"
+                      >
+                        <Upload className="h-3.5 w-3.5" /> Salvar PIX
+                      </button>
+                    </div>
+                  </div>
+                )}
               </li>
             ))}
           </ul>

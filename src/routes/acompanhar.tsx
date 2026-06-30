@@ -1,9 +1,10 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check } from "lucide-react";
 import { getOrderStatus, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
+import QRCode from "qrcode.react";
 
 const search = z.object({ id: z.string().optional() });
 
@@ -26,6 +27,9 @@ type Order = {
   status: PedidoStatus;
   status_atualizado_em: string;
   created_at: string;
+  url_previa: string | null;
+  url_musica: string | null;
+  pix_qr_code: string | null;
 };
 
 function TrackingPage() {
@@ -149,6 +153,46 @@ function Timeline({ order }: { order: Order }) {
                   </div>
                 )}
               </div>
+
+              {/* Conteúdo específico por status */}
+              {isCurrent && step === "previa" && order.url_previa && (
+                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Ouça a prévia (45 segundos)</p>
+                  <audio controls className="w-full">
+                    <source src={order.url_previa} type="audio/mpeg" />
+                    Seu navegador não suporta reprodução de áudio.
+                  </audio>
+                </div>
+              )}
+
+              {isCurrent && step === "pagamento" && order.pix_qr_code && (
+                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Escaneie para pagar via PIX</p>
+                  <div className="flex flex-col items-center gap-4">
+                    <div className="rounded-xl bg-white p-3">
+                      <QRCode value={order.pix_qr_code} size={200} level="H" includeMargin={true} />
+                    </div>
+                    <CopyPixButton pixCode={order.pix_qr_code} />
+                  </div>
+                </div>
+              )}
+
+              {isCurrent && step === "entregue" && order.url_musica && (
+                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua música está pronta!</p>
+                  <audio controls className="w-full mb-4">
+                    <source src={order.url_musica} type="audio/mpeg" />
+                    Seu navegador não suporta reprodução de áudio.
+                  </audio>
+                  <a
+                    href={order.url_musica}
+                    download
+                    className="inline-flex items-center gap-2 rounded-full bg-[var(--sky-blue)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+                  >
+                    <Download className="h-4 w-4" /> Baixar música
+                  </a>
+                </div>
+              )}
             </li>
           );
         })}
@@ -158,5 +202,30 @@ function Timeline({ order }: { order: Order }) {
         Código: <span className="font-mono">{order.id}</span>
       </p>
     </div>
+  );
+}
+
+function CopyPixButton({ pixCode }: { pixCode: string }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = () => {
+    navigator.clipboard.writeText(pixCode);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+  return (
+    <button
+      onClick={handleCopy}
+      className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 px-4 py-2 text-xs font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/20"
+    >
+      {copied ? (
+        <>
+          <Check className="h-4 w-4" /> Copiado!
+        </>
+      ) : (
+        <>
+          <Copy className="h-4 w-4" /> Copiar código PIX
+        </>
+      )}
+    </button>
   );
 }
