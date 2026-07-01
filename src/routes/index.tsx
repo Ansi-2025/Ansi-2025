@@ -736,7 +736,7 @@ function OrderForm() {
 /* ---------------- FAQ ---------------- */
 function FAQ() {
   const items = [
-    { q: "Quanto tempo demora?", a: "Em média, sua música fica pronta em até 48 horas após o envio da sua história." },
+    { q: "Quanto tempo demora?", a: "Em média, sua música fica pronta em até 12 horas após o envio da sua história." },
     { q: "Posso escolher o estilo?", a: "Sim! Você pode indicar o estilo gospel preferido — adoração, congregacional, intimista, entre outros." },
     { q: "Posso pedir alterações?", a: "Claro. Enviamos uma prévia para você ouvir e ajustar antes da entrega final." },
     { q: "Como recebo a música?", a: "A entrega é 100% digital, em alta qualidade, direto no seu e-mail ou WhatsApp." },

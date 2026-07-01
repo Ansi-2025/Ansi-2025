@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check } from "lucide-react";
 import { getOrderStatus, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
-import QRCode from "qrcode.react";
+import QRCode from "qrcode";
 
 const search = z.object({ id: z.string().optional() });
 
@@ -170,7 +170,7 @@ function Timeline({ order }: { order: Order }) {
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Escaneie para pagar via PIX</p>
                   <div className="flex flex-col items-center gap-4">
                     <div className="rounded-xl bg-white p-3">
-                      <QRCode value={order.pix_qr_code} size={200} level="H" includeMargin={true} />
+                      <QRCodeImage value={order.pix_qr_code} />
                     </div>
                     <CopyPixButton pixCode={order.pix_qr_code} />
                   </div>
@@ -228,4 +228,18 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
       )}
     </button>
   );
+}
+
+function QRCodeImage({ value }: { value: string }) {
+  const [qrCode, setQrCode] = useState<string>("");
+
+  useEffect(() => {
+    QRCode.toDataURL(value, { width: 200, margin: 1 })
+      .then((url) => setQrCode(url))
+      .catch(() => setQrCode(""));
+  }, [value]);
+
+  if (!qrCode) return <div className="h-[200px] w-[200px] animate-pulse bg-[var(--soft-gray)]" />;
+
+  return <img src={qrCode} alt="QR Code PIX" className="h-[200px] w-[200px]" />;
 }
