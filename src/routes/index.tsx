@@ -501,19 +501,21 @@ const TIPOS_MUSICA = [
 ];
 
 type OrderFormState = {
-  nome_completo: string;
-  para_quem: string;
-  tipo_musica: string;
+  nome_cliente: string;
+  email_cliente: string;
+  telefone_cliente: string;
+  genero_musical: string;
+  duracao_segundos: string;
   descricao: string;
-  whatsapp: string;
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_completo", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
-  { key: "para_quem", label: "Para quem é a música?", eyebrow: "Passo 2 de 5" },
-  { key: "tipo_musica", label: "Qual o tipo da música?", eyebrow: "Passo 3 de 5" },
-  { key: "descricao", label: "Descreva o que deve ter na música", eyebrow: "Passo 4 de 5" },
-  { key: "whatsapp", label: "Seu WhatsApp (obrigatório)", eyebrow: "Passo 5 de 5" },
+  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6" },
+  { key: "email_cliente", label: "Qual é o seu e-mail?", eyebrow: "Passo 2 de 6" },
+  { key: "telefone_cliente", label: "Qual é o seu telefone ou WhatsApp?", eyebrow: "Passo 3 de 6" },
+  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 6" },
+  { key: "duracao_segundos", label: "Qual duração da prévia em segundos?", eyebrow: "Passo 5 de 6" },
+  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 6 de 6" },
 ];
 
 function OrderForm() {
@@ -523,24 +525,32 @@ function OrderForm() {
   const [orderId, setOrderId] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState("");
   const [form, setForm] = useState<OrderFormState>({
-    nome_completo: "",
-    para_quem: "",
-    tipo_musica: TIPOS_MUSICA[0],
+    nome_cliente: "",
+    email_cliente: "",
+    telefone_cliente: "",
+    genero_musical: TIPOS_MUSICA[0],
+    duracao_segundos: "45",
     descricao: "",
-    whatsapp: "",
   });
 
   const current = STEPS[step];
   const progress = ((step + 1) / STEPS.length) * 100;
 
   const validateStep = (): string | null => {
-    const v = form[current.key].trim();
-    if (current.key === "descricao" && v.length < 10) return "Conte um pouco mais (mínimo 10 caracteres).";
-    if (current.key === "whatsapp") {
-      const digits = v.replace(/\D/g, "");
-      if (digits.length < 10) return "Informe um WhatsApp válido com DDD.";
+    const value = form[current.key].trim();
+    if (current.key === "email_cliente") {
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) return "Informe um e-mail válido.";
     }
-    if (v.length < 2) return "Preencha este campo para continuar.";
+    if (current.key === "telefone_cliente") {
+      const digits = value.replace(/\D/g, "");
+      if (digits.length < 10) return "Informe um telefone ou WhatsApp com DDD.";
+    }
+    if (current.key === "duracao_segundos") {
+      const seconds = Number(value);
+      if (!Number.isInteger(seconds) || seconds < 10 || seconds > 600) return "Informe uma duração entre 10 e 600 segundos.";
+    }
+    if (current.key === "descricao" && value.length < 30) return "Conte um pouco mais (mínimo 30 caracteres).";
+    if (value.length < 2) return "Preencha este campo para continuar.";
     return null;
   };
 
@@ -558,7 +568,12 @@ function OrderForm() {
     setErrorMsg("");
     setStatus("loading");
     try {
-      const res = await send({ data: form });
+      const res = await send({
+        data: {
+          ...form,
+          duracao_segundos: Number(form.duracao_segundos),
+        },
+      });
       setOrderId(res.id);
       setStatus("ok");
     } catch (e) {
@@ -568,7 +583,7 @@ function OrderForm() {
   };
 
   const reset = () => {
-    setForm({ nome_completo: "", para_quem: "", tipo_musica: TIPOS_MUSICA[0], descricao: "", whatsapp: "" });
+    setForm({ nome_cliente: "", email_cliente: "", telefone_cliente: "", genero_musical: TIPOS_MUSICA[0], duracao_segundos: "45", descricao: "" });
     setStep(0);
     setStatus("idle");
     setErrorMsg("");
@@ -649,15 +664,15 @@ function OrderForm() {
                     className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
                     placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
                   />
-                ) : current.key === "tipo_musica" ? (
+                ) : current.key === "genero_musical" ? (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {TIPOS_MUSICA.map((t) => {
-                      const active = form.tipo_musica === t;
+                      const active = form.genero_musical === t;
                       return (
                         <button
                           key={t}
                           type="button"
-                          onClick={() => setForm({ ...form, tipo_musica: t })}
+                          onClick={() => setForm({ ...form, genero_musical: t })}
                           className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
                             active
                               ? "border-[var(--gold)] bg-[var(--gold)]/10 text-primary shadow-[var(--shadow-soft)]"
@@ -672,17 +687,23 @@ function OrderForm() {
                 ) : (
                   <input
                     autoFocus
-                    type={current.key === "whatsapp" ? "tel" : "text"}
+                    type={current.key === "telefone_cliente" ? "tel" : current.key === "duracao_segundos" ? "number" : "text"}
+                    min={current.key === "duracao_segundos" ? 10 : undefined}
+                    max={current.key === "duracao_segundos" ? 600 : undefined}
                     value={form[current.key]}
                     onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
                     onKeyDown={onKeyDown}
                     className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
                     placeholder={
-                      current.key === "nome_completo"
+                      current.key === "nome_cliente"
                         ? "Ex.: Maria Silva Souza"
-                        : current.key === "para_quem"
-                          ? "Ex.: Para minha esposa, Ana"
-                          : "(00) 00000-0000"
+                        : current.key === "email_cliente"
+                          ? "Ex.: maria@email.com"
+                          : current.key === "telefone_cliente"
+                            ? "(00) 00000-0000"
+                            : current.key === "duracao_segundos"
+                              ? "Ex.: 45"
+                              : ""
                     }
                   />
                 )}

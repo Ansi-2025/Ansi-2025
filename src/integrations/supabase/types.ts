@@ -18,37 +18,113 @@ export type Database = {
         Row: {
           created_at: string
           descricao: string
+          duracao_segundos: number | null
+          email_cliente: string | null
+          genero_musical: string | null
           id: string
+          nome_cliente: string | null
           nome_completo: string
           para_quem: string
+          pix_qr_code: string | null
+          pix_fixado: boolean
+          pago_em: string | null
+          roteiro_ia: string | null
           status: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em: string
+          suno_job_id: string | null
           tipo_musica: string
+          url_musica: string | null
+          url_previa: string | null
+          valor_pix: string | null
           whatsapp: string
+          telefone_cliente: string | null
         }
         Insert: {
           created_at?: string
           descricao: string
+          duracao_segundos?: number | null
+          email_cliente?: string | null
+          genero_musical?: string | null
           id?: string
+          nome_cliente?: string | null
           nome_completo: string
           para_quem: string
+          pix_qr_code?: string | null
+          pix_fixado?: boolean
+          pago_em?: string | null
+          roteiro_ia?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
+          suno_job_id?: string | null
           tipo_musica: string
+          url_musica?: string | null
+          url_previa?: string | null
+          valor_pix?: string | null
           whatsapp: string
+          telefone_cliente?: string | null
         }
         Update: {
           created_at?: string
           descricao?: string
+          duracao_segundos?: number | null
+          email_cliente?: string | null
+          genero_musical?: string | null
           id?: string
+          nome_cliente?: string | null
           nome_completo?: string
           para_quem?: string
+          pix_qr_code?: string | null
+          pix_fixado?: boolean
+          pago_em?: string | null
+          roteiro_ia?: string | null
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
+          suno_job_id?: string | null
           tipo_musica?: string
+          url_musica?: string | null
+          url_previa?: string | null
+          valor_pix?: string | null
           whatsapp?: string
+          telefone_cliente?: string | null
         }
         Relationships: []
+      }
+      status_history: {
+        Row: {
+          admin_user: string | null
+          criado_em: string
+          id: string
+          mensagem_whatsapp: string | null
+          pedido_id: string
+          status_anterior: string | null
+          status_novo: string
+        }
+        Insert: {
+          admin_user?: string | null
+          criado_em?: string
+          id?: string
+          mensagem_whatsapp?: string | null
+          pedido_id: string
+          status_anterior?: string | null
+          status_novo: string
+        }
+        Update: {
+          admin_user?: string | null
+          criado_em?: string
+          id?: string
+          mensagem_whatsapp?: string | null
+          pedido_id?: string
+          status_anterior?: string | null
+          status_novo?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "status_history_pedido_id_fkey"
+            columns: ["pedido_id"]
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {

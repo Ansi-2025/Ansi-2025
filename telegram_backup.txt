@@ -1,0 +1,32 @@
+Backup da integração com Telegram
+
+Mensagens utilizadas:
+- recebido: "✨ Recebemos sua história! Em breve começamos a produção da sua música personalizada. Obrigado! 🎵"
+- em_producao: "🎼 Estamos em plena produção! Criando uma música única e especial para você. Em breve a prévia! 🎶"
+- em_revisao: "👂 Estamos fazendo ajustes finais. Em breve te enviamos uma prévia para você ouvir! 🎵"
+- pronto: "✅ Música pronta! Estamos preparando a prévia (45seg) para você avaliar. Já ja recebe! 🎧"
+- previa: "🎧 Confira a prévia da sua música! Enviamos no link. Tem sugestões? Fale conosco! 🎵"
+- pagamento: "💰 Tudo certo com a prévia? Agora é só fazer o pagamento via PIX para receber a música completa! 🎉"
+- entregue: "🎉 Sua música está pronta para download! Obrigado por confiar em nós. Aproveite! 🎵"
+
+Funções:
+- buildTelegramText(pedido, opts)
+- sendTelegram(text)
+
+Estrutura do request:
+POST https://api.telegram.org/bot<token>/sendMessage
+Headers:
+  Content-Type: application/json
+Body:
+  {
+    chat_id: <chatId>,
+    text: <texto_html>,
+    parse_mode: "HTML",
+    disable_web_page_preview: true
+  }
+
+Observações:
+- Usava bot token em TELEGRAM_BOT_TOKEN.
+- Usava CHAT ID em TELEGRAM_OWNER_CHAT_ID.
+- A integração era acionada após criar o pedido e em reenviar notificações.
+- Mensagens eram formatadas em HTML com campos do pedido.

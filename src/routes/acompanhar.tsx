@@ -21,9 +21,12 @@ export const Route = createFileRoute("/acompanhar")({
 
 type Order = {
   id: string;
-  nome_completo: string;
-  para_quem: string;
-  tipo_musica: string;
+  nome_cliente: string;
+  email_cliente: string | null;
+  telefone_cliente: string | null;
+  genero_musical: string | null;
+  duracao_segundos: number | null;
+  descricao: string;
   status: PedidoStatus;
   status_atualizado_em: string;
   created_at: string;
@@ -118,9 +121,9 @@ function Timeline({ order, history }: { order: Order; history: Array<any> }) {
     <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pedido de</p>
-        <h2 className="mt-1 font-display text-2xl font-semibold text-primary">{order.nome_completo}</h2>
+        <h2 className="mt-1 font-display text-2xl font-semibold text-primary">{order.nome_cliente}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {order.tipo_musica} · para {order.para_quem}
+          {order.genero_musical ?? "Gênero não informado"} · {order.duracao_segundos ? `${order.duracao_segundos}s` : "Duração não informada"}
         </p>
       </div>
 
