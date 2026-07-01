@@ -1,8 +1,8 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check } from "lucide-react";
-import { getOrderStatus, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
+import { getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
 import QRCode from "qrcode";
 
@@ -30,21 +30,26 @@ type Order = {
   url_previa: string | null;
   url_musica: string | null;
   pix_qr_code: string | null;
+  pix_fixado: boolean;
 };
 
 function TrackingPage() {
   const { id: initialId } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
+  const fetchHistory = useServerFn(getOrderStatusHistory);
   const [id, setId] = useState(initialId ?? "");
   const [order, setOrder] = useState<Order | null>(null);
+  const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
 
   const search = async (orderId: string) => {
-    setLoading(true); setErr(""); setOrder(null);
+    setLoading(true); setErr(""); setOrder(null); setHistory([]);
     try {
       const row = await fetchStatus({ data: { id: orderId.trim() } });
       setOrder(row as Order);
+      const hist = await fetchHistory({ data: { id: orderId.trim() } });
+      setHistory(hist);
     } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
     finally { setLoading(false); }
   };
@@ -89,13 +94,13 @@ function TrackingPage() {
           {err && <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err}</p>}
         </div>
 
-        {order && <Timeline order={order} key={order.id + order.status} />}
+        {order && <Timeline order={order} history={history} key={order.id + order.status} />}
       </main>
     </div>
   );
 }
 
-function Timeline({ order }: { order: Order }) {
+function Timeline({ order, history }: { order: Order; history: Array<any> }) {
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   // reveal steps progressivamente (uma de cada vez)
   const [revealed, setRevealed] = useState(0);
@@ -201,6 +206,27 @@ function Timeline({ order }: { order: Order }) {
       <p className="mt-8 text-center text-xs text-muted-foreground">
         Código: <span className="font-mono">{order.id}</span>
       </p>
+
+      {history.length > 0 && (
+        <div className="mt-8 rounded-3xl border border-border bg-[var(--soft-gray)]/50 p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <Clock className="h-4 w-4 text-[var(--sky-blue)]" />
+            <h3 className="font-display text-sm font-semibold text-primary">Histórico de Atualizações</h3>
+          </div>
+          <div className="space-y-3">
+            {history.map((item) => (
+              <div key={item.id} className="rounded-xl border border-border/50 bg-card p-3 text-xs">
+                <div className="flex items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold text-primary">{STATUS_LABELS[item.status_novo as PedidoStatus]}</p>
+                    <p className="text-muted-foreground mt-1">{new Date(item.criado_em).toLocaleString("pt-BR")}</p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

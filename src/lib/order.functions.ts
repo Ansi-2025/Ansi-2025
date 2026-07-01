@@ -6,9 +6,19 @@ const OrderSchema = z.object({
   nome_completo: z.string().trim().min(2).max(120),
   para_quem: z.string().trim().min(2).max(120),
   tipo_musica: z.string().trim().min(2).max(80),
-  descricao: z.string().trim().min(10).max(2000),
+  descricao: z.string().trim().min(30).max(2000),
   whatsapp: z.string().trim().min(8).max(40),
 });
+
+export const WHATSAPP_MESSAGES: Record<PedidoStatus, string> = {
+  recebido: "✨ Recebemos sua história! Em breve começamos a produção da sua música personalizada. Obrigado! 🎵",
+  em_producao: "🎼 Estamos em plena produção! Criando uma música única e especial para você. Em breve a prévia! 🎶",
+  em_revisao: "👂 Estamos fazendo ajustes finais. Em breve te enviamos uma prévia para você ouvir! 🎵",
+  pronto: "✅ Música pronta! Estamos preparando a prévia (45seg) para você avaliar. Já ja recebe! 🎧",
+  previa: "🎧 Confira a prévia da sua música! Enviamos no link. Tem sugestões? Fale conosco! 🎵",
+  pagamento: "💰 Tudo certo com a prévia? Agora é só fazer o pagamento via PIX para receber a música completa! 🎉",
+  entregue: "🎉 Sua música está pronta para download! Obrigado por confiar em nós. Aproveite! 🎵",
+};
 
 export const STATUS_FLOW = [
   "recebido",
@@ -115,7 +125,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
   .handler(async ({ data }) => {
     const { data: row, error } = await admin()
       .from("pedidos")
-      .select("id, nome_completo, para_quem, tipo_musica, status, status_atualizado_em, created_at, url_previa, url_musica, pix_qr_code")
+      .select("id, nome_completo, para_quem, tipo_musica, status, status_atualizado_em, created_at, url_previa, url_musica, pix_qr_code, pix_fixado")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -131,6 +141,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       url_previa: string | null;
       url_musica: string | null;
       pix_qr_code: string | null;
+      pix_fixado: boolean;
     };
   });
 
@@ -244,4 +255,73 @@ export const adminUpdatePixQrCode = createServerFn({ method: "POST" })
       .single();
     if (error) throw new Error(error.message);
     return row as PedidoRow;
+  });
+
+export const adminTogglePixFixed = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        password: z.string().min(1),
+        id: z.string().uuid(),
+        pix_fixado: z.boolean(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { data: row, error } = await admin()
+      .from("pedidos")
+      .update({ pix_fixado: data.pix_fixado, status_atualizado_em: new Date().toISOString() })
+      .eq("id", data.id)
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return row as PedidoRow;
+  });
+
+export const adminRecordStatusChange = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        password: z.string().min(1),
+        pedido_id: z.string().uuid(),
+        status_anterior: z.string().optional(),
+        status_novo: z.enum(STATUS_FLOW),
+        mensagem_whatsapp: z.string().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    assertAdmin(data.password);
+    const { error } = await admin()
+      .from("status_history")
+      .insert({
+        pedido_id: data.pedido_id,
+        status_anterior: data.status_anterior,
+        status_novo: data.status_novo,
+        admin_user: "admin",
+        mensagem_whatsapp: data.mensagem_whatsapp,
+      });
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getOrderStatusHistory = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    const { data: rows, error } = await admin()
+      .from("status_history")
+      .select("*")
+      .eq("pedido_id", data.id)
+      .order("criado_em", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows as Array<{
+      id: string;
+      pedido_id: string;
+      status_anterior: string | null;
+      status_novo: string;
+      admin_user: string | null;
+      mensagem_whatsapp: string | null;
+      criado_em: string;
+    }>;
   });
