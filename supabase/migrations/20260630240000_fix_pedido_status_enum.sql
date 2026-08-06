@@ -14,6 +14,16 @@ CREATE TYPE public.pedido_status_corrected AS ENUM (
 );
 
 -- 2. Alterar coluna para usar novo enum
+-- Antes de alterar o tipo, remover o DEFAULT existente para evitar erro
+ALTER TABLE public.pedidos
+  ALTER COLUMN status DROP DEFAULT;
+
+-- (Opcional) Verificar valores existentes compatíveis com o novo enum:
+-- SELECT DISTINCT status FROM public.pedidos;
+-- Caso haja valores incompatíveis, atualize-os manualmente, por exemplo:
+-- UPDATE public.pedidos SET status = 'recebido' WHERE status NOT IN ('recebido','em_producao','em_revisao','pronto','previa','pagamento','entregue');
+
+-- Agora alterar o tipo usando cast via text
 ALTER TABLE public.pedidos
   ALTER COLUMN status TYPE public.pedido_status_corrected
   USING status::text::public.pedido_status_corrected;
@@ -26,5 +36,8 @@ ALTER TYPE public.pedido_status_corrected RENAME TO pedido_status;
 
 -- 5. Garantir defaults e constraints
 ALTER TABLE public.pedidos
-  ALTER COLUMN status SET NOT NULL,
-  ALTER COLUMN status SET DEFAULT 'recebido'::public.pedido_status;
+  ALTER COLUMN status SET DEFAULT 'recebido'::public.pedido_status,
+  ALTER COLUMN status SET NOT NULL;
+
+-- Nota: se você administrar migrations manualmente, confirme os passos acima
+-- em um ambiente de staging antes de aplicar em produção.
