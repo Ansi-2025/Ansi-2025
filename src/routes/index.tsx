@@ -1,9 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Play,
-  Pause,
   Music,
   Heart,
   Sparkles,
@@ -63,7 +62,6 @@ function Index() {
         <Hero />
         <Badges />
         <HowItWorks />
-        <AudioDemo />
         <Occasions />
         <Differentials />
         <Testimonials />
@@ -253,81 +251,6 @@ function HowItWorks() {
             </div>
           ))}
         </div>
-      </div>
-    </section>
-  );
-}
-
-type Track = { name: string; duration: string; src: string };
-const tracks: Track[] = [
-  { name: "Gratidão", duration: "2:48", src: "https://cdn.pixabay.com/audio/2022/10/18/audio_31750e92aa.mp3" },
-  { name: "Casa Cheia de Fé", duration: "3:12", src: "https://cdn.pixabay.com/audio/2022/11/22/audio_febc5fe06a.mp3" },
-  { name: "Promessa", duration: "2:55", src: "https://cdn.pixabay.com/audio/2023/03/03/audio_4495f86251.mp3" },
-];
-
-function AudioDemo() {
-  const [playing, setPlaying] = useState<number | null>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
-  const toggle = (i: number) => {
-    if (!audioRef.current) return;
-    if (playing === i) {
-      audioRef.current.pause();
-      setPlaying(null);
-    } else {
-      audioRef.current.src = tracks[i].src;
-      audioRef.current.play().catch(() => {});
-      setPlaying(i);
-    }
-  };
-
-  useEffect(() => {
-    const a = audioRef.current;
-    if (!a) return;
-    const onEnd = () => setPlaying(null);
-    a.addEventListener("ended", onEnd);
-    return () => a.removeEventListener("ended", onEnd);
-  }, []);
-
-  return (
-    <section id="exemplos" className="px-5 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-4xl">
-        <SectionHeader
-          eyebrow="Ouça por você mesmo"
-          title="Ouça algumas músicas criadas por nós"
-          subtitle="Cada faixa nasceu de uma história verdadeira de fé, amor e gratidão."
-        />
-        <div className="reveal mt-12 overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-soft)]">
-          {tracks.map((t, i) => {
-            const active = playing === i;
-            return (
-              <button
-                key={t.name}
-                onClick={() => toggle(i)}
-                className={`flex w-full items-center gap-4 border-b border-border px-5 py-5 text-left transition-colors last:border-b-0 ${
-                  active ? "bg-[var(--soft-gray)]" : "hover:bg-[var(--soft-gray)]/60"
-                }`}
-              >
-                <span
-                  style={active ? GRADIENT_GOLD : undefined}
-                  className={`grid h-12 w-12 shrink-0 place-items-center rounded-full transition-all ${
-                    active
-                      ? "text-primary shadow-[var(--shadow-gold)]"
-                      : "bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]"
-                  }`}
-                >
-                  {active ? <Pause className="h-5 w-5" /> : <Play className="h-5 w-5 translate-x-0.5" />}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="font-display text-lg font-semibold text-primary">{t.name}</div>
-                  <div className="text-xs text-muted-foreground">Canção personalizada</div>
-                </div>
-                <span className="shrink-0 text-sm tabular-nums text-muted-foreground">{t.duration}</span>
-              </button>
-            );
-          })}
-        </div>
-        <audio ref={audioRef} preload="none" />
       </div>
     </section>
   );
