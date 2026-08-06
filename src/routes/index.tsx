@@ -63,7 +63,6 @@ function Index() {
         <Hero />
         <Badges />
         <HowItWorks />
-        <VideoDemo />
         <AudioDemo />
         <Occasions />
         <Differentials />
@@ -259,34 +258,6 @@ function HowItWorks() {
   );
 }
 
-/* ---------------- Video Demo ---------------- */
-function VideoDemo() {
-  return (
-    <section className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-5xl">
-        <SectionHeader
-          eyebrow="Veja em movimento"
-          title="Veja como uma história se transforma em uma canção"
-          subtitle="Um vislumbre do que acontece quando palavras viram melodia."
-        />
-        <div className="reveal mt-12 overflow-hidden rounded-3xl border border-border bg-card shadow-[var(--shadow-glow)]">
-          <div className="relative aspect-video">
-            <iframe
-              className="absolute inset-0 h-full w-full"
-              src="https://www.youtube.com/embed/dQw4w9WgXcQ?rel=0"
-              title="Vídeo demonstrativo Canção de Fé"
-              loading="lazy"
-              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            />
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-/* ---------------- Audio Demo ---------------- */
 type Track = { name: string; duration: string; src: string };
 const tracks: Track[] = [
   { name: "Gratidão", duration: "2:48", src: "https://cdn.pixabay.com/audio/2022/10/18/audio_31750e92aa.mp3" },
