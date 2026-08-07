@@ -39,6 +39,32 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const url = new URL(request.url);
+
+    if (url.pathname === "/webhooks/shopify/orders/create") {
+      if (request.method === "GET") {
+        return new Response("ok", { status: 200 });
+      }
+
+      if (request.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method not allowed" }), {
+          status: 405,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      try {
+        const { handleShopifyWebhook } = await import("./lib/shopify.webhook");
+        return await handleShopifyWebhook(request);
+      } catch (error) {
+        console.error("Error handling Shopify webhook:", error);
+        return new Response(JSON.stringify({ error: "Webhook handler error" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
+
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
