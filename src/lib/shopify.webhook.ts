@@ -60,8 +60,15 @@ export async function handleShopifyWebhook(request: Request) {
     });
   }
 
+  // Debug: log that we received a POST for tracing in Vercel logs
+  console.info('[shopify.webhook] received request', { method: request.method, url: request.url });
+
   const rawBody = await request.arrayBuffer();
   const headerSignature = request.headers.get(SHOPIFY_HMAC_HEADER);
+
+  if (!headerSignature) {
+    console.warn('[shopify.webhook] missing signature header');
+  }
 
   if (!headerSignature) {
     return new Response(JSON.stringify({ error: "Missing Shopify HMAC header" }), {
@@ -72,7 +79,11 @@ export async function handleShopifyWebhook(request: Request) {
 
   const expectedSignature = await computeHmacBase64(rawBody, SHOPIFY_WEBHOOK_SECRET);
 
-  if (!safeCompare(expectedSignature, headerSignature)) {
+  const signatureMatches = safeCompare(expectedSignature, headerSignature || "");
+  console.info('[shopify.webhook] signature check', { hasHeader: !!headerSignature, signatureMatches });
+
+  if (!signatureMatches) {
+    console.warn('[shopify.webhook] signature mismatch');
     return new Response(JSON.stringify({ error: "Invalid Shopify webhook signature" }), {
       status: 401,
       headers: { "content-type": "application/json" },
@@ -96,6 +107,8 @@ export async function handleShopifyWebhook(request: Request) {
   try {
     const pedidoEntrada = mapShopifyOrderToPedidoEntrada(order as Record<string, unknown>);
     const pedido = await criarPedidoAutomatizado(pedidoEntrada);
+
+    console.info('[shopify.webhook] pedido criado', { pedidoId: pedido.id });
 
     return new Response(JSON.stringify({ ok: true, id: pedido.id }), {
       status: 201,
