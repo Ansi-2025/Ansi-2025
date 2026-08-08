@@ -1,0 +1,56 @@
+Resumo do que foi feito e próximos passos
+
+1. Contexto geral
+- Projeto: Cancao de Fe, app React/Vite com backend Supabase e integração Shopify.
+- Objetivo atual: implementar fluxo de checkout Shopify, webhook de pagamento e melhorar UX do formulário de pedido.
+
+2. O que fizemos
+- Implementamos o backend de checkout Shopify.
+  - Adicionada integração em `src/integrations/shopify/client.ts`.
+  - Criado serviço em `src/lib/shopify.service.ts` para gerar checkout.
+  - Foi usada a variável `SHOPIFY_ACCESS_TOKEN` e `SHOPIFY_STORE_DOMAIN` no ambiente.
+- Desenvolvemos a validação e processamento do webhook `orders/paid`.
+  - Implementado em `src/lib/shopify.webhook.ts`.
+  - Validamos HMAC e atualizamos o pedido no Supabase usando `shopify_checkout_id`.
+- Ajustamos a lógica do pedido no backend.
+  - Em `src/lib/order.functions.ts`, definimos duração fixa do preview (`duracao_segundos: 45`).
+  - Removemos a opção de duração customizada pelo cliente.
+- Melhoramos a interface do pedido.
+  - Em `src/routes/index.tsx`, adicionamos botões de sugestão que preenchem automaticamente a descrição.
+- Executamos build local e deploy no Vercel.
+  - `npm run build` passou.
+  - Deploy realizado com `npx vercel deploy --prod`.
+- Commit e push feitos.
+  - Commit principal: `Add description suggestion buttons for order form`.
+
+3. Arquivos importantes alterados
+- `src/routes/index.tsx`
+- `src/lib/order.functions.ts`
+- `src/integrations/shopify/client.ts`
+- `src/lib/shopify.service.ts`
+- `src/lib/shopify.webhook.ts`
+- `shopify.app.toml`
+- `src/routeTree.gen.ts` (aparentemente modificado sem diff funcional)
+
+4. Status atual
+- Produção implantada em: `https://cancao-de-fpoau38r1-projetasso.vercel.app`
+- Alias ativo: `https://cancao-de-fe-beta.vercel.app`
+- Último deploy foi concluído com sucesso.
+
+5. O que precisamos fazer depois
+- Remover arquivos temporários gerados (`routeTree.diff.txt`, `temp_routeTree.diff`) se não forem necessários.
+- Limpar ou regenerar `src/routeTree.gen.ts` para evitar diffs sem conteúdo.
+- Testar end-to-end o webhook Shopify `orders/paid` em produção.
+- Confirmar que o Vercel não está bloqueando webhooks com autenticação de deploy.
+- Verificar variáveis de ambiente em produção:
+  - `SUPABASE_SERVICE_ROLE`
+  - `SHOPIFY_WEBHOOK_SECRET`
+  - `SHOPIFY_ACCESS_TOKEN`
+  - `SHOPIFY_STORE_DOMAIN`
+- Atualizar o `.env` local com as novas chaves de chat quando for necessário trocar a chave.
+- Se for preciso, adicionar documentação de configuração no `README` ou em um arquivo `.md`.
+
+6. Observações finais
+- O fluxo de pagamento agora depende do webhook ser aceito pelo Vercel.
+- Se o deploy estiver protegido por login, o Shopify não conseguirá enviar webhooks.
+- O próximo passo prático é corrigir essa proteção e testar um pagamento real.

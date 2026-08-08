@@ -48,10 +48,20 @@ export interface FileRoutesById {
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/acompanhar' | '/webhooks/shopify/orders/create'
+  fullPaths:
+    | '/'
+    | '/acompanhar'
+    | '/webhooks/shopify/orders/create'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/acompanhar' | '/webhooks/shopify/orders/create'
-  id: '__root__' | '/' | '/acompanhar' | '/webhooks/shopify/orders/create'
+  to:
+    | '/'
+    | '/acompanhar'
+    | '/webhooks/shopify/orders/create'
+  id:
+    | '__root__'
+    | '/'
+    | '/acompanhar'
+    | '/webhooks/shopify/orders/create'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {

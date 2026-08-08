@@ -11,8 +11,8 @@ export type ShopifyCheckoutResult = {
 
 export async function createShopifyCheckout(payload: ShopifyCheckoutPayload): Promise<ShopifyCheckoutResult> {
   const shopifyDomain = process.env.SHOPIFY_STORE_DOMAIN;
-  const shopifyToken = process.env.SHOPIFY_ACCESS_TOKEN;
   const shopifyApiVersion = process.env.SHOPIFY_API_VERSION ?? "2024-10";
+  const shopifyToken = process.env.SHOPIFY_ACCESS_TOKEN;
 
   if (!shopifyDomain || !shopifyToken) {
     throw new Error("SHOPIFY_STORE_DOMAIN ou SHOPIFY_ACCESS_TOKEN não configurados.");
