@@ -424,6 +424,38 @@ function OrderForm() {
     descricao: "",
   });
 
+  const descriptionSuggestions = [
+    {
+      label: "Para quem é a música?",
+      value: "Esta música é para a pessoa que me apoiou na fé e me acompanhou em cada momento.",
+    },
+    {
+      label: "Qual sentimento quer transmitir?",
+      value: "Quero transmitir gratidão, amor e fé no nosso relacionamento e caminhada espiritual.",
+    },
+    {
+      label: "Momento especial",
+      value: "Descreva um momento especial, como quando vencemos juntos uma dificuldade ou recebemos uma bênção.",
+    },
+    {
+      label: "Palavras importantes",
+      value: "Inclua nomes, lugares e símbolos importantes, como igreja, família, casa ou oração.",
+    },
+    {
+      label: "Como quer que ela se sinta?",
+      value: "Quero que ela se sinta emocionada, fortalecida e abençoada ao ouvir esta canção.",
+    },
+  ];
+
+  const appendDescriptionSuggestion = (suggestion: string) => {
+    setForm((prev) => ({
+      ...prev,
+      descricao: prev.descricao.trim()
+        ? `${prev.descricao.trim()} ${suggestion}`
+        : suggestion,
+    }));
+  };
+
   const current = STEPS[step];
   const progress = ((step + 1) / STEPS.length) * 100;
 
@@ -537,15 +569,41 @@ function OrderForm() {
                 </span>
 
                 {current.key === "descricao" ? (
-                  <textarea
-                    autoFocus
-                    rows={6}
-                    value={form.descricao}
-                    onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                    onKeyDown={onKeyDown}
-                    className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
-                    placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
-                  />
+                  <>
+                    <textarea
+                      autoFocus
+                      rows={6}
+                      value={form.descricao}
+                      onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                      onKeyDown={onKeyDown}
+                      className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                      placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
+                    />
+                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                      {descriptionSuggestions.map((suggestion) => (
+                        <button
+                          key={suggestion.label}
+                          type="button"
+                          onClick={() => appendDescriptionSuggestion(suggestion.value)}
+                          className="rounded-2xl border border-border bg-background px-4 py-3 text-left text-sm font-medium text-primary transition hover:border-[var(--sky-blue)]/40 hover:bg-[var(--sky-blue)]/5"
+                        >
+                          <span className="font-semibold">{suggestion.label}</span>
+                          <p className="mt-1 text-xs text-muted-foreground">{suggestion.value}</p>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4 text-sm text-muted-foreground">
+                      <p className="font-semibold text-primary mb-3">Dicas para deixar a música perfeita</p>
+                      <ul className="list-disc space-y-2 pl-5">
+                        <li><strong>Para quem é a música?</strong> Diga o nome da pessoa e sua relação com ela.</li>
+                        <li><strong>Qual sentimento deve prevalecer?</strong> Ex.: gratidão, fé, amor, esperança, celebração.</li>
+                        <li><strong>Quais momentos especiais lembrar?</strong> Encontros, bênçãos, superações, vitórias ou bênçãos.</li>
+                        <li><strong>Quais palavras ou imagens não podem faltar?</strong> Nomes, lugares, símbolos, sonhos ou expressões importantes.</li>
+                        <li><strong>Como quer que a pessoa se sinta ao ouvir?</strong> Emocionada, acolhida, tocada, fortalecida ou inspirada.</li>
+                      </ul>
+                      <p className="mt-3">Estas informações ajudam nosso sistema a gerar a letra e o roteiro da música com mais precisão.</p>
+                    </div>
+                  </>
                 ) : current.key === "genero_musical" ? (
                   <div className="grid gap-2 sm:grid-cols-2">
                     {TIPOS_MUSICA.map((t) => {
