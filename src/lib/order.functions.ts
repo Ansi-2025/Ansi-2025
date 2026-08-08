@@ -10,8 +10,10 @@ const OrderSchema = z.object({
   telefone_cliente: z.string().trim().min(8).max(30),
   descricao: z.string().trim().min(30).max(2000),
   genero_musical: z.string().trim().min(2).max(80),
-  duracao_segundos: z.number().int().min(10).max(600),
-});
+}).transform((data) => ({
+  ...data,
+  duracao_segundos: 45,
+}));
 
 export const STATUS_FLOW = [
   "recebido",

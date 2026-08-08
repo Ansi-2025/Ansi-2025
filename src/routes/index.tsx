@@ -399,17 +399,15 @@ type OrderFormState = {
   email_cliente: string;
   telefone_cliente: string;
   genero_musical: string;
-  duracao_segundos: string;
   descricao: string;
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6" },
-  { key: "email_cliente", label: "Qual é o seu e-mail?", eyebrow: "Passo 2 de 6" },
-  { key: "telefone_cliente", label: "Qual é o seu telefone ou WhatsApp?", eyebrow: "Passo 3 de 6" },
-  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 6" },
-  { key: "duracao_segundos", label: "Qual duração da prévia em segundos?", eyebrow: "Passo 5 de 6" },
-  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 6 de 6" },
+  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
+  { key: "email_cliente", label: "Qual é o seu e-mail?", eyebrow: "Passo 2 de 5" },
+  { key: "telefone_cliente", label: "Qual é o seu telefone ou WhatsApp?", eyebrow: "Passo 3 de 5" },
+  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 5" },
+  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 5" },
 ];
 
 function OrderForm() {
@@ -423,7 +421,6 @@ function OrderForm() {
     email_cliente: "",
     telefone_cliente: "",
     genero_musical: TIPOS_MUSICA[0],
-    duracao_segundos: "45",
     descricao: "",
   });
 
@@ -438,10 +435,6 @@ function OrderForm() {
     if (current.key === "telefone_cliente") {
       const digits = value.replace(/\D/g, "");
       if (digits.length < 10) return "Informe um telefone ou WhatsApp com DDD.";
-    }
-    if (current.key === "duracao_segundos") {
-      const seconds = Number(value);
-      if (!Number.isInteger(seconds) || seconds < 10 || seconds > 600) return "Informe uma duração entre 10 e 600 segundos.";
     }
     if (current.key === "descricao" && value.length < 30) return "Conte um pouco mais (mínimo 30 caracteres).";
     if (value.length < 2) return "Preencha este campo para continuar.";
@@ -462,12 +455,7 @@ function OrderForm() {
     setErrorMsg("");
     setStatus("loading");
     try {
-      const res = await send({
-        data: {
-          ...form,
-          duracao_segundos: Number(form.duracao_segundos),
-        },
-      });
+      const res = await send({ data: form });
       setOrderId(res.id);
       setStatus("ok");
     } catch (e) {
@@ -477,7 +465,7 @@ function OrderForm() {
   };
 
   const reset = () => {
-    setForm({ nome_cliente: "", email_cliente: "", telefone_cliente: "", genero_musical: TIPOS_MUSICA[0], duracao_segundos: "45", descricao: "" });
+    setForm({ nome_cliente: "", email_cliente: "", telefone_cliente: "", genero_musical: TIPOS_MUSICA[0], descricao: "" });
     setStep(0);
     setStatus("idle");
     setErrorMsg("");
@@ -581,9 +569,7 @@ function OrderForm() {
                 ) : (
                   <input
                     autoFocus
-                    type={current.key === "telefone_cliente" ? "tel" : current.key === "duracao_segundos" ? "number" : "text"}
-                    min={current.key === "duracao_segundos" ? 10 : undefined}
-                    max={current.key === "duracao_segundos" ? 600 : undefined}
+                    type={current.key === "telefone_cliente" ? "tel" : "text"}
                     value={form[current.key]}
                     onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
                     onKeyDown={onKeyDown}
@@ -595,9 +581,7 @@ function OrderForm() {
                           ? "Ex.: maria@email.com"
                           : current.key === "telefone_cliente"
                             ? "(00) 00000-0000"
-                            : current.key === "duracao_segundos"
-                              ? "Ex.: 45"
-                              : ""
+                            : ""
                     }
                   />
                 )}
