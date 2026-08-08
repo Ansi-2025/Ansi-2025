@@ -2,7 +2,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
-import { getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { createShopifyCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
 import QRCode from "qrcode";
 
@@ -34,16 +34,25 @@ type Order = {
   url_musica: string | null;
   pix_qr_code: string | null;
   pix_fixado: boolean;
+  shopify_checkout_id: string | null;
+  shopify_payment_status: string | null;
 };
 
 function TrackingPage() {
   const { id: initialId } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
+  const createCheckout = useServerFn(createShopifyCheckout);
+  const generatePreviewFn = useServerFn(generateMusicPreview);
   const [id, setId] = useState(initialId ?? "");
   const [order, setOrder] = useState<Order | null>(null);
   const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [previewLoading, setPreviewLoading] = useState(false);
+  const [previewError, setPreviewError] = useState("");
   const [err, setErr] = useState("");
 
   const search = async (orderId: string) => {
@@ -55,6 +64,35 @@ function TrackingPage() {
       setHistory(hist);
     } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
     finally { setLoading(false); }
+  };
+
+  const openShopifyCheckout = async () => {
+    if (!order) return;
+    setCheckoutError("");
+    setCheckoutLoading(true);
+    try {
+      const result = await createCheckout({ data: { id: order.id } });
+      setCheckoutUrl(result.checkoutUrl);
+      await search(order.id);
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Shopify.");
+    } finally {
+      setCheckoutLoading(false);
+    }
+  };
+
+  const handleGeneratePreview = async () => {
+    if (!order) return;
+    setPreviewError("");
+    setPreviewLoading(true);
+    try {
+      await generatePreviewFn({ data: { id: order.id } });
+      await search(order.id);
+    } catch (error) {
+      setPreviewError(error instanceof Error ? error.message : "Erro ao gerar prévia de música.");
+    } finally {
+      setPreviewLoading(false);
+    }
   };
 
   useEffect(() => { if (initialId) search(initialId); /* eslint-disable-next-line */ }, [initialId]);
@@ -97,13 +135,46 @@ function TrackingPage() {
           {err && <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err}</p>}
         </div>
 
-        {order && <Timeline order={order} history={history} key={order.id + order.status} />}
+        {order && (
+          <Timeline
+            order={order}
+            history={history}
+            checkoutUrl={checkoutUrl}
+            checkoutError={checkoutError}
+            checkoutLoading={checkoutLoading}
+            previewError={previewError}
+            previewLoading={previewLoading}
+            openShopifyCheckout={openShopifyCheckout}
+            handleGeneratePreview={handleGeneratePreview}
+            key={order.id + order.status}
+          />
+        )}
       </main>
     </div>
   );
 }
 
-function Timeline({ order, history }: { order: Order; history: Array<any> }) {
+function Timeline({
+  order,
+  history,
+  checkoutUrl,
+  checkoutError,
+  checkoutLoading,
+  previewError,
+  previewLoading,
+  openShopifyCheckout,
+  handleGeneratePreview,
+}: {
+  order: Order;
+  history: Array<any>;
+  checkoutUrl: string | null;
+  checkoutError: string;
+  checkoutLoading: boolean;
+  previewError: string;
+  previewLoading: boolean;
+  openShopifyCheckout: () => Promise<void>;
+  handleGeneratePreview: () => Promise<void>;
+}) {
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   // reveal steps progressivamente (uma de cada vez)
   const [revealed, setRevealed] = useState(0);
@@ -173,15 +244,78 @@ function Timeline({ order, history }: { order: Order; history: Array<any> }) {
                 </div>
               )}
 
-              {isCurrent && step === "pagamento" && order.pix_qr_code && (
+              {isCurrent && step === "pagamento" && order.shopify_checkout_id && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Escaneie para pagar via PIX</p>
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="rounded-xl bg-white p-3">
-                      <QRCodeImage value={order.pix_qr_code} />
-                    </div>
-                    <CopyPixButton pixCode={order.pix_qr_code} />
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Finalize o pagamento no Shopify</p>
+                  <a
+                    href={checkoutUrl || `https://${process.env.VITE_SHOPIFY_STORE_DOMAIN}/checkouts/${order.shopify_checkout_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+                  >
+                    Ir para checkout
+                  </a>
+                </div>
+              )}
+              {isCurrent && step === "letra_aprovada" && (
+                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
+                  <p className="text-sm text-muted-foreground">Agora vamos gerar a prévia musical antes de criar o checkout.</p>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handleGeneratePreview}
+                      disabled={previewLoading}
+                      className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                    >
+                      {previewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Gerar prévia de música"}
+                    </button>
                   </div>
+                  {previewError && <p className="mt-3 text-sm text-destructive">{previewError}</p>}
+                </div>
+              )}
+              {isCurrent && step === "previa" && (
+                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
+                  <p className="text-sm text-muted-foreground">Se a prévia estiver boa, você pode criar o checkout para pagamento.</p>
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={openShopifyCheckout}
+                      disabled={checkoutLoading || !!order.shopify_checkout_id}
+                      className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : order.shopify_checkout_id ? "Checkout criado" : "Criar checkout Shopify"}
+                    </button>
+                    {checkoutUrl && (
+                      <a
+                        href={checkoutUrl}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
+                      >
+                        Abrir checkout
+                      </a>
+                    )}
+                  </div>
+                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
+                </div>
+              )}
+              {isCurrent && step === "pagamento" && order.shopify_checkout_id && (
+                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Finalize o pagamento no Shopify</p>
+                  <a
+                    href={checkoutUrl ?? `https://${import.meta.env.VITE_SHOPIFY_STORE_DOMAIN}/checkouts/${order.shopify_checkout_id}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+                  >
+                    Ir para checkout
+                  </a>
+                </div>
+              )}
+              {isCurrent && step === "pagamento" && !order.shopify_checkout_id && (
+                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
+                  <p className="text-sm text-muted-foreground">O checkout ainda não foi criado. Volte para o status "Prévia" para gerar o pagamento.</p>
                 </div>
               )}
 
@@ -264,7 +398,7 @@ function QRCodeImage({ value }: { value: string }) {
 
   useEffect(() => {
     QRCode.toDataURL(value, { width: 200, margin: 1 })
-      .then((url) => setQrCode(url))
+      .then((url: string) => setQrCode(url))
       .catch(() => setQrCode(""));
   }, [value]);
 

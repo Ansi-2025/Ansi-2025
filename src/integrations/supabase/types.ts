@@ -38,6 +38,13 @@ export type Database = {
           valor_pix: string | null
           whatsapp: string
           telefone_cliente: string | null
+          letra_gerada: string | null
+          letra_aprovada: boolean
+          shopify_checkout_id: string | null
+          shopify_order_id: string | null
+          shopify_payment_status: string | null
+          preview_gerada_em: string | null
+          musica_gerada_em: string | null
         }
         Insert: {
           created_at?: string
@@ -62,6 +69,13 @@ export type Database = {
           valor_pix?: string | null
           whatsapp: string
           telefone_cliente?: string | null
+          letra_gerada?: string | null
+          letra_aprovada?: boolean
+          shopify_checkout_id?: string | null
+          shopify_order_id?: string | null
+          shopify_payment_status?: string | null
+          preview_gerada_em?: string | null
+          musica_gerada_em?: string | null
         }
         Update: {
           created_at?: string
@@ -86,6 +100,13 @@ export type Database = {
           valor_pix?: string | null
           whatsapp?: string
           telefone_cliente?: string | null
+          letra_gerada?: string | null
+          letra_aprovada?: boolean
+          shopify_checkout_id?: string | null
+          shopify_order_id?: string | null
+          shopify_payment_status?: string | null
+          preview_gerada_em?: string | null
+          musica_gerada_em?: string | null
         }
         Relationships: []
       }

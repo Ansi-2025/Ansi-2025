@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { criarPedidoAutomatizado, type PedidoEntrada } from "@/lib/pedido.service";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { criarPedido, gerarLetraPedido, gerarMusicaPreview, type PedidoEntrada } from "@/lib/pedido.service";
+import { criarCheckoutShopify } from "@/lib/shopify.service";
 
 const OrderSchema = z.object({
   nome_cliente: z.string().trim().min(2).max(120),
@@ -13,26 +15,30 @@ const OrderSchema = z.object({
 
 export const STATUS_FLOW = [
   "recebido",
-  "criando_sua_musica",
-  "musica_criada",
-  "em_producao",
-  "em_revisao",
-  "pronto",
+  "gerando_letra",
+  "letra_pronta",
+  "aguardando_aprovacao_letra",
+  "letra_aprovada",
+  "gerando_musica",
+  "musica_pronta",
   "previa",
   "pagamento",
+  "pago",
   "entregue",
 ] as const;
 export type PedidoStatus = (typeof STATUS_FLOW)[number];
 
 export const STATUS_LABELS: Record<PedidoStatus, string> = {
   recebido: "Recebido",
-  criando_sua_musica: "Criando sua música",
-  musica_criada: "Música criada",
-  em_producao: "Em produção",
-  em_revisao: "Em revisão",
-  pronto: "Música pronta",
+  gerando_letra: "Gerando letra",
+  letra_pronta: "Letra pronta",
+  aguardando_aprovacao_letra: "Aguardando aprovação da letra",
+  letra_aprovada: "Letra aprovada",
+  gerando_musica: "Gerando música",
+  musica_pronta: "Música pronta",
   previa: "Prévia (45 segundos)",
   pagamento: "Aguardando pagamento",
+  pago: "Pago",
   entregue: "Entregue",
 };
 
@@ -40,8 +46,26 @@ export const sendOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => OrderSchema.parse(data))
   .handler(async ({ data }) => {
     const pedidoData: PedidoEntrada = data;
-    const result = await criarPedidoAutomatizado(pedidoData);
-    return { ok: true, id: result.id };
+    const pedido = await criarPedido(pedidoData);
+    const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);
+    return {
+      ok: true,
+      id: pedido.id,
+      letra_gerada: pedidoComLetra.letra_gerada,
+      status: pedidoComLetra.status,
+    };
+  });
+
+export const createShopifyCheckout = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    return criarCheckoutShopify(data.id);
+  });
+
+export const generateMusicPreview = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    return gerarMusicaPreview(data.id);
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })
@@ -50,7 +74,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, shopify_checkout_id, shopify_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -72,6 +96,8 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       pix_fixado: boolean;
       valor_pix: string | null;
       pago_em: string | null;
+      shopify_checkout_id: string | null;
+      shopify_payment_status: string | null;
       created_at: string;
       status_atualizado_em: string;
     };

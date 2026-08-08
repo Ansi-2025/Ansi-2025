@@ -1,4 +1,5 @@
-import { criarPedidoAutomatizado, type PedidoEntrada } from "./pedido.service";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { type PedidoEntrada } from "./pedido.service";
 
 const SHOPIFY_HMAC_HEADER = "x-shopify-hmac-sha256";
 const SHOPIFY_WEBHOOK_SECRET = process.env.SHOPIFY_WEBHOOK_SECRET;
@@ -60,7 +61,6 @@ export async function handleShopifyWebhook(request: Request) {
     });
   }
 
-  // Debug: log that we received a POST for tracing in Vercel logs
   console.info('[shopify.webhook] received request', { method: request.method, url: request.url });
 
   const rawBody = await request.arrayBuffer();
@@ -68,9 +68,6 @@ export async function handleShopifyWebhook(request: Request) {
 
   if (!headerSignature) {
     console.warn('[shopify.webhook] missing signature header');
-  }
-
-  if (!headerSignature) {
     return new Response(JSON.stringify({ error: "Missing Shopify HMAC header" }), {
       status: 401,
       headers: { "content-type": "application/json" },
@@ -78,14 +75,23 @@ export async function handleShopifyWebhook(request: Request) {
   }
 
   const expectedSignature = await computeHmacBase64(rawBody, SHOPIFY_WEBHOOK_SECRET);
+  const signatureMatches = safeCompare(expectedSignature, headerSignature);
 
-  const signatureMatches = safeCompare(expectedSignature, headerSignature || "");
-  console.info('[shopify.webhook] signature check', { hasHeader: !!headerSignature, signatureMatches });
+  console.info('[shopify.webhook] signature check', { signatureMatches });
 
   if (!signatureMatches) {
     console.warn('[shopify.webhook] signature mismatch');
     return new Response(JSON.stringify({ error: "Invalid Shopify webhook signature" }), {
       status: 401,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const topic = request.headers.get("x-shopify-topic") ?? "unknown";
+  if (topic !== "orders/paid") {
+    console.info('[shopify.webhook] ignored topic', { topic });
+    return new Response(JSON.stringify({ ok: true, message: `Ignored topic ${topic}` }), {
+      status: 200,
       headers: { "content-type": "application/json" },
     });
   }
@@ -103,20 +109,75 @@ export async function handleShopifyWebhook(request: Request) {
   }
 
   const order = typeof payload === "object" && payload !== null && "order" in payload ? (payload as any).order : payload;
+  const checkoutToken = String(order?.checkout_token ?? order?.checkout_id ?? "").trim();
+
+  if (!checkoutToken) {
+    console.warn('[shopify.webhook] missing checkout token in order payload', { order });
+    return new Response(JSON.stringify({ ok: true, message: "No checkout token present" }), {
+      status: 200,
+      headers: { "content-type": "application/json" },
+    });
+  }
 
   try {
-    const pedidoEntrada = mapShopifyOrderToPedidoEntrada(order as Record<string, unknown>);
-    const pedido = await criarPedidoAutomatizado(pedidoEntrada);
+    const { data: pedido, error: pedidoError } = await supabaseAdmin
+      .from("pedidos")
+      .select("id, status")
+      .eq("shopify_checkout_id", checkoutToken)
+      .maybeSingle();
 
-    console.info('[shopify.webhook] pedido criado', { pedidoId: pedido.id });
+    if (pedidoError) {
+      throw new Error(`Falha ao buscar pedido: ${pedidoError.message}`);
+    }
 
-    return new Response(JSON.stringify({ ok: true, id: pedido.id }), {
-      status: 201,
+    if (!pedido) {
+      console.warn('[shopify.webhook] no matching pedido found for checkout token', { checkoutToken });
+      return new Response(JSON.stringify({ ok: true, message: "No matching order found" }), {
+        status: 200,
+        headers: { "content-type": "application/json" },
+      });
+    }
+
+    const shopifyOrderId = String(order?.id ?? order?.order_number ?? "").trim();
+    const financialStatus = String(order?.financial_status ?? order?.fulfillment_status ?? "paid");
+    const pagoEm = String(order?.processed_at ?? order?.created_at ?? new Date().toISOString());
+    const novoStatus = pedido.status === "entregue" ? pedido.status : "pago";
+    const agora = new Date().toISOString();
+
+    const { error: updateError } = await supabaseAdmin
+      .from("pedidos")
+      .update({
+        shopify_order_id: shopifyOrderId,
+        shopify_payment_status: financialStatus,
+        pago_em: pagoEm,
+        status: novoStatus,
+        status_atualizado_em: agora,
+      })
+      .eq("id", pedido.id);
+
+    if (updateError) {
+      throw new Error(`Falha ao atualizar pedido: ${updateError.message}`);
+    }
+
+    if (pedido.status !== novoStatus) {
+      await supabaseAdmin.from("status_history").insert({
+        pedido_id: pedido.id,
+        status_anterior: pedido.status,
+        status_novo: novoStatus,
+        mensagem_whatsapp: "Pagamento confirmado via Shopify",
+        criado_em: agora,
+      });
+    }
+
+    console.info('[shopify.webhook] order payment confirmed', { pedidoId: pedido.id, shopifyOrderId, novoStatus });
+
+    return new Response(JSON.stringify({ ok: true, message: "Order payment recorded" }), {
+      status: 200,
       headers: { "content-type": "application/json" },
     });
   } catch (error) {
     console.error("Failed to process Shopify webhook:", error);
-    return new Response(JSON.stringify({ error: "Failed to create order" }), {
+    return new Response(JSON.stringify({ error: "Failed to process webhook" }), {
       status: 500,
       headers: { "content-type": "application/json" },
     });
