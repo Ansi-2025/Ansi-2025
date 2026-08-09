@@ -40,8 +40,12 @@ async function normalizeCatastrophicSsrResponse(response: Response): Promise<Res
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const url = new URL(request.url);
+    const isStripeWebhookPath =
+      url.pathname === "/webhooks/stripe/payment" ||
+      url.pathname === "/api/webhooks/stripe" ||
+      url.pathname === "/api/webhooks/stripe/";
 
-    if (url.pathname === "/webhooks/stripe/payment") {
+    if (isStripeWebhookPath) {
       if (request.method === "GET") {
         return new Response("ok", { status: 200 });
       }
