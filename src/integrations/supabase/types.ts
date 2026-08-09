@@ -40,11 +40,12 @@ export type Database = {
           telefone_cliente: string | null
           letra_gerada: string | null
           letra_aprovada: boolean
-          shopify_checkout_id: string | null
-          shopify_order_id: string | null
-          shopify_payment_status: string | null
           preview_gerada_em: string | null
           musica_gerada_em: string | null
+          stripe_checkout_url: string | null
+          stripe_session_id: string | null
+          stripe_payment_intent_id: string | null
+          stripe_payment_status: string | null
         }
         Insert: {
           created_at?: string
@@ -71,11 +72,12 @@ export type Database = {
           telefone_cliente?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
-          shopify_checkout_id?: string | null
-          shopify_order_id?: string | null
-          shopify_payment_status?: string | null
           preview_gerada_em?: string | null
           musica_gerada_em?: string | null
+          stripe_checkout_url?: string | null
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_status?: string | null
         }
         Update: {
           created_at?: string
@@ -102,11 +104,12 @@ export type Database = {
           telefone_cliente?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
-          shopify_checkout_id?: string | null
-          shopify_order_id?: string | null
-          shopify_payment_status?: string | null
           preview_gerada_em?: string | null
           musica_gerada_em?: string | null
+          stripe_checkout_url?: string | null
+          stripe_session_id?: string | null
+          stripe_payment_intent_id?: string | null
+          stripe_payment_status?: string | null
         }
         Relationships: []
       }

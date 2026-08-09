@@ -2,7 +2,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
-import { createShopifyCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
 import QRCode from "qrcode";
 
@@ -34,15 +34,17 @@ type Order = {
   url_musica: string | null;
   pix_qr_code: string | null;
   pix_fixado: boolean;
-  shopify_checkout_id: string | null;
-  shopify_payment_status: string | null;
+  stripe_checkout_url: string | null;
+  stripe_session_id: string | null;
+  stripe_payment_intent_id: string | null;
+  stripe_payment_status: string | null;
 };
 
 function TrackingPage() {
   const { id: initialId } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
-  const createCheckout = useServerFn(createShopifyCheckout);
+  const createCheckout = useServerFn(createStripeCheckout);
   const generatePreviewFn = useServerFn(generateMusicPreview);
   const [id, setId] = useState(initialId ?? "");
   const [order, setOrder] = useState<Order | null>(null);
@@ -66,7 +68,7 @@ function TrackingPage() {
     finally { setLoading(false); }
   };
 
-  const openShopifyCheckout = async () => {
+  const openStripeCheckout = async () => {
     if (!order) return;
     setCheckoutError("");
     setCheckoutLoading(true);
@@ -75,7 +77,7 @@ function TrackingPage() {
       setCheckoutUrl(result.checkoutUrl);
       await search(order.id);
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Shopify.");
+      setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Stripe.");
     } finally {
       setCheckoutLoading(false);
     }
@@ -144,7 +146,7 @@ function TrackingPage() {
             checkoutLoading={checkoutLoading}
             previewError={previewError}
             previewLoading={previewLoading}
-            openShopifyCheckout={openShopifyCheckout}
+            openStripeCheckout={openStripeCheckout}
             handleGeneratePreview={handleGeneratePreview}
             key={order.id + order.status}
           />
@@ -162,7 +164,7 @@ function Timeline({
   checkoutLoading,
   previewError,
   previewLoading,
-  openShopifyCheckout,
+  openStripeCheckout,
   handleGeneratePreview,
 }: {
   order: Order;
@@ -172,7 +174,7 @@ function Timeline({
   checkoutLoading: boolean;
   previewError: string;
   previewLoading: boolean;
-  openShopifyCheckout: () => Promise<void>;
+  openStripeCheckout: () => Promise<void>;
   handleGeneratePreview: () => Promise<void>;
 }) {
   const currentIdx = STATUS_FLOW.indexOf(order.status);
@@ -244,19 +246,6 @@ function Timeline({
                 </div>
               )}
 
-              {isCurrent && step === "pagamento" && order.shopify_checkout_id && (
-                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Finalize o pagamento no Shopify</p>
-                  <a
-                    href={checkoutUrl || `https://${process.env.VITE_SHOPIFY_STORE_DOMAIN}/checkouts/${order.shopify_checkout_id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
-                  >
-                    Ir para checkout
-                  </a>
-                </div>
-              )}
               {isCurrent && step === "letra_aprovada" && (
                 <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
@@ -280,11 +269,11 @@ function Timeline({
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
-                      onClick={openShopifyCheckout}
-                      disabled={checkoutLoading || !!order.shopify_checkout_id}
+                      onClick={openStripeCheckout}
+                      disabled={checkoutLoading || !!order.stripe_checkout_url}
                       className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
                     >
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : order.shopify_checkout_id ? "Checkout criado" : "Criar checkout Shopify"}
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : order.stripe_checkout_url ? "Checkout criado" : "Criar checkout Stripe"}
                     </button>
                     {checkoutUrl && (
                       <a
@@ -300,26 +289,7 @@ function Timeline({
                   {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
                 </div>
               )}
-              {isCurrent && step === "pagamento" && order.shopify_checkout_id && (
-                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Finalize o pagamento no Shopify</p>
-                  <a
-                    href={checkoutUrl ?? `https://${import.meta.env.VITE_SHOPIFY_STORE_DOMAIN}/checkouts/${order.shopify_checkout_id}`}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
-                  >
-                    Ir para checkout
-                  </a>
-                </div>
-              )}
-              {isCurrent && step === "pagamento" && !order.shopify_checkout_id && (
-                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="text-sm text-muted-foreground">O checkout ainda não foi criado. Volte para o status "Prévia" para gerar o pagamento.</p>
-                </div>
-              )}
-
-              {isCurrent && step === "entregue" && order.url_musica && (
+                  {isCurrent && step === "pagamento" && !order.stripe_checkout_url && (
                 <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua música está pronta!</p>
                   <audio controls className="w-full mb-4">

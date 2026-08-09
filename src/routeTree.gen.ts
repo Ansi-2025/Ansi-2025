@@ -11,7 +11,6 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as AcompanharRouteImport } from './routes/acompanhar'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as WebhooksShopifyOrdersCreateRouteImport } from './routes/webhooks/shopify/orders/create'
 
 const AcompanharRoute = AcompanharRouteImport.update({
   id: '/acompanhar',
@@ -23,51 +22,31 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const WebhooksShopifyOrdersCreateRoute =
-  WebhooksShopifyOrdersCreateRouteImport.update({
-    id: '/webhooks/shopify/orders/create',
-    path: '/webhooks/shopify/orders/create',
-    getParentRoute: () => rootRouteImport,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
-  '/webhooks/shopify/orders/create': typeof WebhooksShopifyOrdersCreateRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
-  '/webhooks/shopify/orders/create': typeof WebhooksShopifyOrdersCreateRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
-  '/webhooks/shopify/orders/create': typeof WebhooksShopifyOrdersCreateRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths:
-    | '/'
-    | '/acompanhar'
-    | '/webhooks/shopify/orders/create'
+  fullPaths: '/' | '/acompanhar'
   fileRoutesByTo: FileRoutesByTo
-  to:
-    | '/'
-    | '/acompanhar'
-    | '/webhooks/shopify/orders/create'
-  id:
-    | '__root__'
-    | '/'
-    | '/acompanhar'
-    | '/webhooks/shopify/orders/create'
+  to: '/' | '/acompanhar'
+  id: '__root__' | '/' | '/acompanhar'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcompanharRoute: typeof AcompanharRoute
-  WebhooksShopifyOrdersCreateRoute: typeof WebhooksShopifyOrdersCreateRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -86,20 +65,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/webhooks/shopify/orders/create': {
-      id: '/webhooks/shopify/orders/create'
-      path: '/webhooks/shopify/orders/create'
-      fullPath: '/webhooks/shopify/orders/create'
-      preLoaderRoute: typeof WebhooksShopifyOrdersCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcompanharRoute: AcompanharRoute,
-  WebhooksShopifyOrdersCreateRoute: WebhooksShopifyOrdersCreateRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

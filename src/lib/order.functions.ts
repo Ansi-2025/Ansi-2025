@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { criarPedido, gerarLetraPedido, gerarMusicaPreview, type PedidoEntrada } from "@/lib/pedido.service";
-import { criarCheckoutShopify } from "@/lib/shopify.service";
+import { criarCheckoutStripe } from "@/lib/stripe.service";
 
 const OrderSchema = z.object({
   nome_cliente: z.string().trim().min(2).max(120),
@@ -58,10 +58,10 @@ export const sendOrder = createServerFn({ method: "POST" })
     };
   });
 
-export const createShopifyCheckout = createServerFn({ method: "POST" })
+export const createStripeCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
-    return criarCheckoutShopify(data.id);
+    return criarCheckoutStripe(data.id);
   });
 
 export const generateMusicPreview = createServerFn({ method: "POST" })
@@ -76,7 +76,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, shopify_checkout_id, shopify_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -98,8 +98,10 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       pix_fixado: boolean;
       valor_pix: string | null;
       pago_em: string | null;
-      shopify_checkout_id: string | null;
-      shopify_payment_status: string | null;
+      stripe_checkout_url: string | null;
+      stripe_session_id: string | null;
+      stripe_payment_intent_id: string | null;
+      stripe_payment_status: string | null;
       created_at: string;
       status_atualizado_em: string;
     };

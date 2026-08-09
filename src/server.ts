@@ -41,7 +41,7 @@ export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     const url = new URL(request.url);
 
-    if (url.pathname === "/webhooks/shopify/orders/create") {
+    if (url.pathname === "/webhooks/stripe/payment") {
       if (request.method === "GET") {
         return new Response("ok", { status: 200 });
       }
@@ -54,10 +54,10 @@ export default {
       }
 
       try {
-        const { handleShopifyWebhook } = await import("./lib/shopify.webhook");
-        return await handleShopifyWebhook(request);
+        const { handleStripeWebhook } = await import("./lib/stripe.service");
+        return await handleStripeWebhook(request);
       } catch (error) {
-        console.error("Error handling Shopify webhook:", error);
+        console.error("Error handling Stripe webhook:", error);
         return new Response(JSON.stringify({ error: "Webhook handler error" }), {
           status: 500,
           headers: { "content-type": "application/json" },
