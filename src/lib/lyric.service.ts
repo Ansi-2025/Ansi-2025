@@ -5,18 +5,14 @@ export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const roteiro = gerarRoteiroMusical(pedido);
 
   const prompt = `
-Nome do cliente: ${pedido.nomeCliente}
+Nome do cliente: ${pedido.nome_cliente}
 
-Pessoa homenageada: ${pedido.pessoaHomenageada}
+Estilo musical: ${pedido.genero_musical}
 
-Relacionamento: ${pedido.relacionamento}
-
-Ocasião: ${pedido.ocasiao}
-
-Estilo musical: ${pedido.estiloMusical}
+Duração aproximada: ${pedido.duracao_segundos} segundos
 
 História:
-${pedido.historia}
+${pedido.descricao}
 
 Crie uma letra personalizada seguindo todas as regras.
   `;
