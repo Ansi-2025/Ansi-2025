@@ -1,22 +1,26 @@
 import { gerarRoteiroMusical, DadosPedidoParaRoteiro } from "@/lib/motor-regras-musica";
-import { gerarLetraComGemini } from "@/integrations/gemini/client";
+import { gerarLetraComFlatkey } from "@/integrations/flatkey/client";
 
 export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const roteiro = gerarRoteiroMusical(pedido);
 
-  const prompt = `Você é um compositor de letras para músicas gospel personalizadas. Produza uma letra emotiva, inspiradora e estruturada, com versos, refrão e ponte, respeitando o contexto abaixo:
+  const prompt = `
+Nome do cliente: ${pedido.nomeCliente}
 
-${roteiro}
+Pessoa homenageada: ${pedido.pessoaHomenageada}
 
-Regras:
-- Escreva em português.
-- Use linguagem acolhedora e espiritual.
-- Inclua imagens de fé, oração, família, vitória ou gratidão quando fizer sentido.
-- O texto deve ser adequado para uma música de aproximadamente ${pedido.duracao_segundos} segundos.
-- A letra deve ser coesa, com começo, meio e fim.
+Relacionamento: ${pedido.relacionamento}
 
-Agora escreva a letra completa.`;
+Ocasião: ${pedido.ocasiao}
 
-  const letra = await gerarLetraComGemini(prompt);
-  return { roteiro, letra };
+Estilo musical: ${pedido.estiloMusical}
+
+História:
+${pedido.historia}
+
+Crie uma letra personalizada seguindo todas as regras.
+  `;
+
+  const result = await gerarLetraComFlatkey(prompt);
+  return { roteiro, letra: result.letra, uso: result.uso };
 }
