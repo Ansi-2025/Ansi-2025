@@ -1,7 +1,17 @@
 export async function gerarLetraComGemini(prompt: string): Promise<string> {
   const apiKey = process.env.GEMINI_API_KEY;
-  const model = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
-  const baseUrl = process.env.GEMINI_API_URL || `https://generativeai.googleapis.com/v1beta2/models/${model}`;
+  const rawModel = process.env.GEMINI_MODEL || "gemini-3-flash-preview";
+  const model = /^models\//.test(rawModel) || /^projects\//.test(rawModel) ? rawModel : `models/${rawModel}`;
+  const apiUrl = process.env.GEMINI_API_URL;
+
+  if (apiUrl?.includes("v1beta2") || apiUrl?.includes("generativeai.googleapis.com")) {
+    throw new Error(
+      "GEMINI_API_URL está usando um endpoint antigo ou host incorreto. Use generativemodels.googleapis.com/v1/ e remova qualquer v1beta2."
+    );
+  }
+
+  const baseUrl = apiUrl || `https://generativemodels.googleapis.com/v1/${model}`;
+  const isDebug = process.env.GEMINI_DEBUG === "true";
 
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY não configurada. Defina em .env.local ou nas variáveis do ambiente.");
@@ -28,6 +38,10 @@ export async function gerarLetraComGemini(prompt: string): Promise<string> {
           }
     );
 
+    if (isDebug) {
+      console.log("[Gemini] request url:", url);
+    }
+
     const response = await fetch(url, {
       method: "POST",
       headers: {
@@ -43,6 +57,9 @@ export async function gerarLetraComGemini(prompt: string): Promise<string> {
   let result = await callGemini("generateMessage");
 
   if (!result.response.ok && result.response.status === 404) {
+    if (isDebug) {
+      console.warn("[Gemini] generateMessage retornou 404, testando generateText...");
+    }
     result = await callGemini("generateText");
   }
 
