@@ -77,7 +77,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
 
   const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card", "pix"],
+    payment_method_types: ["card"],
     mode: "payment",
     line_items: [
       {
