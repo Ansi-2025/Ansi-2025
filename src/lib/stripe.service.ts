@@ -66,6 +66,14 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
   }
 
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY não configurado. Configure a variável de ambiente STRIPE_SECRET_KEY.");
+  }
+
+  if (!STRIPE_APP_URL) {
+    throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
+  }
+
   const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
 
   const session = await stripe.checkout.sessions.create({

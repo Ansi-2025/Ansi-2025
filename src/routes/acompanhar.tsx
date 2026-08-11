@@ -1,5 +1,5 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
 import { approveLyric, createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
@@ -196,6 +196,8 @@ function TrackingPage() {
             previewLoading={previewLoading}
             approvalLoading={approvalLoading}
             approvalError={approvalError}
+            secondVersionSelected={secondVersionSelected}
+            setSecondVersionSelected={setSecondVersionSelected}
             handleApproveLyric={handleApproveLyric}
             handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
@@ -251,6 +253,8 @@ function Timeline({
   previewLoading,
   approvalLoading,
   approvalError,
+  secondVersionSelected,
+  setSecondVersionSelected,
   handleApproveLyric,
   handleRequestRevision,
   openStripeCheckout,
@@ -265,6 +269,8 @@ function Timeline({
   previewLoading: boolean;
   approvalLoading: boolean;
   approvalError: string;
+  secondVersionSelected: boolean;
+  setSecondVersionSelected: Dispatch<SetStateAction<boolean>>;
   handleApproveLyric: () => Promise<void>;
   handleRequestRevision: (feedback?: string) => Promise<void>;
   openStripeCheckout: (withSecondVersion?: boolean) => Promise<void>;

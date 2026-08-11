@@ -307,9 +307,13 @@ export async function gerarMusicaFinal(pedidoId: string) {
 export async function marcarLetraAprovada(pedidoId: string) {
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
+  const validStatuses = ["aguardando_aprovacao_letra", "letra_pronta", "pronto"];
 
-  if (pedido.status !== "aguardando_aprovacao_letra") {
-    throw new Error("A letra só pode ser aprovada quando estiver aguardando aprovação.");
+  if (!validStatuses.includes(pedido.status)) {
+    throw new Error(
+      `A letra só pode ser aprovada quando estiver aguardando aprovação. Status atual: ${pedido.status}. ` +
+        `Se este pedido for antigo, revise o status no banco ou contate o administrador.`,
+    );
   }
 
   const { data: pedidoAtualizado, error } = await supabaseAdmin

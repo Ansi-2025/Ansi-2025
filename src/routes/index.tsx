@@ -24,7 +24,7 @@ import { sendOrder } from "@/lib/order.functions";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Canção de Fé — Músicas Gospel Personalizadas | Vita Core Music" },
+      { title: "Canção de Fé — Músicas Gospel Personalizadas" },
       {
         name: "description",
         content:
@@ -37,7 +37,7 @@ export const Route = createFileRoute("/")({
           "Sua história merece ser cantada. Crie uma canção gospel única, baseada na sua jornada de fé.",
       },
       { property: "og:url", content: "/" },
-      { name: "twitter:title", content: "Canção de Fé — Vita Core Music" },
+      { name: "twitter:title", content: "Canção de Fé" },
       {
         name: "twitter:description",
         content: "Músicas gospel personalizadas, criadas a partir da sua história.",

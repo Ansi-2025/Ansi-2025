@@ -10,7 +10,6 @@ import {
 import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
-import { reportLovableError } from "../lib/lovable-error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -37,9 +36,6 @@ function NotFoundComponent() {
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
@@ -79,16 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#183B6B" },
       { property: "og:type", content: "website" },
-      { property: "og:site_name", content: "Vita Core Music" },
+      { property: "og:site_name", content: "Canção de Fé" },
       { name: "twitter:card", content: "summary_large_image" },
-      { title: "Lovable App" },
-      { property: "og:title", content: "Lovable App" },
-      { name: "twitter:title", content: "Lovable App" },
+      { title: "Canção de Fé" },
+      { property: "og:title", content: "Canção de Fé" },
+      { name: "twitter:title", content: "Canção de Fé" },
       { name: "description", content: "Canções de Fé" },
       { property: "og:description", content: "Canções de Fé" },
       { name: "twitter:description", content: "Canções de Fé" },
-      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/00f35a19-7463-4f63-981e-b7aa0e8e9191/id-preview-d79363fc--17a8fd4f-a58a-4fcc-a3b8-9ba9b3dc1547.lovable.app-1782831890335.png" },
-      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/00f35a19-7463-4f63-981e-b7aa0e8e9191/id-preview-d79363fc--17a8fd4f-a58a-4fcc-a3b8-9ba9b3dc1547.lovable.app-1782831890335.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
