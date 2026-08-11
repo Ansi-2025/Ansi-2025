@@ -134,6 +134,9 @@ function TrackingPage() {
     try {
       const result = await createCheckout({ data: { id: order.id, secondVersion: withSecondVersion } });
       setCheckoutUrl(result.checkoutUrl);
+      if (typeof window !== "undefined" && result.checkoutUrl) {
+        window.open(result.checkoutUrl, "_blank");
+      }
       await search(order.id);
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Stripe.");
@@ -568,11 +571,13 @@ function Timeline({
                   {approvalError && <p className="mt-3 text-sm text-destructive">{approvalError}</p>}
                 </div>
               )}
-              {isCurrent && step === "letra_aprovada" && (
+              {isCurrent && (step === "letra_aprovada" || step === "pagamento" || step === "previa") && (
                 <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Pagamento necessário</p>
                   <p className="text-sm text-muted-foreground">
-                    O próximo passo é validar o pagamento para liberar a produção da música final com a sua letra aprovada.
+                    {step === "previa"
+                      ? "Sua prévia está pronta. Agora falta apenas concluir o pagamento para liberar a música final."
+                      : "O próximo passo é validar o pagamento para liberar a produção da música final com a sua letra aprovada."}
                   </p>
                   <p className="mt-2 text-sm text-muted-foreground">
                     A música é produzida somente após a confirmação do pagamento. Se você desejar uma nova versão com a mesma história, mas com letra diferente, esse serviço pode ser feito por R$ 9,90.
@@ -595,14 +600,14 @@ function Timeline({
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
-                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-white/10 bg-background text-white hover:bg-white/5"}`}
+                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-background text-foreground hover:border-[var(--gold)] hover:text-[var(--gold)]"}`}
                     >
                       Pagar com cartão
                     </button>
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("pix")}
-                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-white/10 bg-background text-white hover:bg-white/5"}`}
+                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-background text-foreground hover:border-[var(--gold)] hover:text-[var(--gold)]"}`}
                     >
                       Pagar por Pix
                     </button>
