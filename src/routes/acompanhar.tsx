@@ -27,6 +27,8 @@ type Order = {
   genero_musical: string | null;
   duracao_segundos: number | null;
   descricao: string;
+  para_quem: string | null;
+  ocasiao: string | null;
   status: PedidoStatus;
   status_atualizado_em: string;
   created_at: string;
@@ -148,7 +150,7 @@ function TrackingPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-2xl px-5 py-12 md:px-8">
+      <main className="mx-auto max-w-5xl px-5 py-12 md:px-8">
         <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
           <label className="block">
             <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Código do pedido</span>
@@ -260,10 +262,8 @@ function Timeline({
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
-  const lyricPreview = order.letra_gerada
-    ? order.letra_gerada.replace(/\s+/g, " ").trim()
-    : "";
-  const excerpt = lyricPreview.length > 780 ? `${lyricPreview.slice(0, 780).trim()}...` : lyricPreview;
+  const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
+  const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;
   const [showFullBrief, setShowFullBrief] = useState(false);
   const [showFullLyric, setShowFullLyric] = useState(false);
   // reveal steps progressivamente (uma de cada vez)
@@ -384,7 +384,7 @@ function Timeline({
                     <div className="mt-4 rounded-2xl border border-border bg-[var(--card)] p-4">
                       <div className="mb-3 flex items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Letra</p>
-                        {lyricPreview.length > 780 && (
+                        {lyricPreview.length > 1200 && (
                           <button
                             type="button"
                             onClick={() => setShowFullLyric((value) => !value)}
@@ -394,8 +394,15 @@ function Timeline({
                           </button>
                         )}
                       </div>
+
+                      <div className="mb-3 flex flex-wrap gap-3 rounded-xl border border-border/60 bg-background/50 p-3 text-[11px] text-muted-foreground">
+                        <span><strong className="text-primary">Pedido por:</strong> {order.nome_cliente}</span>
+                        <span><strong className="text-primary">Para:</strong> {order.para_quem || "Não informado"}</span>
+                        <span><strong className="text-primary">Ocasião:</strong> {order.ocasiao || "Não informada"}</span>
+                      </div>
+
                       <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">
-                        {(showFullLyric ? lyricPreview : excerpt).replace(/\n{2,}/g, "\n")}
+                        {showFullLyric ? lyricPreview : excerpt}
                       </div>
                     </div>
                   )}
@@ -436,18 +443,23 @@ function Timeline({
               {isCurrent && step === "letra_aprovada" && (
                 <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
-                  <p className="text-sm text-muted-foreground">Agora vamos gerar a prévia musical antes de criar o checkout.</p>
+                  <p className="text-sm text-muted-foreground">
+                    Agora é só finalizar o pagamento para gerar a música final com a sua letra aprovada.
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    A música é produzida somente após a confirmação do pagamento. Se você quiser outra versão com a mesma letra depois da entrega, isso pode ser feito por R$ 9,90.
+                  </p>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
-                      onClick={handleGeneratePreview}
-                      disabled={previewLoading}
+                      onClick={openStripeCheckout}
+                      disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
                       className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
                     >
-                      {previewLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Gerar prévia de música"}
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Finalizar pagamento"}
                     </button>
                   </div>
-                  {previewError && <p className="mt-3 text-sm text-destructive">{previewError}</p>}
+                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
                 </div>
               )}
               {isCurrent && step === "previa" && (
