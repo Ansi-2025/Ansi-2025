@@ -44,10 +44,10 @@ function gerarTema(pedido: DadosPedidoParaRoteiro) {
 
 function gerarNarrativa(pedido: DadosPedidoParaRoteiro) {
   const partes: string[] = [];
-  partes.push(`Uma música de ${pedido.genero_musical.toLowerCase()} com duração aproximada de ${pedido.duracao_segundos} segundos.`);
+  partes.push(`A música é um ${pedido.genero_musical.toLowerCase()} com atmosfera emocional e memorável.`);
   partes.push(`A canção é dedicada a ${pedido.para_quem} e celebra ${pedido.ocasiao.toLowerCase()}.`);
   partes.push(`O cliente ${pedido.nome_cliente} deseja incluir na letra: ${pedido.descricao.trim()}`);
-  partes.push(`O tom deve ser inspirado na história e no sentimento descrito.`);
+  partes.push(`A mensagem central deve ser profunda, honesta e inspiradora, com tom emocional e envolvente.`);
   return partes.join(" ");
 }
 

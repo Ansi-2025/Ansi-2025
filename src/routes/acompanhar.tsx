@@ -61,7 +61,6 @@ function TrackingPage() {
   const [previewError, setPreviewError] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
-  const [revisionFeedback, setRevisionFeedback] = useState("");
   const [err, setErr] = useState("");
 
   const search = async (orderId: string) => {
@@ -119,13 +118,12 @@ function TrackingPage() {
     }
   };
 
-  const handleRequestRevision = async () => {
+  const handleRequestRevision = async (feedback?: string) => {
     if (!order) return;
     setApprovalError("");
     setApprovalLoading(true);
     try {
-      await requestRevisionFn({ data: { id: order.id, feedback: revisionFeedback } });
-      setRevisionFeedback("");
+      await requestRevisionFn({ data: { id: order.id, feedback: feedback ?? "" } });
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao solicitar revisão da letra.");
@@ -255,10 +253,11 @@ function Timeline({
   approvalLoading: boolean;
   approvalError: string;
   handleApproveLyric: () => Promise<void>;
-  handleRequestRevision: () => Promise<void>;
+  handleRequestRevision: (feedback?: string) => Promise<void>;
   openStripeCheckout: () => Promise<void>;
   handleGeneratePreview: () => Promise<void>;
 }) {
+  const [revisionFeedback, setRevisionFeedback] = useState("");
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada
@@ -424,7 +423,7 @@ function Timeline({
                     </button>
                     <button
                       type="button"
-                      onClick={handleRequestRevision}
+                      onClick={() => handleRequestRevision(revisionFeedback)}
                       disabled={approvalLoading}
                       className="inline-flex items-center justify-center rounded-full border border-[var(--gold)] bg-background px-5 py-3 text-sm font-semibold text-[var(--gold)] disabled:opacity-50"
                     >

@@ -13,12 +13,10 @@ Ocasião: ${pedido.ocasiao}
 
 Estilo musical: ${pedido.genero_musical}
 
-Duração aproximada: ${pedido.duracao_segundos} segundos
-
 História:
 ${pedido.descricao}
 
-Crie uma letra personalizada seguindo todas as regras.
+Crie uma letra personalizada, emocional, memorável e com boa estrutura, seguindo todas as regras.
   `;
 
   const result = await gerarLetraComFlatkey(prompt);
