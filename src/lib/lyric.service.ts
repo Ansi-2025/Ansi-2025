@@ -1,5 +1,5 @@
 import { gerarRoteiroMusical, DadosPedidoParaRoteiro } from "@/lib/motor-regras-musica";
-import { gerarLetraComFlatkey } from "@/integrations/flatkey/client";
+import { gerarLetraComFlatkey } from "@/integrations/flatkey/client.server";
 
 export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const roteiro = gerarRoteiroMusical(pedido);
