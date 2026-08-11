@@ -56,10 +56,10 @@ export const STATUS_FLOW = [
   "letra_pronta",
   "aguardando_aprovacao_letra",
   "letra_aprovada",
+  "pagamento",
+  "previa",
   "gerando_musica",
   "musica_pronta",
-  "previa",
-  "pagamento",
   "pago",
   "entregue",
 ] as const;
@@ -74,7 +74,7 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   gerando_musica: "Gerando música",
   musica_pronta: "Música pronta",
   previa: "Prévia (45 segundos)",
-  pagamento: "Aguardando pagamento",
+  pagamento: "Pagamento e validação",
   pago: "Pago",
   entregue: "Entregue",
 };

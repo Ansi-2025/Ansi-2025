@@ -7,6 +7,8 @@ import { z } from "zod";
 import QRCode from "qrcode";
 
 const search = z.object({ id: z.string().optional() });
+const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5917ANDERSON DA SILVA6008CURITIBA62070503***63042679";
+const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
 
 export const Route = createFileRoute("/acompanhar")({
   validateSearch: (s) => search.parse(s),
@@ -59,6 +61,7 @@ function TrackingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
@@ -77,12 +80,12 @@ function TrackingPage() {
     finally { setLoading(false); }
   };
 
-  const openStripeCheckout = async () => {
+  const openStripeCheckout = async (withSecondVersion = secondVersionSelected) => {
     if (!order) return;
     setCheckoutError("");
     setCheckoutLoading(true);
     try {
-      const result = await createCheckout({ data: { id: order.id } });
+      const result = await createCheckout({ data: { id: order.id, secondVersion: withSecondVersion } });
       setCheckoutUrl(result.checkoutUrl);
       await search(order.id);
     } catch (error) {
@@ -150,8 +153,8 @@ function TrackingPage() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-5xl px-5 py-12 md:px-8">
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
+      <main className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-5 py-12 md:px-8">
+        <div className="w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
           <label className="block">
             <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Código do pedido</span>
             <div className="mt-2 flex gap-2">
@@ -256,18 +259,20 @@ function Timeline({
   approvalError: string;
   handleApproveLyric: () => Promise<void>;
   handleRequestRevision: (feedback?: string) => Promise<void>;
-  openStripeCheckout: () => Promise<void>;
+  openStripeCheckout: (withSecondVersion?: boolean) => Promise<void>;
   handleGeneratePreview: () => Promise<void>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
-  const currentIdx = STATUS_FLOW.indexOf(order.status);
+  const effectiveStatus = order.status === "previa" ? "pagamento" : order.status;
+  const currentIdx = STATUS_FLOW.indexOf(effectiveStatus as PedidoStatus);
+  const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
   const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;
   const [showFullBrief, setShowFullBrief] = useState(false);
   const [showFullLyric, setShowFullLyric] = useState(false);
-  // reveal steps progressivamente (uma de cada vez)
   const [revealed, setRevealed] = useState(0);
+
   useEffect(() => {
     setRevealed(0);
     const target = currentIdx + 1;
@@ -279,7 +284,7 @@ function Timeline({
   }, [order.id, currentIdx]);
 
   return (
-    <div className="mt-8 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
+    <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
       <div className="mb-6">
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pedido de</p>
         <h2 className="mt-1 font-display text-2xl font-semibold text-primary">{order.nome_cliente}</h2>
@@ -338,17 +343,6 @@ function Timeline({
                   </div>
                 )}
               </div>
-
-              {/* Conteúdo específico por status */}
-              {isCurrent && step === "previa" && order.url_previa && (
-                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Ouça a prévia (45 segundos)</p>
-                  <audio controls className="w-full">
-                    <source src={order.url_previa} type="audio/mpeg" />
-                    Seu navegador não suporta reprodução de áudio.
-                  </audio>
-                </div>
-              )}
 
               {isCurrent && step === "aguardando_aprovacao_letra" && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
@@ -440,47 +434,74 @@ function Timeline({
                   {approvalError && <p className="mt-3 text-sm text-destructive">{approvalError}</p>}
                 </div>
               )}
-              {isCurrent && step === "letra_aprovada" && (
-                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
-                  <p className="text-sm text-muted-foreground">
-                    Agora é só finalizar o pagamento para gerar a música final com a sua letra aprovada.
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    A música é produzida somente após a confirmação do pagamento. Se você quiser outra versão com a mesma letra depois da entrega, isso pode ser feito por R$ 9,90.
-                  </p>
+
+              {isCurrent && (step === "letra_aprovada" || step === "pagamento") && paymentBlockVisible && (
+                <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
+                  <div className="flex justify-center">
+                    <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">
+                      Inter
+                    </div>
+                  </div>
+                  <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
+                  <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
+
+                  <div className="mt-5 border-t border-dashed border-white/20" />
+
+                  <div className="mt-5 flex justify-center">
+                    <div className="rounded-2xl bg-white p-3 shadow-inner">
+                      <QRCodeImage value={PIX_PAYMENT_CODE} />
+                    </div>
+                  </div>
+
+                  <div className="mt-5 border-t border-dashed border-white/20" />
+
+                  <div className="mt-5">
+                    <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
+
+                    <div className="mt-5 space-y-4 text-sm text-white/80">
+                      <div className="flex items-center justify-between gap-4">
+                        <span className="text-white/70">Nome</span>
+                        <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 break-all">
+                        <span className="text-white/70">Chave Pix</span>
+                        <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 flex flex-wrap items-center gap-3">
+                      <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                    </div>
+
+                    <p className="mt-5 text-sm text-white/70">
+                      Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
+                    </p>
+                    <p className="mt-2 text-sm text-white/70">
+                      O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
+                    </p>
+                  </div>
+
+                  <div className="mt-5 rounded-2xl border border-border bg-background/60 p-4">
+                    <button
+                      type="button"
+                      onClick={() => setSecondVersionSelected((prev) => !prev)}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--gold)] bg-background px-4 py-2 text-sm font-semibold text-[var(--gold)]"
+                    >
+                      {secondVersionSelected ? "Remover segunda versão" : "Quero a segunda versão +R$ 9,90"}
+                    </button>
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      Total do checkout: <strong className="text-primary">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</strong>
+                    </p>
+                  </div>
+
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
-                      onClick={openStripeCheckout}
+                      onClick={() => openStripeCheckout(secondVersionSelected)}
                       disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
                       className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
                     >
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Finalizar pagamento"}
-                    </button>
-                  </div>
-                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
-                </div>
-              )}
-              {isCurrent && step === "previa" && (
-                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Pagamento seguro</p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    Sua prévia está pronta. Agora você pode confirmar o pagamento e receber a música final em seguida, diretamente no site ou pelo e-mail/WhatsApp informado no checkout.
-                  </p>
-                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-                    <li>• Pagamento via Stripe com segurança padrão do mercado.</li>
-                    <li>• Entrega digital imediata após a confirmação.</li>
-                    <li>• Suporte e acompanhamento do pedido em um único lugar.</li>
-                  </ul>
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                    <button
-                      type="button"
-                      onClick={openStripeCheckout}
-                      disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
-                      className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
-                    >
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Ir para o pagamento"}
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Validar pagamento"}
                     </button>
                     {(checkoutUrl || order.stripe_checkout_url) && (
                       <a
@@ -494,22 +515,6 @@ function Timeline({
                     )}
                   </div>
                   {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
-                </div>
-              )}
-                  {isCurrent && step === "pagamento" && !order.stripe_checkout_url && (
-                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua música está pronta!</p>
-                  <audio controls className="w-full mb-4">
-                    <source src={order.url_musica} type="audio/mpeg" />
-                    Seu navegador não suporta reprodução de áudio.
-                  </audio>
-                  <a
-                    href={order.url_musica}
-                    download
-                    className="inline-flex items-center gap-2 rounded-full bg-[var(--sky-blue)] px-4 py-2 text-xs font-semibold text-white hover:bg-[var(--sky-blue)]/90"
-                  >
-                    <Download className="h-4 w-4" /> Baixar música
-                  </a>
                 </div>
               )}
             </li>
@@ -555,7 +560,7 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="inline-flex items-center gap-2 rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 px-4 py-2 text-xs font-semibold text-[var(--gold)] hover:bg-[var(--gold)]/20"
+      className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
     >
       {copied ? (
         <>
@@ -563,7 +568,7 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
         </>
       ) : (
         <>
-          <Copy className="h-4 w-4" /> Copiar código PIX
+          <Copy className="h-4 w-4" /> Copiar chave PIX
         </>
       )}
     </button>

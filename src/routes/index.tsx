@@ -87,7 +87,7 @@ function Header() {
   return (
     <header
       className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-background/85 backdrop-blur-md shadow-[0_1px_0_var(--border)]" : "bg-transparent"
+        scrolled ? "bg-white/85 backdrop-blur-md shadow-[0_1px_0_rgba(15,23,42,0.1)]" : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
@@ -96,17 +96,17 @@ function Header() {
             <Music className="h-4 w-4" />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-display text-base font-semibold text-primary">Canção de Fé</span>
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+            <span className="font-display text-base font-semibold text-slate-900">Canção de Fé</span>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
               Vita Core Music
             </span>
           </span>
         </a>
         <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          <a href="#como-funciona" className="hover:text-primary transition-colors">Como funciona</a>
-          <a href="#exemplos" className="hover:text-primary transition-colors">Exemplos</a>
-          <a href="#ocasioes" className="hover:text-primary transition-colors">Ocasiões</a>
-          <a href="#faq" className="hover:text-primary transition-colors">Perguntas</a>
+          <a href="#como-funciona" className="text-slate-700 hover:text-slate-900 transition-colors">Como funciona</a>
+          <a href="#exemplos" className="text-slate-700 hover:text-slate-900 transition-colors">Exemplos</a>
+          <a href="#ocasioes" className="text-slate-700 hover:text-slate-900 transition-colors">Ocasiões</a>
+          <a href="#faq" className="text-slate-700 hover:text-slate-900 transition-colors">Perguntas</a>
         </nav>
         <a
           href={CREATE_URL}
@@ -176,9 +176,9 @@ function Hero() {
           className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4 text-center animate-fade-up"
           style={{ animationDelay: "420ms" }}
         >
-          <Stat value="2.500+" label="Músicas criadas" />
+          <Stat value="1.350+" label="Músicas criadas" />
           <Stat value="4.9" label="Avaliação média" icon={<Star className="h-3 w-3 fill-current" />} />
-          <Stat value="48h" label="Entrega média" />
+          <Stat value="2h" label="Entrega média" />
         </div>
       </div>
     </section>
@@ -205,7 +205,7 @@ function Badges() {
     { icon: ShieldCheck, label: "Produção Profissional" },
   ];
   return (
-    <section className="border-y border-border bg-[var(--soft-gray)]">
+    <section className="border-y border-border bg-white/90">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-5 py-6 sm:grid-cols-4 md:px-8">
         {items.map(({ icon: Icon, label }) => (
           <div key={label} className="flex items-center justify-center gap-2 text-xs font-medium text-primary sm:text-sm">
