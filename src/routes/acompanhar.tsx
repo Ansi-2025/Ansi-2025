@@ -288,6 +288,13 @@ function Timeline({
   handleGeneratePreview: () => Promise<void>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
+  const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
+  const checkoutMessages = [
+    "Estamos validando seu pagamento com cuidado...",
+    "Quase lá! Configurando o checkout para você...",
+    "Seu pedido está sendo preparado para a finalização segura...",
+    "Aguarde só um instante, estamos confirmando os detalhes...",
+  ];
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
@@ -306,6 +313,19 @@ function Timeline({
     }
     return () => timers.forEach(clearTimeout);
   }, [order.id, currentIdx]);
+
+  useEffect(() => {
+    if (!checkoutLoading) {
+      setCheckoutMessageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setCheckoutMessageIndex((prev) => (prev + 1) % checkoutMessages.length);
+    }, 2800);
+
+    return () => clearInterval(interval);
+  }, [checkoutLoading, checkoutMessages.length]);
 
   return (
     <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
@@ -545,14 +565,25 @@ function Timeline({
                     </div>
                   ) : (
                     <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      <button
-                        type="button"
-                        onClick={() => openStripeCheckout(secondVersionSelected)}
-                        disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
-                        className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
-                      >
-                        {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Validar pagamento"}
-                      </button>
+                      {!checkoutUrl && !order.stripe_checkout_url ? (
+                        <button
+                          type="button"
+                          onClick={() => openStripeCheckout(secondVersionSelected)}
+                          disabled={checkoutLoading}
+                          className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                        >
+                          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validar pagamento"}
+                        </button>
+                      ) : (
+                        <div className="inline-flex items-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]">
+                          Checkout criado
+                        </div>
+                      )}
+                      {checkoutLoading && (
+                        <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-[var(--gold)]">
+                          {checkoutMessages[checkoutMessageIndex]}
+                        </div>
+                      )}
                       {(checkoutUrl || order.stripe_checkout_url) && (
                         <a
                           href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
