@@ -68,6 +68,7 @@ function TrackingPage() {
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PedidoStatus | null>(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [autoRefreshMessageIndex, setAutoRefreshMessageIndex] = useState(0);
   const [err, setErr] = useState("");
   const autoRefreshMessages = [
@@ -199,7 +200,7 @@ function TrackingPage() {
   }, [initialId, search]);
 
   return (
-    <div className="min-h-screen bg-[var(--soft-gray)]">
+    <div className="min-h-screen bg-white">
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4 md:px-8">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">
@@ -264,6 +265,8 @@ function TrackingPage() {
             handleGeneratePreview={handleGeneratePreview}
             selectedStatus={selectedStatus}
             onSelectStatus={setSelectedStatus}
+            historyOpen={historyOpen}
+            setHistoryOpen={setHistoryOpen}
             key={order.id + order.status}
           />
         )}
@@ -325,6 +328,8 @@ function Timeline({
   handleGeneratePreview,
   selectedStatus,
   onSelectStatus,
+  historyOpen,
+  setHistoryOpen,
 }: {
   order: Order;
   history: Array<any>;
@@ -345,6 +350,8 @@ function Timeline({
   handleGeneratePreview: () => Promise<void>;
   selectedStatus: PedidoStatus | null;
   onSelectStatus: Dispatch<SetStateAction<PedidoStatus | null>>;
+  historyOpen: boolean;
+  setHistoryOpen: Dispatch<SetStateAction<boolean>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
@@ -458,7 +465,7 @@ function Timeline({
                 </div>
               </button>
 
-              {isSelected && excerpt && (
+              {isSelected && excerpt && step === "aguardando_aprovacao_letra" && (
                 <div className="mt-3 rounded-2xl border border-border bg-background/70 p-4">
                   <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Letra selecionada</p>
                   <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">
@@ -501,15 +508,13 @@ function Timeline({
                     <div className="mt-4 rounded-2xl border border-border bg-[var(--card)] p-4">
                       <div className="mb-3 flex items-center justify-between gap-2">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Letra</p>
-                        {lyricPreview.length > 1200 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowFullLyric((value) => !value)}
-                            className="text-xs font-semibold text-[var(--sky-blue)]"
-                          >
-                            {showFullLyric ? "Ver menos" : "Ver mais"}
-                          </button>
-                        )}
+                        <button
+                          type="button"
+                          onClick={() => setShowFullLyric((value) => !value)}
+                          className="text-xs font-semibold text-[var(--sky-blue)]"
+                        >
+                          {showFullLyric ? "Ocultar letra" : "Mostrar letra"}
+                        </button>
                       </div>
 
                       <div className="mb-3 flex flex-wrap gap-3 rounded-xl border border-border/60 bg-background/50 p-3 text-[11px] text-muted-foreground">
@@ -518,9 +523,15 @@ function Timeline({
                         <span><strong className="text-primary">Ocasião:</strong> {order.ocasiao || "Não informada"}</span>
                       </div>
 
-                      <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">
-                        {showFullLyric ? lyricPreview : excerpt}
-                      </div>
+                      {showFullLyric ? (
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">
+                          {lyricPreview}
+                        </div>
+                      ) : (
+                        <div className="whitespace-pre-wrap text-sm leading-7 text-muted-foreground">
+                          {lyricPreview.slice(0, 220)}{lyricPreview.length > 220 ? "..." : ""}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -688,22 +699,37 @@ function Timeline({
 
       {history.length > 0 && (
         <div className="mt-8 rounded-3xl border border-border bg-[var(--soft-gray)]/50 p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Clock className="h-4 w-4 text-[var(--sky-blue)]" />
-            <h3 className="font-display text-sm font-semibold text-primary">Histórico de Atualizações</h3>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Clock className="h-4 w-4 text-[var(--sky-blue)]" />
+              <div>
+                <h3 className="font-display text-sm font-semibold text-primary">Histórico de Atualizações</h3>
+                <p className="text-xs text-muted-foreground">{history.length} atualização{history.length > 1 ? "s" : ""}</p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setHistoryOpen((prev) => !prev)}
+              className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-4 py-2 text-sm font-semibold text-[var(--sky-blue)]"
+            >
+              {historyOpen ? "Ocultar histórico" : "Mostrar histórico"}
+            </button>
           </div>
-          <div className="space-y-3">
-            {history.map((item) => (
-              <div key={item.id} className="rounded-xl border border-border/50 bg-card p-3 text-xs">
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="font-semibold text-primary">{STATUS_LABELS[item.status_novo as PedidoStatus]}</p>
-                    <p className="text-muted-foreground mt-1">{new Date(item.criado_em).toLocaleString("pt-BR")}</p>
+
+          {historyOpen && (
+            <div className="space-y-3">
+              {history.map((item) => (
+                <div key={item.id} className="rounded-xl border border-border/50 bg-card p-3 text-xs">
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-semibold text-primary">{STATUS_LABELS[item.status_novo as PedidoStatus]}</p>
+                      <p className="text-muted-foreground mt-1">{new Date(item.criado_em).toLocaleString("pt-BR")}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
