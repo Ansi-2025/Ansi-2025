@@ -86,8 +86,10 @@ function Header() {
   }, []);
   return (
     <header
-      className={`fixed inset-x-0 top-0 z-50 transition-all duration-300 ${
-        scrolled ? "bg-white/85 backdrop-blur-md shadow-[0_1px_0_rgba(15,23,42,0.1)]" : "bg-transparent"
+      className={`fixed inset-x-0 top-0 z-50 border-b transition-all duration-300 ${
+        scrolled
+          ? "border-white/10 bg-[#041827]/80 backdrop-blur-md shadow-[0_10px_30px_rgba(3,10,20,0.45)]"
+          : "border-transparent bg-transparent"
       }`}
     >
       <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4 md:px-8">
@@ -96,17 +98,17 @@ function Header() {
             <Music className="h-4 w-4" />
           </span>
           <span className="flex flex-col leading-tight">
-            <span className="font-display text-base font-semibold text-slate-900">Canção de Fé</span>
-            <span className="text-[10px] uppercase tracking-[0.18em] text-slate-600">
+            <span className="font-display text-base font-semibold text-white">Canção de Fé</span>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-sky-100/80">
               Vita Core Music
             </span>
           </span>
         </a>
-        <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
-          <a href="#como-funciona" className="text-slate-700 hover:text-slate-900 transition-colors">Como funciona</a>
-          <a href="#exemplos" className="text-slate-700 hover:text-slate-900 transition-colors">Exemplos</a>
-          <a href="#ocasioes" className="text-slate-700 hover:text-slate-900 transition-colors">Ocasiões</a>
-          <a href="#faq" className="text-slate-700 hover:text-slate-900 transition-colors">Perguntas</a>
+        <nav className="hidden items-center gap-8 text-sm text-sky-100/85 md:flex">
+          <a href="#como-funciona" className="transition-colors hover:text-white">Como funciona</a>
+          <a href="#exemplos" className="transition-colors hover:text-white">Exemplos</a>
+          <a href="#ocasioes" className="transition-colors hover:text-white">Ocasiões</a>
+          <a href="#faq" className="transition-colors hover:text-white">Perguntas</a>
         </nav>
         <a
           href={CREATE_URL}
@@ -123,21 +125,23 @@ function Header() {
 /* ---------------- Hero ---------------- */
 function Hero() {
   return (
-    <section id="top" className="relative isolate overflow-hidden">
+    <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
       <div className="absolute inset-0 -z-10">
         <img
           src={heroImg}
           alt="Família em oração ao pôr do sol"
           width={1920}
           height={1280}
-          className="h-full w-full object-cover animate-fade-in"
+          className="h-full w-full object-cover opacity-80 animate-fade-in"
         />
-        <div className="absolute inset-0 bg-gradient-to-b from-[oklch(0.15_0.08_260/0.55)] via-[oklch(0.18_0.09_258/0.5)] to-[oklch(0.12_0.06_260/0.85)]" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,oklch(0.78_0.13_85/0.18),transparent_60%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.35),transparent_35%),linear-gradient(180deg,rgba(4,24,39,0.72)_0%,rgba(4,24,39,0.78)_30%,rgba(4,24,39,0.9)_100%)]" />
+        <div className="absolute inset-x-0 top-0 h-52 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.22),transparent_60%)]" />
+        <div className="absolute -left-12 top-12 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" />
+        <div className="absolute -right-12 top-20 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
       </div>
 
       <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
-        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-white/90 backdrop-blur animate-fade-up">
+        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
           <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
           Música Gospel Personalizada
         </span>
@@ -145,10 +149,10 @@ function Hero() {
           className="text-balance font-display text-4xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl animate-fade-up"
           style={{ animationDelay: "120ms" }}
         >
-          Sua História <em className="not-italic bg-gradient-to-r from-[var(--gold-soft)] to-[var(--gold)] bg-clip-text text-transparent">Merece</em> Ser Cantada
+          Sua História <em className="not-italic bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">Merece</em> Ser Cantada
         </h1>
         <p
-          className="mt-6 max-w-2xl text-balance text-base text-white/85 sm:text-lg animate-fade-up"
+          className="mt-6 max-w-2xl text-balance text-base text-sky-50/85 sm:text-lg animate-fade-up"
           style={{ animationDelay: "220ms" }}
         >
           Transforme sua história de fé em uma música gospel exclusiva, criada especialmente para você e sua família.
@@ -166,7 +170,7 @@ function Hero() {
           </a>
           <a
             href="#exemplos"
-            className="inline-flex items-center gap-2 rounded-full border border-white/30 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
           >
             <Play className="h-4 w-4" /> Ouvir Exemplo
           </a>
@@ -187,11 +191,11 @@ function Hero() {
 
 function Stat({ value, label, icon }: { value: string; label: string; icon?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/15 bg-white/5 px-3 py-4 backdrop-blur">
+    <div className="rounded-2xl border border-sky-100/15 bg-[rgba(13,34,53,0.62)] px-3 py-4 shadow-[0_0_0_1px_rgba(255,255,255,0.03)] backdrop-blur-md">
       <div className="flex items-center justify-center gap-1.5 font-display text-2xl font-semibold text-white sm:text-3xl">
         {value} {icon && <span className="text-[var(--gold)]">{icon}</span>}
       </div>
-      <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-white/70">{label}</div>
+      <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-sky-100/75">{label}</div>
     </div>
   );
 }
@@ -205,11 +209,11 @@ function Badges() {
     { icon: ShieldCheck, label: "Produção Profissional" },
   ];
   return (
-    <section className="border-y border-border bg-white/90">
+    <section className="border-y border-sky-100/10 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.12),transparent_35%),#041827]">
       <div className="mx-auto grid max-w-6xl grid-cols-2 gap-4 px-5 py-6 sm:grid-cols-4 md:px-8">
         {items.map(({ icon: Icon, label }) => (
-          <div key={label} className="flex items-center justify-center gap-2 text-xs font-medium text-primary sm:text-sm">
-            <span className="grid h-8 w-8 place-items-center rounded-full bg-white text-[var(--sky-blue)] shadow-[var(--shadow-soft)]">
+          <div key={label} className="flex items-center justify-center gap-2 text-xs font-medium text-sky-50 sm:text-sm">
+            <span className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-[var(--gold)] shadow-[var(--shadow-soft)] ring-1 ring-white/10">
               <Icon className="h-4 w-4" />
             </span>
             <span>{label}</span>
@@ -229,7 +233,7 @@ function HowItWorks() {
     { n: "04", title: "Receba sua música", desc: "Baixe e compartilhe esse momento especial com quem você ama." },
   ];
   return (
-    <section id="como-funciona" className="px-5 py-24 md:px-8 md:py-32">
+    <section id="como-funciona" className="bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_30%),#041827] px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
           eyebrow="Como funciona"
@@ -240,14 +244,14 @@ function HowItWorks() {
           {steps.map((s, i) => (
             <div
               key={s.n}
-              className="reveal group relative rounded-3xl border border-border bg-card p-7 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-1 hover:shadow-[var(--shadow-glow)]"
+              className="reveal group relative rounded-3xl border border-sky-200/10 bg-[#0a1d2f]/80 p-7 shadow-[0_8px_30px_rgba(7,17,25,0.35)] transition-all hover:-translate-y-1 hover:border-sky-300/25"
               style={{ transitionDelay: `${i * 60}ms` }}
             >
-              <div className="font-display text-5xl font-semibold text-[var(--sky-blue)]/30 group-hover:text-[var(--sky-blue)]/60 transition-colors">
+              <div className="font-display text-5xl font-semibold text-[var(--sky-blue)]/40 transition-colors group-hover:text-[var(--sky-blue)]/70">
                 {s.n}
               </div>
-              <h3 className="mt-3 font-display text-xl font-semibold text-primary">{s.title}</h3>
-              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{s.desc}</p>
+              <h3 className="mt-3 font-display text-xl font-semibold text-white">{s.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-sky-50/75">{s.desc}</p>
             </div>
           ))}
         </div>
@@ -271,7 +275,7 @@ function Occasions() {
     { emoji: "🙌", label: "Ministério" },
   ];
   return (
-    <section id="ocasioes" className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
+    <section id="ocasioes" className="bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_35%),#041827] px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
           eyebrow="Para cada momento"
@@ -282,11 +286,11 @@ function Occasions() {
           {items.map((it, i) => (
             <div
               key={it.label}
-              className="reveal group flex flex-col items-center gap-2 rounded-2xl border border-border bg-card px-4 py-6 text-center shadow-[var(--shadow-soft)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
+              className="reveal group flex flex-col items-center gap-2 rounded-2xl border border-sky-200/10 bg-[#0b1f2d]/80 px-4 py-6 text-center shadow-[0_8px_30px_rgba(7,17,25,0.35)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
               style={{ transitionDelay: `${i * 40}ms` }}
             >
               <span className="text-3xl transition-transform group-hover:scale-110">{it.emoji}</span>
-              <span className="text-sm font-medium text-primary">{it.label}</span>
+              <span className="text-sm font-medium text-white">{it.label}</span>
             </div>
           ))}
         </div>

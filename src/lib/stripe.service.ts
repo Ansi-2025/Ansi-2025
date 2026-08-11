@@ -5,7 +5,13 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_APP_URL = process.env.STRIPE_APP_URL ?? process.env.APP_URL;
 const STRIPE_ITEM_TITLE = process.env.STRIPE_ITEM_TITLE ?? "Canção de Fé Exclusiva";
-const STRIPE_ITEM_PRICE = Number(process.env.STRIPE_ITEM_PRICE ?? "149.9");
+const parseMoneyValue = (value: string | undefined, fallback: number) => {
+  if (!value) return fallback;
+  const clean = value.trim().replace("R$", "").replace(" ", "").replace(",", ".");
+  const parsed = Number(clean);
+  return Number.isFinite(parsed) ? parsed : fallback;
+};
+const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 19.9);
 
 if (!STRIPE_SECRET_KEY) {
   console.error("STRIPE_SECRET_KEY is not configured.");
@@ -63,7 +69,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
 
   const session = await stripe.checkout.sessions.create({
-    payment_method_types: ["card"],
+    payment_method_types: ["card", "pix"],
     mode: "payment",
     line_items: [
       {

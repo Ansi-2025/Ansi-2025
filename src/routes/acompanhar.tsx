@@ -443,52 +443,17 @@ function Timeline({
                   {approvalError && <p className="mt-3 text-sm text-destructive">{approvalError}</p>}
                 </div>
               )}
+              {isCurrent && step === "letra_aprovada" && (
+                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
+                  <p className="text-sm text-muted-foreground">
+                    O próximo passo é validar o pagamento para liberar a produção da música final com a sua letra aprovada.
+                  </p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    A música é produzida somente após a confirmação do pagamento. Se você desejar uma nova versão com a mesma história, mas com letra diferente, esse serviço pode ser feito por R$ 9,90.
+                  </p>
 
-              {isCurrent && paymentBlockVisible && (
-                <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
-                  <div className="flex justify-center">
-                    <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">Inter</div>
-                  </div>
-                  <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
-                  <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
-
-                  <div className="mt-5 border-t border-dashed border-white/20" />
-
-                  <div className="mt-5 flex justify-center">
-                    <div className="rounded-2xl bg-white p-3 shadow-inner">
-                      <QRCodeImage value={PIX_PAYMENT_CODE} />
-                    </div>
-                  </div>
-
-                  <div className="mt-5 border-t border-dashed border-white/20" />
-
-                  <div className="mt-5">
-                    <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
-
-                    <div className="mt-5 space-y-4 text-sm text-white/80">
-                      <div className="flex items-center justify-between gap-4">
-                        <span className="text-white/70">Nome</span>
-                        <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
-                      </div>
-                      <div className="flex items-center justify-between gap-4 break-all">
-                        <span className="text-white/70">Chave Pix</span>
-                        <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
-                      </div>
-                    </div>
-
-                    <div className="mt-5 flex flex-wrap items-center gap-3">
-                      <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
-                    </div>
-
-                    <p className="mt-5 text-sm text-white/70">
-                      Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
-                    </p>
-                    <p className="mt-2 text-sm text-white/70">
-                      O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
-                    </p>
-                  </div>
-
-                  <div className="mt-5 rounded-2xl border border-border bg-background/60 p-4">
+                  <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
                     <button
                       type="button"
                       onClick={() => setSecondVersionSelected((prev) => !prev)}
@@ -499,6 +464,52 @@ function Timeline({
                     <p className="mt-3 text-sm text-muted-foreground">
                       Total do checkout: <strong className="text-primary">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</strong>
                     </p>
+                  </div>
+
+                  <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
+                    <div className="flex justify-center">
+                      <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">
+                        Inter
+                      </div>
+                    </div>
+                    <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
+                    <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
+
+                    <div className="mt-5 border-t border-dashed border-white/20" />
+
+                    <div className="mt-5 flex justify-center">
+                      <div className="rounded-2xl bg-white p-3 shadow-inner">
+                        <QRCodeImage value={PIX_PAYMENT_CODE} />
+                      </div>
+                    </div>
+
+                    <div className="mt-5 border-t border-dashed border-white/20" />
+
+                    <div className="mt-5">
+                      <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
+
+                      <div className="mt-5 space-y-4 text-sm text-white/80">
+                        <div className="flex items-center justify-between gap-4">
+                          <span className="text-white/70">Nome</span>
+                          <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
+                        </div>
+                        <div className="flex items-center justify-between gap-4 break-all">
+                          <span className="text-white/70">Chave Pix</span>
+                          <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
+                        </div>
+                      </div>
+
+                      <div className="mt-5 flex flex-wrap items-center gap-3">
+                        <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                      </div>
+
+                      <p className="mt-5 text-sm text-white/70">
+                        Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
+                      </p>
+                      <p className="mt-2 text-sm text-white/70">
+                        O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
