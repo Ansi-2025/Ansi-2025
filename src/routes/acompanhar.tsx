@@ -2,7 +2,7 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
-import { createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { approveLyric, createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { z } from "zod";
 import QRCode from "qrcode";
 
@@ -30,6 +30,7 @@ type Order = {
   status: PedidoStatus;
   status_atualizado_em: string;
   created_at: string;
+  letra_gerada: string | null;
   url_previa: string | null;
   url_musica: string | null;
   pix_qr_code: string | null;
@@ -46,6 +47,8 @@ function TrackingPage() {
   const fetchHistory = useServerFn(getOrderStatusHistory);
   const createCheckout = useServerFn(createStripeCheckout);
   const generatePreviewFn = useServerFn(generateMusicPreview);
+  const approveLyricFn = useServerFn(approveLyric);
+  const requestRevisionFn = useServerFn(requestLyricRevision);
   const [id, setId] = useState(initialId ?? "");
   const [order, setOrder] = useState<Order | null>(null);
   const [history, setHistory] = useState<Array<any>>([]);
@@ -55,6 +58,8 @@ function TrackingPage() {
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
+  const [approvalLoading, setApprovalLoading] = useState(false);
+  const [approvalError, setApprovalError] = useState("");
   const [err, setErr] = useState("");
 
   const search = async (orderId: string) => {
@@ -95,6 +100,34 @@ function TrackingPage() {
       setPreviewError(error instanceof Error ? error.message : "Erro ao gerar prévia de música.");
     } finally {
       setPreviewLoading(false);
+    }
+  };
+
+  const handleApproveLyric = async () => {
+    if (!order) return;
+    setApprovalError("");
+    setApprovalLoading(true);
+    try {
+      await approveLyricFn({ data: { id: order.id } });
+      await search(order.id);
+    } catch (error) {
+      setApprovalError(error instanceof Error ? error.message : "Erro ao aprovar a letra.");
+    } finally {
+      setApprovalLoading(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    if (!order) return;
+    setApprovalError("");
+    setApprovalLoading(true);
+    try {
+      await requestRevisionFn({ data: { id: order.id } });
+      await search(order.id);
+    } catch (error) {
+      setApprovalError(error instanceof Error ? error.message : "Erro ao solicitar revisão da letra.");
+    } finally {
+      setApprovalLoading(false);
     }
   };
 
@@ -147,6 +180,10 @@ function TrackingPage() {
             checkoutLoading={checkoutLoading}
             previewError={previewError}
             previewLoading={previewLoading}
+            approvalLoading={approvalLoading}
+            approvalError={approvalError}
+            handleApproveLyric={handleApproveLyric}
+            handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
             handleGeneratePreview={handleGeneratePreview}
             key={order.id + order.status}
@@ -165,6 +202,10 @@ function Timeline({
   checkoutLoading,
   previewError,
   previewLoading,
+  approvalLoading,
+  approvalError,
+  handleApproveLyric,
+  handleRequestRevision,
   openStripeCheckout,
   handleGeneratePreview,
 }: {
@@ -175,10 +216,18 @@ function Timeline({
   checkoutLoading: boolean;
   previewError: string;
   previewLoading: boolean;
+  approvalLoading: boolean;
+  approvalError: string;
+  handleApproveLyric: () => Promise<void>;
+  handleRequestRevision: () => Promise<void>;
   openStripeCheckout: () => Promise<void>;
   handleGeneratePreview: () => Promise<void>;
 }) {
   const currentIdx = STATUS_FLOW.indexOf(order.status);
+  const lyricPreview = order.letra_gerada
+    ? order.letra_gerada.replace(/\s+/g, " ").trim()
+    : "";
+  const excerpt = lyricPreview.length > 220 ? `${lyricPreview.slice(0, 220).trim()}...` : lyricPreview;
   // reveal steps progressivamente (uma de cada vez)
   const [revealed, setRevealed] = useState(0);
   useEffect(() => {
@@ -263,6 +312,36 @@ function Timeline({
                 </div>
               )}
 
+              {isCurrent && step === "aguardando_aprovacao_letra" && (
+                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra está pronta</p>
+                  <p className="text-sm text-muted-foreground">Confira só um trecho da letra e escolha se você aprova ou pede uma revisão.</p>
+                  {excerpt && (
+                    <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4 text-sm leading-6 text-muted-foreground whitespace-pre-wrap">
+                      {excerpt}
+                    </div>
+                  )}
+                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={handleApproveLyric}
+                      disabled={approvalLoading}
+                      className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                    >
+                      {approvalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar letra"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleRequestRevision}
+                      disabled={approvalLoading}
+                      className="inline-flex items-center justify-center rounded-full border border-[var(--gold)] bg-background px-5 py-3 text-sm font-semibold text-[var(--gold)] disabled:opacity-50"
+                    >
+                      {approvalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pedir revisão"}
+                    </button>
+                  </div>
+                  {approvalError && <p className="mt-3 text-sm text-destructive">{approvalError}</p>}
+                </div>
+              )}
               {isCurrent && step === "letra_aprovada" && (
                 <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra foi aprovada</p>
