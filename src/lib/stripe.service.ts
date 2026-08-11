@@ -1,5 +1,8 @@
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { Database } from "@/integrations/supabase/types";
+
+type PedidoStatus = Database["public"]["Enums"]["pedido_status"];
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -22,7 +25,7 @@ if (!STRIPE_APP_URL) {
 }
 
 const stripe = new Stripe(STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2022-11-15",
+  apiVersion: "2026-07-29.dahlia",
 });
 
 function getSuccessUrl(orderId: string) {
@@ -39,10 +42,12 @@ function getCancelUrl(orderId: string) {
   return `${STRIPE_APP_URL}/acompanhar?id=${orderId}`;
 }
 
-export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
+export async function criarCheckoutStripe(pedidoId: string, secondVersion = false, videoOption = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
-    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status")
+    .select(
+      "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status",
+    )
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -54,7 +59,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("Pedido não encontrado.");
   }
 
-  if (pedido.status === "pagamento" && pedido.stripe_checkout_url) {
+  if ((pedido.status as string) === "pagamento" && pedido.stripe_checkout_url && !secondVersion && !videoOption) {
     return {
       checkoutUrl: pedido.stripe_checkout_url,
       sessionId: pedido.stripe_session_id,
@@ -62,7 +67,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     };
   }
 
-  if (!["letra_aprovada", "pagamento"].includes(pedido.status)) {
+  if (!["letra_aprovada", "pagamento"].includes(pedido.status as string)) {
     throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
   }
 
@@ -74,7 +79,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
+  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0) + (videoOption ? 49.9 : 0);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -210,7 +215,7 @@ export async function handleStripeWebhook(request: Request) {
   try {
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from("pedidos")
-      .select("id, status")
+      .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id")
       .eq("id", pedidoId)
       .maybeSingle();
 
@@ -226,22 +231,22 @@ export async function handleStripeWebhook(request: Request) {
       });
     }
 
-    let novoStatus = pedido.status;
-    const updates: Record<string, unknown> = {
+    let novoStatus: PedidoStatus = pedido.status;
+    const updates = {
       stripe_payment_status: paymentStatus || pedido.stripe_payment_status,
       stripe_session_id: sessionId ?? pedido.stripe_session_id,
       stripe_payment_intent_id: paymentIntentId ?? pedido.stripe_payment_intent_id,
     } as any;
 
     if (isSuccessfulPayment && (paymentStatus === "paid" || event.type === "payment_intent.succeeded")) {
-      updates.status = pedido.status === "entregue" ? pedido.status : "pagamento";
+      updates.status = (pedido.status === "entregue" ? pedido.status : "pagamento") as any;
       updates.pago_em = new Date().toISOString();
       updates.status_atualizado_em = new Date().toISOString();
-      novoStatus = updates.status as string;
+      novoStatus = updates.status as PedidoStatus;
     } else if (isFailedOrExpiredPayment) {
-      updates.status = pedido.status === "entregue" ? pedido.status : "letra_aprovada";
+      updates.status = (pedido.status === "entregue" ? pedido.status : "letra_aprovada") as any;
       updates.status_atualizado_em = new Date().toISOString();
-      novoStatus = updates.status as string;
+      novoStatus = updates.status as PedidoStatus;
     }
 
     const { error: updateError } = await supabaseAdmin

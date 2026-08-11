@@ -24,6 +24,8 @@ export type Database = {
           id: string
           nome_cliente: string | null
           para_quem: string
+          ocasiao: string | null
+          letra_refazer_contador: number
           pix_qr_code: string | null
           pix_fixado: boolean
           pago_em: string | null
@@ -54,6 +56,8 @@ export type Database = {
           id?: string
           nome_cliente?: string | null
           para_quem: string
+          ocasiao?: string | null
+          letra_refazer_contador?: number
           pix_qr_code?: string | null
           pix_fixado?: boolean
           pago_em?: string | null
@@ -84,6 +88,8 @@ export type Database = {
           id?: string
           nome_cliente?: string | null
           para_quem?: string
+          ocasiao?: string | null
+          letra_refazer_contador?: number
           pix_qr_code?: string | null
           pix_fixado?: boolean
           pago_em?: string | null
@@ -154,9 +160,15 @@ export type Database = {
     Enums: {
       pedido_status:
         | "recebido"
-        | "em_producao"
-        | "em_revisao"
-        | "pronto"
+        | "gerando_letra"
+        | "letra_pronta"
+        | "aguardando_aprovacao_letra"
+        | "letra_aprovada"
+        | "pagamento"
+        | "gerando_musica"
+        | "previa"
+        | "musica_pronta"
+        | "pago"
         | "entregue"
     }
     CompositeTypes: {
@@ -287,9 +299,15 @@ export const Constants = {
     Enums: {
       pedido_status: [
         "recebido",
-        "em_producao",
-        "em_revisao",
-        "pronto",
+        "gerando_letra",
+        "letra_pronta",
+        "aguardando_aprovacao_letra",
+        "letra_aprovada",
+        "pagamento",
+        "gerando_musica",
+        "previa",
+        "musica_pronta",
+        "pago",
         "entregue",
       ],
     },

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } 
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
 import { approveLyric, createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { z } from "zod";
 import QRCode from "qrcode";
 
@@ -63,6 +64,8 @@ function TrackingPage() {
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('card');
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
+  const [videoOptionSelected, setVideoOptionSelected] = useState(false);
+  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
@@ -127,16 +130,23 @@ function TrackingPage() {
     return () => clearInterval(interval);
   }, [order?.id, refreshOrder]);
 
-  const openStripeCheckout = async (withSecondVersion = secondVersionSelected) => {
+  const openStripeCheckout = async (
+    withSecondVersion = secondVersionSelected,
+    withVideoOption = videoOptionSelected,
+  ) => {
     if (!order) return;
     setCheckoutError("");
     setCheckoutLoading(true);
     try {
-      const result = await createCheckout({ data: { id: order.id, secondVersion: withSecondVersion } });
+      const result = await createCheckout({
+        data: {
+          id: order.id,
+          secondVersion: withSecondVersion,
+          videoOption: withVideoOption,
+        },
+      });
       setCheckoutUrl(result.checkoutUrl);
-      if (typeof window !== "undefined" && result.checkoutUrl) {
-        window.open(result.checkoutUrl, "_blank");
-      }
+      setCheckoutDialogOpen(true);
       await search(order.id);
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Stripe.");
@@ -172,7 +182,7 @@ function TrackingPage() {
     try {
       await approveLyricFn({ data: { id: order.id } });
       if (paymentMethod === "card") {
-        await openStripeCheckout(false);
+        await openStripeCheckout(false, videoOptionSelected);
       }
       await search(order.id);
     } catch (error) {
@@ -265,6 +275,10 @@ function TrackingPage() {
             handleApproveLyric={handleApproveLyric}
             handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
+            videoOptionSelected={videoOptionSelected}
+            setVideoOptionSelected={setVideoOptionSelected}
+            checkoutDialogOpen={checkoutDialogOpen}
+            setCheckoutDialogOpen={setCheckoutDialogOpen}
             handleGeneratePreview={handleGeneratePreview}
             selectedStatus={selectedStatus}
             onSelectStatus={setSelectedStatus}
@@ -328,6 +342,10 @@ function Timeline({
   handleApproveLyric,
   handleRequestRevision,
   openStripeCheckout,
+  videoOptionSelected,
+  setVideoOptionSelected,
+  checkoutDialogOpen,
+  setCheckoutDialogOpen,
   handleGeneratePreview,
   selectedStatus,
   onSelectStatus,
@@ -347,7 +365,11 @@ function Timeline({
   setSecondVersionSelected: Dispatch<SetStateAction<boolean>>;
   handleApproveLyric: () => Promise<void>;
   handleRequestRevision: (feedback?: string) => Promise<void>;
-  openStripeCheckout: (withSecondVersion?: boolean) => Promise<void>;
+  openStripeCheckout: (withSecondVersion?: boolean, withVideoOption?: boolean) => Promise<void>;
+  videoOptionSelected: boolean;
+  setVideoOptionSelected: Dispatch<SetStateAction<boolean>>;
+  checkoutDialogOpen: boolean;
+  setCheckoutDialogOpen: Dispatch<SetStateAction<boolean>>;
   paymentMethod: "pix" | "card";
   setPaymentMethod: Dispatch<SetStateAction<"pix" | "card">>;
   handleGeneratePreview: () => Promise<void>;
@@ -584,15 +606,27 @@ function Timeline({
                   </p>
 
                   <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
-                    <button
-                      type="button"
-                      onClick={() => setSecondVersionSelected((prev) => !prev)}
-                      className="inline-flex items-center justify-center rounded-full border border-[var(--gold)] bg-background px-4 py-2 text-sm font-semibold text-[var(--gold)]"
-                    >
-                      {secondVersionSelected ? "Remover segunda versão" : "Quero a segunda versão +R$ 9,90"}
-                    </button>
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      Total do checkout: <strong className="text-primary">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</strong>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setSecondVersionSelected((prev) => !prev)}
+                        className={`inline-flex items-center justify-center rounded-full border px-4 py-3 text-sm font-semibold transition ${secondVersionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-foreground hover:border-[var(--gold)]"}`}
+                      >
+                        {secondVersionSelected ? "Remover segunda versão" : "Quero a segunda versão +R$ 9,90"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setVideoOptionSelected((prev) => !prev)}
+                        className={`inline-flex items-center justify-center rounded-full border px-4 py-3 text-sm font-semibold transition ${videoOptionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-foreground hover:border-[var(--gold)]"}`}
+                      >
+                        {videoOptionSelected ? "Remover vídeo vertical" : "Vídeo vertical por +R$ 49,90"}
+                      </button>
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-foreground">
+                      Total do checkout: <strong className="text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
+                    </p>
+                    <p className="mt-2 text-sm text-muted-foreground">
+                      Valor final inclui a letra aprovada mais as opções escolhidas. O pagamento será processado no checkout abaixo.
                     </p>
                   </div>
 
@@ -662,31 +696,25 @@ function Timeline({
                       {!checkoutUrl && !order.stripe_checkout_url ? (
                         <button
                           type="button"
-                          onClick={() => openStripeCheckout(secondVersionSelected)}
+                          onClick={() => openStripeCheckout(secondVersionSelected, videoOptionSelected)}
                           disabled={checkoutLoading}
                           className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
                         >
                           {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validar pagamento"}
                         </button>
                       ) : (
-                        <div className="inline-flex items-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]">
-                          Checkout criado
-                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setCheckoutDialogOpen(true)}
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
+                        >
+                          Abrir checkout
+                        </button>
                       )}
                       {checkoutLoading && (
                         <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-[var(--gold)]">
                           {checkoutMessages[checkoutMessageIndex]}
                         </div>
-                      )}
-                      {(checkoutUrl || order.stripe_checkout_url) && (
-                        <a
-                          href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
-                        >
-                          Abrir checkout
-                        </a>
                       )}
                     </div>
                   )}
@@ -701,6 +729,58 @@ function Timeline({
       <p className="mt-8 text-center text-xs text-muted-foreground">
         Código: <span className="font-mono">{order.id}</span>
       </p>
+
+      <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogHeader>
+            <DialogTitle>Checkout de pagamento</DialogTitle>
+            <DialogDescription>
+              Finalize seu pagamento para liberar a música. Se quiser, use o botão abaixo para abrir o checkout do Stripe.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 pt-4">
+            <div className="rounded-[32px] border border-border bg-white p-6 shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
+              <div className="grid gap-2">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Total</span>
+                  <span className="text-2xl font-extrabold text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</span>
+                </div>
+                <div className="rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
+                  <p className="font-semibold text-slate-900">Resumo do pedido</p>
+                  <div className="mt-3 space-y-2">
+                    <p className="flex justify-between"><span>Letra aprovada</span><span>R$ 19,90</span></p>
+                    {secondVersionSelected && <p className="flex justify-between"><span>Segunda versão</span><span>R$ 9,90</span></p>}
+                    {videoOptionSelected && <p className="flex justify-between"><span>Vídeo vertical</span><span>R$ 49,90</span></p>}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
+              <p className="text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
+              <p className="mt-2 text-sm text-slate-700">Clique no botão abaixo para seguir para o checkout na mesma página. O Stripe processará o pagamento no ambiente seguro deles.</p>
+              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                <a
+                  href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+                >
+                  Ir para o checkout
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutDialogOpen(false)}
+                  className="inline-flex items-center justify-center rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-slate-900"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {history.length > 0 && (
         <div className="mt-8 rounded-3xl border border-border bg-[var(--soft-gray)]/50 p-6">

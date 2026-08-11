@@ -118,9 +118,17 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
   });
 
 export const createStripeCheckout = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), secondVersion: z.boolean().optional() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        secondVersion: z.boolean().optional(),
+        videoOption: z.boolean().optional(),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    return criarCheckoutStripe(data.id, data.secondVersion ?? false);
+    return criarCheckoutStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
   });
 
 export const generateMusicPreview = createServerFn({ method: "POST" })

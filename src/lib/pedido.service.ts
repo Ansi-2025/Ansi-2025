@@ -141,7 +141,7 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
     genero_musical: pedido.genero_musical ?? "Gospel",
     duracao_segundos: pedido.duracao_segundos ?? 45,
     para_quem: pedido.para_quem,
-    ocasiao: pedido.ocasiao,
+    ocasiao: pedido.ocasiao ?? "",
   };
 
   const { roteiro, letra } = await gerarLetraDoPedido(pedidoData);
@@ -199,7 +199,7 @@ export async function gerarMusicaPreview(pedidoId: string) {
     genero_musical: pedido.genero_musical ?? "Gospel",
     duracao_segundos: pedido.duracao_segundos ?? 45,
     para_quem: pedido.para_quem,
-    ocasiao: pedido.ocasiao,
+    ocasiao: pedido.ocasiao ?? "",
   });
 
   await supabaseAdmin
@@ -266,7 +266,7 @@ export async function gerarMusicaFinal(pedidoId: string) {
     genero_musical: pedido.genero_musical ?? "Gospel",
     duracao_segundos: pedido.duracao_segundos ?? 45,
     para_quem: pedido.para_quem,
-    ocasiao: pedido.ocasiao,
+    ocasiao: pedido.ocasiao ?? "",
   });
 
   await supabaseAdmin
