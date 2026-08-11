@@ -14,12 +14,21 @@ const OrderSchema = z.object({
       }
       return value;
     },
-    z.string().email().optional(),
+    z.string().email().optional().nullable(),
   ),
-  telefone_cliente: z.string().trim().min(8).max(30),
+  telefone_cliente: z.preprocess(
+    (value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    },
+    z.string().trim().max(30).optional().nullable(),
+  ),
   para_quem: z.string().trim().min(2).max(120),
   ocasiao: z.string().trim().min(2).max(120),
-  descricao: z.string().trim().min(30).max(2000),
+  descricao: z.string().trim().min(15).max(2000),
   genero_musical: z.string().trim().min(2).max(80),
   outro_genero: z.string().trim().max(120).optional(),
 })

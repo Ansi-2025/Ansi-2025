@@ -415,8 +415,6 @@ const OUTRO_GENEROS = [
 
 type OrderFormState = {
   nome_cliente: string;
-  email_cliente: string;
-  telefone_cliente: string;
   para_quem: string;
   ocasiao: string;
   genero_musical: string;
@@ -425,12 +423,11 @@ type OrderFormState = {
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6" },
-  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 2 de 6" },
-  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 3 de 6" },
-  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 6" },
-  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 6" },
-  { key: "email_cliente", label: "Para finalizar, deixe seu e-mail e WhatsApp", eyebrow: "Passo 6 de 6" },
+  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
+  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 2 de 5" },
+  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 3 de 5" },
+  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 5" },
+  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 5" },
 ];
 
 function OrderForm() {
@@ -441,8 +438,6 @@ function OrderForm() {
   const [errorMsg, setErrorMsg] = useState("");
   const [form, setForm] = useState<OrderFormState>({
     nome_cliente: "",
-    email_cliente: "",
-    telefone_cliente: "",
     para_quem: "",
     ocasiao: "",
     genero_musical: TIPOS_MUSICA[0],
@@ -501,15 +496,6 @@ function OrderForm() {
   const progress = ((step + 1) / STEPS.length) * 100;
 
   const validateStep = (): string | null => {
-    if (current.key === "email_cliente") {
-      const email = form.email_cliente.trim();
-      const phone = form.telefone_cliente.trim();
-      if (!email) return "Informe seu e-mail para receber a música.";
-      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return "Informe um e-mail válido.";
-      const digits = phone.replace(/\D/g, "");
-      if (digits.length < 10) return "Informe um WhatsApp com DDD.";
-      return null;
-    }
     const value = form[current.key].trim();
     if (current.key === "descricao" && value.length < 15) return "Conte um pouco mais (mínimo 15 caracteres).";
     if ((current.key === "para_quem" || current.key === "ocasiao") && value.length < 2) return "Preencha este campo para continuar.";
@@ -544,7 +530,7 @@ function OrderForm() {
   };
 
   const reset = () => {
-    setForm({ nome_cliente: "", email_cliente: "", telefone_cliente: "", genero_musical: TIPOS_MUSICA[0], descricao: "" });
+    setForm({ nome_cliente: "", para_quem: "", ocasiao: "", genero_musical: TIPOS_MUSICA[0], outro_genero: "", descricao: "" });
     setStep(0);
     setStatus("idle");
     setErrorMsg("");
@@ -709,41 +695,10 @@ function OrderForm() {
                       ))}
                     </div>
                   </div>
-                ) : current.key === "email_cliente" ? (
-                  <div className="space-y-4">
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-medium text-primary">E-mail</span>
-                        <input
-                          autoFocus
-                          type="email"
-                          value={form.email_cliente}
-                          onChange={(e) => setForm({ ...form, email_cliente: e.target.value })}
-                          onKeyDown={onKeyDown}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
-                          placeholder="maria@email.com"
-                        />
-                      </label>
-                      <label className="block">
-                        <span className="mb-2 block text-sm font-medium text-primary">WhatsApp</span>
-                        <input
-                          type="tel"
-                          value={form.telefone_cliente}
-                          onChange={(e) => setForm({ ...form, telefone_cliente: e.target.value })}
-                          onKeyDown={onKeyDown}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
-                          placeholder="(00) 00000-0000"
-                        />
-                      </label>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      Para entregar a música no site em menos de 1 hora ou por e-mail em até 5 horas, deixe seu e-mail e WhatsApp aqui.
-                    </p>
-                  </div>
                 ) : (
                   <input
                     autoFocus
-                    type={current.key === "telefone_cliente" ? "tel" : "text"}
+                    type="text"
                     value={form[current.key]}
                     onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
                     onKeyDown={onKeyDown}
@@ -751,13 +706,15 @@ function OrderForm() {
                     placeholder={
                       current.key === "nome_cliente"
                         ? "Ex.: Maria Silva Souza"
-                        : current.key === "telefone_cliente"
-                          ? "(00) 00000-0000"
-                          : ""
+                        : ""
                     }
                   />
                 )}
               </label>
+
+              <p className="mt-4 text-sm text-muted-foreground">
+                O e-mail e o WhatsApp serão solicitados no momento do pagamento para a entrega da música.
+              </p>
 
               {errorMsg && status !== "loading" && (
                 <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">

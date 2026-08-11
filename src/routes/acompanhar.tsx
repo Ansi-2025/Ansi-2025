@@ -62,6 +62,7 @@ function TrackingPage() {
     try {
       const row = await fetchStatus({ data: { id: orderId.trim() } });
       setOrder(row as Order);
+      setCheckoutUrl((row as Order).stripe_checkout_url ?? null);
       const hist = await fetchHistory({ data: { id: orderId.trim() } });
       setHistory(hist);
     } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
@@ -281,19 +282,27 @@ function Timeline({
               )}
               {isCurrent && step === "previa" && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="text-sm text-muted-foreground">Se a prévia estiver boa, você pode criar o checkout para pagamento.</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Pagamento seguro</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Sua prévia está pronta. Agora você pode confirmar o pagamento e receber a música final em seguida, diretamente no site ou pelo e-mail/WhatsApp informado no checkout.
+                  </p>
+                  <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
+                    <li>• Pagamento via Stripe com segurança padrão do mercado.</li>
+                    <li>• Entrega digital imediata após a confirmação.</li>
+                    <li>• Suporte e acompanhamento do pedido em um único lugar.</li>
+                  </ul>
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button
                       type="button"
                       onClick={openStripeCheckout}
-                      disabled={checkoutLoading || !!order.stripe_checkout_url}
+                      disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
                       className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
                     >
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : order.stripe_checkout_url ? "Checkout criado" : "Criar checkout Stripe"}
+                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Ir para o pagamento"}
                     </button>
-                    {checkoutUrl && (
+                    {(checkoutUrl || order.stripe_checkout_url) && (
                       <a
-                        href={checkoutUrl}
+                        href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
                         target="_blank"
                         rel="noreferrer"
                         className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"

@@ -1,7 +1,7 @@
 export type DadosPedidoParaRoteiro = {
   nome_cliente: string;
   email_cliente?: string | null;
-  telefone_cliente: string;
+  telefone_cliente?: string | null;
   para_quem: string;
   ocasiao: string;
   descricao: string;

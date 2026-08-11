@@ -3,7 +3,16 @@ import { gerarLetraDoPedido } from "@/lib/lyric.service";
 import { gerarMusicaComSuno } from "@/integrations/suno/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-export type PedidoEntrada = DadosPedidoParaRoteiro;
+export type PedidoEntrada = {
+  nome_cliente: string;
+  email_cliente?: string | null;
+  telefone_cliente?: string | null;
+  para_quem: string;
+  ocasiao: string;
+  descricao: string;
+  genero_musical: string;
+  duracao_segundos: number;
+};
 
 export async function criarPedido(data: PedidoEntrada) {
   const agora = new Date().toISOString();
