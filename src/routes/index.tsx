@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -436,6 +436,7 @@ function OrderForm() {
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [orderId, setOrderId] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState("");
+  const navigate = useNavigate();
   const [form, setForm] = useState<OrderFormState>({
     nome_cliente: "",
     para_quem: "",
@@ -529,6 +530,16 @@ function OrderForm() {
     }
   };
 
+  useEffect(() => {
+    if (status === "ok" && orderId) {
+      const timer = window.setTimeout(() => {
+        navigate({ to: "/acompanhar", search: { id: orderId } });
+      }, 500);
+
+      return () => window.clearTimeout(timer);
+    }
+  }, [status, orderId, navigate]);
+
   const reset = () => {
     setForm({ nome_cliente: "", para_quem: "", ocasiao: "", genero_musical: TIPOS_MUSICA[0], outro_genero: "", descricao: "" });
     setStep(0);
@@ -560,19 +571,19 @@ function OrderForm() {
               </div>
               <h3 className="mt-6 font-display text-2xl font-semibold text-primary">Pedido recebido! 🎉</h3>
               <p className="mt-3 text-sm text-muted-foreground">
-                Em breve entraremos em contato pelo WhatsApp. Guarde o código abaixo para acompanhar seu pedido:
+                Redirecionando você para o acompanhamento do pedido e a etapa de produção.
               </p>
               <div className="mx-auto mt-5 max-w-md rounded-2xl border border-border bg-[var(--soft-gray)] px-4 py-3 font-mono text-xs break-all text-primary">
                 {orderId}
               </div>
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-                <a
-                  href={`/acompanhar?id=${orderId}`}
+                <button
+                  onClick={() => orderId && navigate({ to: "/acompanhar", search: { id: orderId } })}
                   style={GRADIENT_GOLD}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
                 >
                   <Sparkles className="h-4 w-4" /> Acompanhar meu pedido
-                </a>
+                </button>
                 <button
                   onClick={reset}
                   className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-6 py-3 text-sm font-semibold text-primary hover:border-[var(--gold)]"
