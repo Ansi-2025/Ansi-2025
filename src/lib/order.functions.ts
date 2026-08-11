@@ -123,7 +123,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -140,6 +140,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       descricao: string;
       status: PedidoStatus;
       letra_gerada: string | null;
+      roteiro_ia: string | null;
       url_previa: string | null;
       url_musica: string | null;
       pix_qr_code: string | null;
