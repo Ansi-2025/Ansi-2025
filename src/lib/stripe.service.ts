@@ -49,7 +49,15 @@ export async function criarCheckoutStripe(pedidoId: string) {
     throw new Error("Pedido não encontrado.");
   }
 
-  if (!["letra_aprovada", "previa", "pagamento"].includes(pedido.status)) {
+  if (pedido.status === "pagamento" && pedido.stripe_checkout_url) {
+    return {
+      checkoutUrl: pedido.stripe_checkout_url,
+      sessionId: pedido.stripe_session_id,
+      status: pedido.status,
+    };
+  }
+
+  if (!["letra_aprovada", "pagamento"].includes(pedido.status)) {
     throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
   }
 
@@ -169,6 +177,11 @@ export async function handleStripeWebhook(request: Request) {
     : "id" in object && object.id
       ? object.id
       : undefined;
+  const isSuccessfulPayment = event.type === "checkout.session.completed" || event.type === "payment_intent.succeeded";
+  const isFailedOrExpiredPayment =
+    event.type === "checkout.session.expired" ||
+    event.type === "payment_intent.payment_failed" ||
+    ["failed", "canceled", "incomplete", "expired"].includes(paymentStatus);
 
   if (!pedidoId) {
     console.warn("Stripe webhook missing pedido_id metadata", event.type);
@@ -204,13 +217,15 @@ export async function handleStripeWebhook(request: Request) {
       stripe_payment_intent_id: paymentIntentId ?? pedido.stripe_payment_intent_id,
     } as any;
 
-    if (event.type === "checkout.session.completed" || event.type === "payment_intent.succeeded") {
-      if (paymentStatus === "paid" || event.type === "payment_intent.succeeded") {
-        updates.status = pedido.status === "entregue" ? pedido.status : "pagamento";
-        updates.pago_em = new Date().toISOString();
-        updates.status_atualizado_em = new Date().toISOString();
-        novoStatus = updates.status as string;
-      }
+    if (isSuccessfulPayment && (paymentStatus === "paid" || event.type === "payment_intent.succeeded")) {
+      updates.status = pedido.status === "entregue" ? pedido.status : "pagamento";
+      updates.pago_em = new Date().toISOString();
+      updates.status_atualizado_em = new Date().toISOString();
+      novoStatus = updates.status as string;
+    } else if (isFailedOrExpiredPayment) {
+      updates.status = pedido.status === "entregue" ? pedido.status : "letra_aprovada";
+      updates.status_atualizado_em = new Date().toISOString();
+      novoStatus = updates.status as string;
     }
 
     const { error: updateError } = await supabaseAdmin
