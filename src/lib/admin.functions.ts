@@ -56,6 +56,23 @@ async function validateAdminAccess(accessToken?: string) {
   return user;
 }
 
+export const adminCheckAccess = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        accessToken: z.string().min(10),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    const user = await validateAdminAccess(data.accessToken);
+    return {
+      id: user.id,
+      email: user.email,
+      role: user.role ?? null,
+    };
+  });
+
 export const adminListOrders = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
@@ -80,8 +97,7 @@ export const adminListOrders = createServerFn({ method: "POST" })
   });
 
 async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
-  await validateAdminAccess(accessToken);
-
+  const adminUser = await validateAdminAccess(accessToken);
   const agora = new Date().toISOString();
 
   const { data: pedidoAtual, error: fetchError } = await supabaseAdmin
@@ -92,6 +108,10 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
 
   if (fetchError || !pedidoAtual) {
     throw new Error(fetchError?.message ?? "Pedido não encontrado.");
+  }
+
+  if (!["letra_aprovada", "pagamento"].includes(pedidoAtual.status)) {
+    throw new Error("O pedido precisa estar com a letra aprovada ou aguardando pagamento para confirmar o pagamento.");
   }
 
   const { data: pedido, error } = await supabaseAdmin
@@ -114,8 +134,52 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
     pedido_id: pedido.id,
     status_anterior: pedidoAtual.status ?? "letra_aprovada",
     status_novo: "pago",
-    admin_user: "admin",
+    admin_user: adminUser.email ?? "admin",
     mensagem_whatsapp: "Pagamento confirmado manualmente pelo painel administrativo.",
+    criado_em: agora,
+  });
+
+  return pedido;
+}
+
+async function releaseMusicPedido(pedidoId: string, accessToken: string) {
+  const adminUser = await validateAdminAccess(accessToken);
+  const agora = new Date().toISOString();
+
+  const { data: pedidoAtual, error: fetchError } = await supabaseAdmin
+    .from("pedidos")
+    .select("status")
+    .eq("id", pedidoId)
+    .single();
+
+  if (fetchError || !pedidoAtual) {
+    throw new Error(fetchError?.message ?? "Pedido não encontrado.");
+  }
+
+  if (pedidoAtual.status !== "pago") {
+    throw new Error("O pedido precisa estar pago antes de liberar a música.");
+  }
+
+  const { data: pedido, error } = await supabaseAdmin
+    .from("pedidos")
+    .update({
+      status: "entregue",
+      status_atualizado_em: agora,
+    })
+    .eq("id", pedidoId)
+    .select("*")
+    .single();
+
+  if (error || !pedido) {
+    throw new Error(error?.message ?? "Pedido não encontrado.");
+  }
+
+  await supabaseAdmin.from("status_history").insert({
+    pedido_id: pedido.id,
+    status_anterior: pedidoAtual.status,
+    status_novo: "entregue",
+    admin_user: adminUser.email ?? "admin",
+    mensagem_whatsapp: "Música liberada manualmente pelo painel administrativo.",
     criado_em: agora,
   });
 
@@ -145,5 +209,5 @@ export const adminReleaseMusic = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    return confirmPagamentoPedido(data.id, data.accessToken);
+    return releaseMusicPedido(data.id, data.accessToken);
   });

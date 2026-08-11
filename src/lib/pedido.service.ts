@@ -306,8 +306,13 @@ export async function gerarMusicaFinal(pedidoId: string) {
 
 export async function marcarLetraAprovada(pedidoId: string) {
   const agora = new Date().toISOString();
+  const pedido = await obterPedidoParaRoteiro(pedidoId);
 
-  const { data: pedido, error } = await supabaseAdmin
+  if (pedido.status !== "aguardando_aprovacao_letra") {
+    throw new Error("A letra só pode ser aprovada quando estiver aguardando aprovação.");
+  }
+
+  const { data: pedidoAtualizado, error } = await supabaseAdmin
     .from("pedidos")
     .update({
       letra_aprovada: true,
@@ -318,17 +323,17 @@ export async function marcarLetraAprovada(pedidoId: string) {
     .select("*")
     .single();
 
-  if (error || !pedido) {
+  if (error || !pedidoAtualizado) {
     throw new Error(`Falha ao aprovar letra: ${error?.message ?? "pedido não encontrado"}`);
   }
 
   await supabaseAdmin.from("status_history").insert({
-    pedido_id: pedido.id,
+    pedido_id: pedidoAtualizado.id,
     status_anterior: "aguardando_aprovacao_letra",
     status_novo: "letra_aprovada",
     mensagem_whatsapp: "Letra aprovada pelo cliente",
     criado_em: agora,
   });
 
-  return pedido;
+  return pedidoAtualizado;
 }

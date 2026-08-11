@@ -3,19 +3,23 @@ import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState, type FormEvent } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
-import { adminConfirmPayment, adminListOrders, adminReleaseMusic } from "@/lib/admin.functions";
+import { adminCheckAccess, adminConfirmPayment, adminListOrders, adminReleaseMusic } from "@/lib/admin.functions";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
 function AdminPage() {
+  const checkAdminAccess = useServerFn(adminCheckAccess);
   const listOrders = useServerFn(adminListOrders);
   const confirmPayment = useServerFn(adminConfirmPayment);
   const releaseMusic = useServerFn(adminReleaseMusic);
 
   const [session, setSession] = useState<Session | null>(null);
   const [loadingSession, setLoadingSession] = useState(true);
+  const [adminValidated, setAdminValidated] = useState<boolean>(false);
+  const [adminValidationInProgress, setAdminValidationInProgress] = useState(false);
+  const [adminError, setAdminError] = useState<string>("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loginError, setLoginError] = useState("");
@@ -61,15 +65,43 @@ function AdminPage() {
   }, []);
 
   useEffect(() => {
-    if (session) {
-      loadOrders(session);
-    }
+    const validate = async () => {
+      if (!session?.access_token) {
+        setAdminValidated(false);
+        setAdminError("");
+        return;
+      }
+
+      setAdminValidationInProgress(true);
+      setAdminError("");
+
+      try {
+        await checkAdminAccess({
+          data: {
+            accessToken: session.access_token,
+          },
+        });
+        setAdminValidated(true);
+        await loadOrders(session);
+      } catch (error) {
+        setAdminValidated(false);
+        setAdminError("Acesso não autorizado.");
+        await supabase.auth.signOut();
+        setSession(null);
+      } finally {
+        setAdminValidationInProgress(false);
+      }
+    };
+
+    validate();
   }, [session]);
 
   const handleLogin = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setLoginError("");
     setLoginLoading(true);
+    setAdminValidated(false);
+    setOrders([]);
 
     try {
       const { data, error } = await supabase.auth.signInWithPassword({
@@ -93,6 +125,7 @@ function AdminPage() {
     await supabase.auth.signOut();
     setSession(null);
     setOrders([]);
+    setAdminValidated(false);
   };
 
   const handleConfirmPayment = async (orderId: string) => {
@@ -183,6 +216,35 @@ function AdminPage() {
               {loginLoading ? "Entrando..." : "Entrar no painel"}
             </button>
           </form>
+        </div>
+      </div>
+    );
+  }
+
+  if (adminValidationInProgress) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--soft-gray)] text-sm text-muted-foreground">
+        Validando acesso administrativo...
+      </div>
+    );
+  }
+
+  if (!adminValidated) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[var(--soft-gray)] px-4">
+        <div className="w-full max-w-md rounded-[28px] border border-border bg-card p-8 shadow-[var(--shadow-soft)]">
+          <div className="mb-6 text-center">
+            <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">Acesso restrito</p>
+            <h1 className="mt-2 font-display text-3xl font-semibold text-primary">Acesso não autorizado</h1>
+          </div>
+          <p className="text-sm text-muted-foreground">Você precisa fazer login novamente para acessar este painel.</p>
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="mt-6 inline-flex w-full items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
+          >
+            Voltar para login
+          </button>
         </div>
       </div>
     );
