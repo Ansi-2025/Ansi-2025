@@ -77,8 +77,17 @@ function TrackingPage() {
     "Aguarde, seu pedido está sendo atualizado em segundo plano...",
   ];
 
-  const search = useCallback(async (orderId: string) => {
-    setLoading(true); setErr(""); setOrder(null); setHistory([]);
+  const search = useCallback(async (orderId: string, options?: { preserveExisting?: boolean }) => {
+    const preserveExisting = options?.preserveExisting ?? false;
+    if (!preserveExisting) {
+      setLoading(true);
+      setErr("");
+      setOrder(null);
+      setHistory([]);
+    } else {
+      setErr("");
+    }
+
     try {
       const row = (await fetchStatus({ data: { id: orderId.trim() } })) as unknown as Order;
       setOrder(row);
@@ -88,14 +97,16 @@ function TrackingPage() {
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro");
     } finally {
-      setLoading(false);
+      if (!preserveExisting) {
+        setLoading(false);
+      }
     }
   }, [fetchStatus, fetchHistory]);
 
   const refreshOrder = useCallback(async () => {
     if (!order?.id) return;
     try {
-      await search(order.id);
+      await search(order.id, { preserveExisting: true });
     } catch {
       // ignore refresh errors, user can retry manually
     }
@@ -110,7 +121,7 @@ function TrackingPage() {
     const interval = setInterval(() => {
       refreshOrder();
       setAutoRefreshMessageIndex((prev) => (prev + 1) % autoRefreshMessages.length);
-    }, 5000);
+    }, 40000);
 
     return () => clearInterval(interval);
   }, [order?.id, refreshOrder]);
