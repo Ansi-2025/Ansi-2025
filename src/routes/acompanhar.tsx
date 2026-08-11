@@ -61,6 +61,7 @@ function TrackingPage() {
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('card');
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [previewError, setPreviewError] = useState("");
@@ -70,10 +71,11 @@ function TrackingPage() {
 
   const search = async (orderId: string) => {
     setLoading(true); setErr(""); setOrder(null); setHistory([]);
+    setPaymentMethod('card');
     try {
-      const row = await fetchStatus({ data: { id: orderId.trim() } });
-      setOrder(row as Order);
-      setCheckoutUrl((row as Order).stripe_checkout_url ?? null);
+      const row = (await fetchStatus({ data: { id: orderId.trim() } })) as unknown as Order;
+      setOrder(row);
+      setCheckoutUrl(row.stripe_checkout_url ?? null);
       const hist = await fetchHistory({ data: { id: orderId.trim() } });
       setHistory(hist);
     } catch (e) {
@@ -118,6 +120,9 @@ function TrackingPage() {
     setApprovalLoading(true);
     try {
       await approveLyricFn({ data: { id: order.id } });
+      if (paymentMethod === "card") {
+        await openStripeCheckout(false);
+      }
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao aprovar a letra.");
@@ -198,6 +203,8 @@ function TrackingPage() {
             approvalError={approvalError}
             secondVersionSelected={secondVersionSelected}
             setSecondVersionSelected={setSecondVersionSelected}
+            paymentMethod={paymentMethod}
+            setPaymentMethod={setPaymentMethod}
             handleApproveLyric={handleApproveLyric}
             handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
@@ -255,6 +262,8 @@ function Timeline({
   approvalError,
   secondVersionSelected,
   setSecondVersionSelected,
+  paymentMethod,
+  setPaymentMethod,
   handleApproveLyric,
   handleRequestRevision,
   openStripeCheckout,
@@ -274,11 +283,12 @@ function Timeline({
   handleApproveLyric: () => Promise<void>;
   handleRequestRevision: (feedback?: string) => Promise<void>;
   openStripeCheckout: (withSecondVersion?: boolean) => Promise<void>;
+  paymentMethod: "pix" | "card";
+  setPaymentMethod: Dispatch<SetStateAction<"pix" | "card">>;
   handleGeneratePreview: () => Promise<void>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
-  const effectiveStatus = order.status === "previa" ? "pagamento" : order.status;
-  const currentIdx = STATUS_FLOW.indexOf(effectiveStatus as PedidoStatus);
+  const currentIdx = STATUS_FLOW.indexOf(order.status);
   const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
@@ -472,72 +482,89 @@ function Timeline({
                     </p>
                   </div>
 
-                  <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
-                    <div className="flex justify-center">
-                      <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">
-                        Inter
-                      </div>
-                    </div>
-                    <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
-                    <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
-
-                    <div className="mt-5 border-t border-dashed border-white/20" />
-
-                    <div className="mt-5 flex justify-center">
-                      <div className="rounded-2xl bg-white p-3 shadow-inner">
-                        <QRCodeImage value={PIX_PAYMENT_CODE} />
-                      </div>
-                    </div>
-
-                    <div className="mt-5 border-t border-dashed border-white/20" />
-
-                    <div className="mt-5">
-                      <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
-
-                      <div className="mt-5 space-y-4 text-sm text-white/80">
-                        <div className="flex items-center justify-between gap-4">
-                          <span className="text-white/70">Nome</span>
-                          <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-4 break-all">
-                          <span className="text-white/70">Chave Pix</span>
-                          <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
-                        </div>
-                      </div>
-
-                      <div className="mt-5 flex flex-wrap items-center gap-3">
-                        <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
-                      </div>
-
-                      <p className="mt-5 text-sm text-white/70">
-                        Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
-                      </p>
-                      <p className="mt-2 text-sm text-white/70">
-                        O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                  <div className="mt-4 flex flex-wrap gap-3">
                     <button
                       type="button"
-                      onClick={() => openStripeCheckout(secondVersionSelected)}
-                      disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
-                      className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-white/10 bg-background text-white hover:bg-white/5"}`}
                     >
-                      {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Validar pagamento"}
+                      Pagar com cartão
                     </button>
-                    {(checkoutUrl || order.stripe_checkout_url) && (
-                      <a
-                        href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
-                      >
-                        Abrir checkout
-                      </a>
-                    )}
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("pix")}
+                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-white/10 bg-background text-white hover:bg-white/5"}`}
+                    >
+                      Pagar por Pix
+                    </button>
                   </div>
+
+                  {paymentMethod === "pix" ? (
+                    <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
+                      <div className="flex justify-center">
+                        <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">Inter</div>
+                      </div>
+                      <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
+                      <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
+
+                      <div className="mt-5 border-t border-dashed border-white/20" />
+
+                      <div className="mt-5 flex justify-center">
+                        <div className="rounded-2xl bg-white p-3 shadow-inner">
+                          <QRCodeImage value={PIX_PAYMENT_CODE} />
+                        </div>
+                      </div>
+
+                      <div className="mt-5 border-t border-dashed border-white/20" />
+
+                      <div className="mt-5">
+                        <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
+
+                        <div className="mt-5 space-y-4 text-sm text-white/80">
+                          <div className="flex items-center justify-between gap-4">
+                            <span className="text-white/70">Nome</span>
+                            <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
+                          </div>
+                          <div className="flex items-center justify-between gap-4 break-all">
+                            <span className="text-white/70">Chave Pix</span>
+                            <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 flex flex-wrap items-center gap-3">
+                          <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                        </div>
+
+                        <p className="mt-5 text-sm text-white/70">
+                          Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
+                        </p>
+                        <p className="mt-2 text-sm text-white/70">
+                          O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+                      <button
+                        type="button"
+                        onClick={() => openStripeCheckout(secondVersionSelected)}
+                        disabled={checkoutLoading || !!(checkoutUrl || order.stripe_checkout_url)}
+                        className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                      >
+                        {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : checkoutUrl || order.stripe_checkout_url ? "Checkout criado" : "Validar pagamento"}
+                      </button>
+                      {(checkoutUrl || order.stripe_checkout_url) && (
+                        <a
+                          href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
+                        >
+                          Abrir checkout
+                        </a>
+                      )}
+                    </div>
+                  )}
                   {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
                 </div>
               )}
