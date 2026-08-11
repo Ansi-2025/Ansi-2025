@@ -4,7 +4,7 @@ export type ResultadoSuno = {
   suno_job_id?: string | null;
 };
 
-export async function gerarMusicaComSuno(roteiro: string, pedidoId: string): Promise<ResultadoSuno> {
+export async function gerarMusicaComSuno(roteiro: string, pedidoId: string, duracaoSegundos: number = 45): Promise<ResultadoSuno> {
   const apiKey = process.env.SUNO_API_KEY;
   const apiUrl = process.env.SUNO_API_URL || "https://api.suno.ai/v1/generate";
 

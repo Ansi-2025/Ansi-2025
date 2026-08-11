@@ -1,17 +1,43 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { criarPedido, gerarLetraPedido, gerarMusicaPreview, type PedidoEntrada } from "@/lib/pedido.service";
+import { criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe } from "@/lib/stripe.service";
 
 const OrderSchema = z.object({
   nome_cliente: z.string().trim().min(2).max(120),
-  email_cliente: z.string().email(),
+  email_cliente: z.preprocess(
+    (value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    },
+    z.string().email().optional(),
+  ),
   telefone_cliente: z.string().trim().min(8).max(30),
+  para_quem: z.string().trim().min(2).max(120),
+  ocasiao: z.string().trim().min(2).max(120),
   descricao: z.string().trim().min(30).max(2000),
   genero_musical: z.string().trim().min(2).max(80),
-}).transform((data) => ({
+  outro_genero: z.string().trim().max(120).optional(),
+})
+.superRefine((data, ctx) => {
+  if (data.genero_musical === "Outro" && !data.outro_genero?.trim()) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Escolha um gênero quando selecionar 'Outro'.",
+      path: ["outro_genero"],
+    });
+  }
+})
+.transform((data) => ({
   ...data,
+  genero_musical:
+    data.genero_musical === "Outro" && data.outro_genero?.trim()
+      ? data.outro_genero.trim()
+      : data.genero_musical,
   duracao_segundos: 45,
 }));
 
@@ -58,6 +84,18 @@ export const sendOrder = createServerFn({ method: "POST" })
     };
   });
 
+export const approveLyric = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    return marcarLetraAprovada(data.id);
+  });
+
+export const requestLyricRevision = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data }) => {
+    return refazerLetraPedido(data.id);
+  });
+
 export const createStripeCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data }) => {
@@ -76,7 +114,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();

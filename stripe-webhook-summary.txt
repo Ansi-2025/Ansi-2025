@@ -1,0 +1,31 @@
+Resumo do fluxo de teste Stripe Checkout e webhook
+
+O que fizemos:
+- Identificamos que o backend do projeto usa Stripe Checkout e um webhook em /webhooks/stripe/payment.
+- Criamos/atualizamos as variáveis de ambiente no arquivo .env:
+  - STRIPE_SECRET_KEY
+  - STRIPE_WEBHOOK_SECRET
+  - STRIPE_APP_URL
+  - STRIPE_ITEM_TITLE
+  - STRIPE_ITEM_PRICE
+- Descobrimos que o servidor local estava rodando em uma porta diferente da esperada (4176 em vez de 4173).
+- Ajustamos o Stripe CLI para encaminhar para a porta correta do Vite.
+- Validamos que o endpoint GET retorna 200 em http://localhost:4176/webhooks/stripe/payment.
+- Adicionamos logs temporários no handler de webhook para depuração do segredo e cabeçalho Stripe.
+- Confirmamos que o Stripe CLI estava ativo com `npx @stripe/cli listen --forward-to localhost:4176/webhooks/stripe/payment`.
+
+O que deu certo:
+- O servidor local está ativo e responde no endpoint do webhook.
+- O problema principal era a porta errada e/ou segredo de webhook desatualizado.
+- Agora o Stripe CLI está configurado para enviar eventos para o endereço correto.
+
+Próximos passos:
+1. Verificar se o listener Stripe está recebendo `checkout.session.completed` e respondendo com 200.
+2. Executar `npx @stripe/cli trigger checkout.session.completed` para testar o fluxo completo.
+3. Confirmar que o webhook processa o evento e atualiza o pedido no Supabase.
+4. Depois de validar localmente, atualizar o `STRIPE_APP_URL` para o ambiente de produção quando for fazer deploy.
+5. Garantir que o `STRIPE_WEBHOOK_SECRET` em produção corresponda ao secret do webhook configurado no Dashboard ou no Stripe CLI de produção.
+
+Observações:
+- Cada vez que você reinicia `stripe listen`, o secret do webhook pode mudar.
+- Sempre reinicie o servidor Vite depois de editar o .env para carregar as variáveis atualizadas.

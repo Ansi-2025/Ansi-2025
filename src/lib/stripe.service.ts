@@ -1,5 +1,6 @@
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { gerarMusicaFinal } from "@/lib/pedido.service";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -155,7 +156,11 @@ export async function handleStripeWebhook(request: Request) {
   }
 
   const object = event.data.object as Stripe.Checkout.Session | Stripe.PaymentIntent;
-  const paymentStatus = "status" in object ? String(object.status ?? "").toLowerCase() : "";
+  const paymentStatus = "payment_status" in object
+    ? String(object.payment_status ?? "").toLowerCase()
+    : "status" in object
+      ? String(object.status ?? "").toLowerCase()
+      : "";
   const metadata = "metadata" in object ? object.metadata : undefined;
   const pedidoId = metadata?.pedido_id ? String(metadata.pedido_id) : "";
   const sessionId = event.type === "checkout.session.completed" && "id" in object ? object.id : undefined;
@@ -201,7 +206,7 @@ export async function handleStripeWebhook(request: Request) {
 
     if (event.type === "checkout.session.completed" || event.type === "payment_intent.succeeded") {
       if (paymentStatus === "paid" || event.type === "payment_intent.succeeded") {
-        updates.status = pedido.status === "entregue" ? pedido.status : "pago";
+        updates.status = pedido.status === "entregue" ? pedido.status : "pagamento";
         updates.pago_em = new Date().toISOString();
         updates.status_atualizado_em = new Date().toISOString();
         novoStatus = updates.status as string;
@@ -217,14 +222,22 @@ export async function handleStripeWebhook(request: Request) {
       throw new Error(`Falha ao atualizar pedido: ${updateError.message}`);
     }
 
-    if (pedido.status !== novoStatus && novoStatus === "pago") {
+    if (pedido.status !== novoStatus && novoStatus === "pagamento") {
       await supabaseAdmin.from("status_history").insert({
         pedido_id: pedido.id,
         status_anterior: pedido.status,
         status_novo: novoStatus,
-        mensagem_whatsapp: "Pagamento confirmado via Stripe",
+        mensagem_whatsapp: "Pagamento confirmado via Stripe, gerando música final",
         criado_em: new Date().toISOString(),
       });
+    }
+
+    if (novoStatus === "pagamento") {
+      try {
+        await gerarMusicaFinal(pedidoId);
+      } catch (error) {
+        console.error("Falha ao gerar música final após pagamento:", error);
+      }
     }
 
     return new Response(JSON.stringify({ ok: true, message: "Payment processed" }), {

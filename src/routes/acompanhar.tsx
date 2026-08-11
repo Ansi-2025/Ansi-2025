@@ -198,6 +198,22 @@ function Timeline({
         <p className="mt-1 text-sm text-muted-foreground">
           {order.genero_musical ?? "Gênero não informado"} · {order.duracao_segundos ? `${order.duracao_segundos}s` : "Duração não informada"}
         </p>
+        {(order.status === "pago" || order.status === "entregue") && order.url_musica && (
+          <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
+            <p className="font-semibold text-destructive">Atenção:</p>
+            <p className="mt-2">Sua música está disponível para download aqui no site em menos de 1 hora — essa é a melhor opção para receber o arquivo rapidamente.</p>
+            <p className="mt-2">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
+            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+              <a
+                href={order.url_musica}
+                download
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sky-blue)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+              >
+                <Download className="h-4 w-4" /> Baixar música
+              </a>
+            </div>
+          </div>
+        )}
       </div>
 
       <ol className="relative space-y-4 border-l-2 border-border pl-6">

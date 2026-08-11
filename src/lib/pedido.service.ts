@@ -17,7 +17,9 @@ export async function criarPedido(data: PedidoEntrada) {
     tipo_musica: data.genero_musical,
     duracao_segundos: data.duracao_segundos,
     whatsapp: data.telefone_cliente,
-    para_quem: data.nome_cliente,
+    para_quem: data.para_quem,
+    ocasiao: data.ocasiao,
+    letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,
     status_atualizado_em: agora,
@@ -61,6 +63,7 @@ export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
     .update({
       roteiro_ia: roteiro,
       letra_gerada: letra,
+      letra_aprovada: false,
       status: "aguardando_aprovacao_letra",
       status_atualizado_em: new Date().toISOString(),
     })
@@ -83,24 +86,88 @@ export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
   return pedido;
 }
 
-export async function gerarMusicaPreview(pedidoId: string) {
-  const agora = new Date().toISOString();
-
-  const { data: pedido, error: pedidoError } = await supabaseAdmin
+async function obterPedidoParaRoteiro(pedidoId: string) {
+  const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, duracao_segundos, roteiro_ia, status",
+      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, duracao_segundos, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, roteiro_ia, status"
     )
     .eq("id", pedidoId)
     .maybeSingle();
 
-  if (pedidoError) {
-    throw new Error(`Falha ao buscar pedido: ${pedidoError.message}`);
+  if (error) {
+    throw new Error(`Falha ao buscar pedido: ${error.message}`);
   }
 
   if (!pedido) {
     throw new Error("Pedido não encontrado.");
   }
+
+  return pedido;
+}
+
+export async function refazerLetraPedido(pedidoId: string) {
+  const agora = new Date().toISOString();
+  const pedido = await obterPedidoParaRoteiro(pedidoId);
+
+  if (pedido.letra_refazer_contador >= 4) {
+    throw new Error("Você já usou todas as 4 revisões de letra.");
+  }
+
+  if (pedido.status === "pago" || pedido.status === "entregue") {
+    throw new Error("Não é possível refazer a letra após a finalização do pedido.");
+  }
+
+  await supabaseAdmin
+    .from("pedidos")
+    .update({ status: "gerando_letra", status_atualizado_em: agora })
+    .eq("id", pedidoId);
+
+  const pedidoData: PedidoEntrada = {
+    nome_cliente: pedido.nome_cliente ?? "Cliente",
+    email_cliente: pedido.email_cliente ?? "",
+    telefone_cliente: pedido.telefone_cliente ?? "",
+    descricao: pedido.descricao,
+    genero_musical: pedido.genero_musical ?? "Gospel",
+    duracao_segundos: pedido.duracao_segundos ?? 45,
+    para_quem: pedido.para_quem,
+    ocasiao: pedido.ocasiao,
+  };
+
+  const { roteiro, letra } = await gerarLetraDoPedido(pedidoData);
+
+  const { data: pedidoAtualizado, error } = await supabaseAdmin
+    .from("pedidos")
+    .update({
+      roteiro_ia: roteiro,
+      letra_gerada: letra,
+      letra_aprovada: false,
+      letra_refazer_contador: (pedido.letra_refazer_contador ?? 0) + 1,
+      status: "aguardando_aprovacao_letra",
+      status_atualizado_em: new Date().toISOString(),
+    })
+    .eq("id", pedidoId)
+    .select("*")
+    .single();
+
+  if (error || !pedidoAtualizado) {
+    throw new Error(`Falha ao salvar revisão da letra: ${error?.message ?? "pedido não encontrado"}`);
+  }
+
+  await supabaseAdmin.from("status_history").insert({
+    pedido_id: pedidoId,
+    status_anterior: "gerando_letra",
+    status_novo: "aguardando_aprovacao_letra",
+    mensagem_whatsapp: `Revisão ${pedidoAtualizado.letra_refazer_contador} solicitada e aguardando aprovação`,
+    criado_em: agora,
+  });
+
+  return pedidoAtualizado;
+}
+
+export async function gerarMusicaPreview(pedidoId: string) {
+  const agora = new Date().toISOString();
+  const pedido = await obterPedidoParaRoteiro(pedidoId);
 
   if (pedido.status !== "letra_aprovada") {
     throw new Error("A prévia só pode ser gerada após a letra ser aprovada.");
@@ -113,6 +180,8 @@ export async function gerarMusicaPreview(pedidoId: string) {
     descricao: pedido.descricao,
     genero_musical: pedido.genero_musical ?? "Gospel",
     duracao_segundos: pedido.duracao_segundos ?? 45,
+    para_quem: pedido.para_quem,
+    ocasiao: pedido.ocasiao,
   });
 
   await supabaseAdmin
@@ -120,16 +189,15 @@ export async function gerarMusicaPreview(pedidoId: string) {
     .update({ status: "gerando_musica", status_atualizado_em: agora })
     .eq("id", pedidoId);
 
-  const { url_musica, url_previa, suno_job_id } = await gerarMusicaComSuno(roteiro, pedidoId);
+  const { url_previa, suno_job_id } = await gerarMusicaComSuno(roteiro, pedidoId, 45);
 
   const { data: pedidoAtualizado, error } = await supabaseAdmin
     .from("pedidos")
     .update({
-      url_previa: url_previa,
-      url_musica: url_musica,
-      suno_job_id: suno_job_id,
+      roteiro_ia: roteiro,
+      url_previa,
+      suno_job_id,
       preview_gerada_em: agora,
-      musica_gerada_em: agora,
       status: "previa",
       status_atualizado_em: agora,
     })
@@ -146,6 +214,60 @@ export async function gerarMusicaPreview(pedidoId: string) {
     status_anterior: "gerando_musica",
     status_novo: "previa",
     mensagem_whatsapp: "Prévia gerada e aguardando pagamento",
+    criado_em: agora,
+  });
+
+  return pedidoAtualizado;
+}
+
+export async function gerarMusicaFinal(pedidoId: string) {
+  const agora = new Date().toISOString();
+  const pedido = await obterPedidoParaRoteiro(pedidoId);
+
+  if (!["previa", "pagamento"].includes(pedido.status)) {
+    throw new Error("A música final só pode ser gerada após a prévia ou a confirmação de pagamento.");
+  }
+
+  const roteiro = pedido.roteiro_ia || gerarRoteiroMusical({
+    nome_cliente: pedido.nome_cliente ?? "Cliente",
+    email_cliente: pedido.email_cliente ?? "",
+    telefone_cliente: pedido.telefone_cliente ?? "",
+    descricao: pedido.descricao,
+    genero_musical: pedido.genero_musical ?? "Gospel",
+    duracao_segundos: pedido.duracao_segundos ?? 45,
+    para_quem: pedido.para_quem,
+    ocasiao: pedido.ocasiao,
+  });
+
+  await supabaseAdmin
+    .from("pedidos")
+    .update({ status: "gerando_musica", status_atualizado_em: agora })
+    .eq("id", pedidoId);
+
+  const { url_musica, suno_job_id } = await gerarMusicaComSuno(roteiro, pedidoId, pedido.duracao_segundos ?? 90);
+
+  const { data: pedidoAtualizado, error } = await supabaseAdmin
+    .from("pedidos")
+    .update({
+      url_musica,
+      suno_job_id,
+      musica_gerada_em: agora,
+      status: "pago",
+      status_atualizado_em: agora,
+    })
+    .eq("id", pedidoId)
+    .select("*")
+    .single();
+
+  if (error || !pedidoAtualizado) {
+    throw new Error(`Falha ao salvar música final do pedido: ${error?.message ?? "pedido não encontrado"}`);
+  }
+
+  await supabaseAdmin.from("status_history").insert({
+    pedido_id: pedidoId,
+    status_anterior: "pagamento",
+    status_novo: "pago",
+    mensagem_whatsapp: "Pagamento confirmado e música final gerada",
     criado_em: agora,
   });
 
@@ -172,7 +294,7 @@ export async function marcarLetraAprovada(pedidoId: string) {
 
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedido.id,
-    status_anterior: "letra_pronta",
+    status_anterior: "aguardando_aprovacao_letra",
     status_novo: "letra_aprovada",
     mensagem_whatsapp: "Letra aprovada pelo cliente",
     criado_em: agora,

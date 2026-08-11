@@ -394,20 +394,44 @@ const TIPOS_MUSICA = [
   "Outro",
 ];
 
+const OUTRO_GENEROS = [
+  "Eletrônica / EDM",
+  "Flashback",
+  "Anos 80",
+  "Forró",
+  "Funk carioca / Funk brasileiro",
+  "Gospel / Música cristã",
+  "Jazz / Instrumental",
+  "MPB",
+  "Pagode",
+  "Pop",
+  "Pop romântico acústico",
+  "Rap nacional",
+  "R&B / Soul",
+  "Reggae",
+  "Cantiga infantil",
+  "K-Pop",
+];
+
 type OrderFormState = {
   nome_cliente: string;
   email_cliente: string;
   telefone_cliente: string;
+  para_quem: string;
+  ocasiao: string;
   genero_musical: string;
+  outro_genero: string;
   descricao: string;
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
-  { key: "email_cliente", label: "Qual é o seu e-mail?", eyebrow: "Passo 2 de 5" },
-  { key: "telefone_cliente", label: "Qual é o seu telefone ou WhatsApp?", eyebrow: "Passo 3 de 5" },
-  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 5" },
-  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 5" },
+  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 7" },
+  { key: "email_cliente", label: "Qual é o seu e-mail? (opcional)", eyebrow: "Passo 2 de 7" },
+  { key: "telefone_cliente", label: "Qual é o seu telefone ou WhatsApp?", eyebrow: "Passo 3 de 7" },
+  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 4 de 7" },
+  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 5 de 7" },
+  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 6 de 7" },
+  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 7 de 7" },
 ];
 
 function OrderForm() {
@@ -420,7 +444,10 @@ function OrderForm() {
     nome_cliente: "",
     email_cliente: "",
     telefone_cliente: "",
+    para_quem: "",
+    ocasiao: "",
     genero_musical: TIPOS_MUSICA[0],
+    outro_genero: "",
     descricao: "",
   });
 
@@ -462,6 +489,7 @@ function OrderForm() {
   const validateStep = (): string | null => {
     const value = form[current.key].trim();
     if (current.key === "email_cliente") {
+      if (!value) return null;
       if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(value)) return "Informe um e-mail válido.";
     }
     if (current.key === "telefone_cliente") {
@@ -469,6 +497,10 @@ function OrderForm() {
       if (digits.length < 10) return "Informe um telefone ou WhatsApp com DDD.";
     }
     if (current.key === "descricao" && value.length < 30) return "Conte um pouco mais (mínimo 30 caracteres).";
+    if ((current.key === "para_quem" || current.key === "ocasiao") && value.length < 2) return "Preencha este campo para continuar.";
+    if (current.key === "genero_musical" && value === "Outro" && !form.outro_genero.trim()) {
+      return "Escolha um estilo na lista ou descreva outro gênero.";
+    }
     if (value.length < 2) return "Preencha este campo para continuar.";
     return null;
   };
@@ -605,24 +637,38 @@ function OrderForm() {
                     </div>
                   </>
                 ) : current.key === "genero_musical" ? (
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    {TIPOS_MUSICA.map((t) => {
-                      const active = form.genero_musical === t;
-                      return (
-                        <button
-                          key={t}
-                          type="button"
-                          onClick={() => setForm({ ...form, genero_musical: t })}
-                          className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
-                            active
-                              ? "border-[var(--gold)] bg-[var(--gold)]/10 text-primary shadow-[var(--shadow-soft)]"
-                              : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
-                          }`}
-                        >
-                          {t}
-                        </button>
-                      );
-                    })}
+                  <div className="space-y-4">
+                    <div className="grid gap-2 sm:grid-cols-2">
+                      {TIPOS_MUSICA.map((t) => {
+                        const active = form.genero_musical === t;
+                        return (
+                          <button
+                            key={t}
+                            type="button"
+                            onClick={() => setForm({ ...form, genero_musical: t })}
+                            className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
+                              active
+                                ? "border-[var(--gold)] bg-[var(--gold)]/10 text-primary shadow-[var(--shadow-soft)]"
+                                : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
+                            }`}
+                          >
+                            {t}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {form.genero_musical === "Outro" && (
+                      <label className="block rounded-2xl border border-border bg-background p-4">
+                        <span className="mb-2 block text-sm font-medium text-primary">Descreva outro estilo</span>
+                        <input
+                          type="text"
+                          value={form.outro_genero}
+                          onChange={(e) => setForm({ ...form, outro_genero: e.target.value })}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                          placeholder="Ex.: R&B / Soul, Balada pop gospel, Pagode gospel"
+                        />
+                      </label>
+                    )}
                   </div>
                 ) : (
                   <input
@@ -636,12 +682,17 @@ function OrderForm() {
                       current.key === "nome_cliente"
                         ? "Ex.: Maria Silva Souza"
                         : current.key === "email_cliente"
-                          ? "Ex.: maria@email.com"
+                          ? "Ex.: maria@email.com (opcional)"
                           : current.key === "telefone_cliente"
                             ? "(00) 00000-0000"
                             : ""
                     }
                   />
+                  {current.key === "email_cliente" && (
+                    <p className="mt-3 text-sm text-muted-foreground">
+                      E-mail opcional: entregamos por aqui em até 5 horas, mas o download no site fica disponível em menos de 1 hora.
+                    </p>
+                  )}
                 )}
               </label>
 

@@ -1,27 +1,29 @@
 Resumo do que foi feito e próximos passos
 
 1. Contexto geral
-- Projeto: Cancao de Fe, app React/Vite com backend Supabase e integração Shopify.
-- Objetivo atual: implementar fluxo de checkout Shopify, webhook de pagamento e melhorar UX do formulário de pedido.
+- Projeto: Cancao de Fe, app React/Vite com backend Supabase e integração de checkout.
+- Objetivo atual: implementar fluxo de checkout Mercado Pago, webhook de pagamento e melhorar UX do formulário de pedido.
 
 2. O que fizemos
-- Implementamos o backend de checkout Shopify.
-  - Adicionada integração em `src/integrations/shopify/client.ts`.
-  - Criado serviço em `src/lib/shopify.service.ts` para gerar checkout.
-  - Foi usada a variável `SHOPIFY_ACCESS_TOKEN` e `SHOPIFY_STORE_DOMAIN` no ambiente.
-- Desenvolvemos a validação e processamento do webhook `orders/paid`.
-  - Implementado em `src/lib/shopify.webhook.ts`.
-  - Validamos HMAC e atualizamos o pedido no Supabase usando `shopify_checkout_id`.
+- Migramos o backend para Mercado Pago.
+  - Adicionada integração em `src/lib/mercadopago.service.ts`.
+  - Atualizado `src/lib/order.functions.ts` para criar checkout Mercado Pago.
+  - Acompanhar o pedido agora usa `mercado_pago_checkout_url` e `mercado_pago_status`.
+- Removemos todo o código Shopify do projeto.
+  - Excluídos arquivos de integração e rotas Shopify.
+  - Atualizado `src/routeTree.gen.ts` para remover as rotas antigas.
 - Ajustamos a lógica do pedido no backend.
   - Em `src/lib/order.functions.ts`, definimos duração fixa do preview (`duracao_segundos: 45`).
   - Removemos a opção de duração customizada pelo cliente.
 - Melhoramos a interface do pedido.
   - Em `src/routes/index.tsx`, adicionamos botões de sugestão que preenchem automaticamente a descrição.
-- Executamos build local e deploy no Vercel.
+- Executamos build local e limpeza de artefatos gerados.
   - `npm run build` passou.
-  - Deploy realizado com `npx vercel deploy --prod`.
-- Commit e push feitos.
-  - Commit principal: `Add description suggestion buttons for order form`.
+
+3. Status atual
+- Checkout Mercado Pago implementado e webhook Mercado Pago roteado em `src/server.ts`.
+- As variáveis de ambiente Shopify foram removidas do `.env` local.
+- O projeto não contém mais rotas ou arquivos de integração Shopify.
 
 3. Arquivos importantes alterados
 - `src/routes/index.tsx`

@@ -1,7 +1,9 @@
 export type DadosPedidoParaRoteiro = {
   nome_cliente: string;
-  email_cliente: string;
+  email_cliente?: string | null;
   telefone_cliente: string;
+  para_quem: string;
+  ocasiao: string;
   descricao: string;
   genero_musical: string;
   duracao_segundos: number;
@@ -43,6 +45,7 @@ function gerarTema(pedido: DadosPedidoParaRoteiro) {
 function gerarNarrativa(pedido: DadosPedidoParaRoteiro) {
   const partes: string[] = [];
   partes.push(`Uma música de ${pedido.genero_musical.toLowerCase()} com duração aproximada de ${pedido.duracao_segundos} segundos.`);
+  partes.push(`A canção é dedicada a ${pedido.para_quem} e celebra ${pedido.ocasiao.toLowerCase()}.`);
   partes.push(`O cliente ${pedido.nome_cliente} deseja incluir na letra: ${pedido.descricao.trim()}`);
   partes.push(`O tom deve ser inspirado na história e no sentimento descrito.`);
   return partes.join(" ");

@@ -7,6 +7,10 @@ export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const prompt = `
 Nome do cliente: ${pedido.nome_cliente}
 
+Para quem é a música: ${pedido.para_quem}
+
+Ocasião: ${pedido.ocasiao}
+
 Estilo musical: ${pedido.genero_musical}
 
 Duração aproximada: ${pedido.duracao_segundos} segundos
