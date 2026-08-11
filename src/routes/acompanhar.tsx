@@ -635,7 +635,7 @@ function Timeline({
                     A música é produzida somente após a confirmação do pagamento. Se você desejar uma nova versão com a mesma história, mas com letra diferente, esse serviço pode ser feito por R$ 9,90.
                   </p>
 
-                  <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
+                  <div className="mt-4 rounded-3xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-[0_10px_30px_rgba(16,185,129,0.12)]">
                     <div className="grid gap-3 sm:grid-cols-2">
                       <button
                         type="button"
@@ -652,11 +652,11 @@ function Timeline({
                         {videoOptionSelected ? "Remover vídeo vertical" : "Vídeo vertical por +R$ 49,90"}
                       </button>
                     </div>
-                    <p className="mt-4 text-sm font-semibold text-foreground">
+                    <p className="mt-4 text-base font-bold tracking-tight text-emerald-950">
                       Total do checkout:
-                      <strong className="ml-2 text-[var(--gold)] text-2xl">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
+                      <strong className="ml-3 text-4xl text-emerald-900">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
                     </p>
-                    <p className="mt-2 text-sm text-muted-foreground">
+                    <p className="mt-2 text-sm text-emerald-700">
                       Valor final inclui a letra aprovada mais as opções escolhidas. O pagamento será processado no checkout abaixo.
                     </p>
                   </div>
@@ -736,10 +736,11 @@ function Timeline({
                       ) : (
                         <button
                           type="button"
-                          onClick={() => setCheckoutDialogOpen(true)}
-                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)]"
+                          onClick={() => openStripeCheckout(secondVersionSelected, videoOptionSelected)}
+                          disabled={checkoutLoading}
+                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)] disabled:opacity-50"
                         >
-                          Abrir checkout
+                          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Abrir checkout"}
                         </button>
                       )}
                       {checkoutLoading && (
@@ -749,7 +750,7 @@ function Timeline({
                       )}
                     {videoOptionSelected && (
                       <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
-                        Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99747-4516</strong>. Em seguida, confirme o envio pelo WhatsApp da empresa <strong>41 99723-2395</strong> e aguarde o vídeo ficar pronto.
+                        Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99723-2395</strong>. Em seguida, confirme o envio pelo mesmo WhatsApp <strong>41 99723-2395</strong> e aguarde o vídeo ficar pronto.
                       </div>
                     )}
                     </div>
