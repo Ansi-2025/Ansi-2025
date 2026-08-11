@@ -671,28 +671,30 @@ function OrderForm() {
                     )}
                   </div>
                 ) : (
-                  <input
-                    autoFocus
-                    type={current.key === "telefone_cliente" ? "tel" : "text"}
-                    value={form[current.key]}
-                    onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
-                    onKeyDown={onKeyDown}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
-                    placeholder={
-                      current.key === "nome_cliente"
-                        ? "Ex.: Maria Silva Souza"
-                        : current.key === "email_cliente"
-                          ? "Ex.: maria@email.com (opcional)"
-                          : current.key === "telefone_cliente"
-                            ? "(00) 00000-0000"
-                            : ""
-                    }
-                  />
-                  {current.key === "email_cliente" && (
-                    <p className="mt-3 text-sm text-muted-foreground">
-                      E-mail opcional: entregamos por aqui em até 5 horas, mas o download no site fica disponível em menos de 1 hora.
-                    </p>
-                  )}
+                  <>
+                    <input
+                      autoFocus
+                      type={current.key === "telefone_cliente" ? "tel" : "text"}
+                      value={form[current.key]}
+                      onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
+                      onKeyDown={onKeyDown}
+                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                      placeholder={
+                        current.key === "nome_cliente"
+                          ? "Ex.: Maria Silva Souza"
+                          : current.key === "email_cliente"
+                            ? "Ex.: maria@email.com (opcional)"
+                            : current.key === "telefone_cliente"
+                              ? "(00) 00000-0000"
+                              : ""
+                      }
+                    />
+                    {current.key === "email_cliente" && (
+                      <p className="mt-3 text-sm text-muted-foreground">
+                        E-mail opcional: entregamos por aqui em até 5 horas, mas o download no site fica disponível em menos de 1 hora.
+                      </p>
+                    )}
+                  </>
                 )}
               </label>
 
