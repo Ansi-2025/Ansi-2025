@@ -3,6 +3,8 @@ import { gerarLetraDoPedido } from "@/lib/lyric.service";
 import { gerarMusicaComSuno } from "@/integrations/suno/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
+const SUNO_GENERATION_ENABLED = (process.env.ENABLE_SUNO_GENERATION ?? "false").toLowerCase() === "true";
+
 export type PedidoEntrada = {
   nome_cliente: string;
   email_cliente?: string | null;
@@ -178,6 +180,10 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
 }
 
 export async function gerarMusicaPreview(pedidoId: string) {
+  if (!SUNO_GENERATION_ENABLED) {
+    throw new Error("Geração de música desativada no momento. Habilite ENABLE_SUNO_GENERATION para ativar a API do Suno.");
+  }
+
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
 
@@ -233,6 +239,18 @@ export async function gerarMusicaPreview(pedidoId: string) {
 }
 
 export async function gerarMusicaFinal(pedidoId: string) {
+  if (!SUNO_GENERATION_ENABLED) {
+    return await supabaseAdmin
+      .from("pedidos")
+      .update({
+        status: "pagamento",
+        status_atualizado_em: new Date().toISOString(),
+      })
+      .eq("id", pedidoId)
+      .select("*")
+      .single();
+  }
+
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
 

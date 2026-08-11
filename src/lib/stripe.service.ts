@@ -1,6 +1,5 @@
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { gerarMusicaFinal } from "@/lib/pedido.service";
 
 const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
@@ -245,14 +244,6 @@ export async function handleStripeWebhook(request: Request) {
         mensagem_whatsapp: "Pagamento confirmado via Stripe, gerando música final",
         criado_em: new Date().toISOString(),
       });
-    }
-
-    if (novoStatus === "pagamento") {
-      try {
-        await gerarMusicaFinal(pedidoId);
-      } catch (error) {
-        console.error("Falha ao gerar música final após pagamento:", error);
-      }
     }
 
     return new Response(JSON.stringify({ ok: true, message: "Payment processed" }), {
