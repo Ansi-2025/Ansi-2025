@@ -1,18 +1,21 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
-import { approveLyric, createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { loadStripe } from "@stripe/stripe-js";
+import { approveLyric, createStripeCheckout, createStripePaymentIntent, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { z } from "zod";
 import QRCode from "qrcode";
 
-const search = z.object({ id: z.string().optional() });
-const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5917ANDERSON DA SILVA6008CURITIBA62070503***63042679";
+const searchSchema = z.object({ id: z.string().optional() });
+const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "");
+const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
 const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
 
 export const Route = createFileRoute("/acompanhar")({
-  validateSearch: (s) => search.parse(s),
+  validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
     meta: [
       { title: "Acompanhar Pedido | Canção de Fé" },
@@ -52,6 +55,7 @@ function TrackingPage() {
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
   const createCheckout = useServerFn(createStripeCheckout);
+  const createPaymentIntent = useServerFn(createStripePaymentIntent);
   const generatePreviewFn = useServerFn(generateMusicPreview);
   const approveLyricFn = useServerFn(approveLyric);
   const requestRevisionFn = useServerFn(requestLyricRevision);
@@ -60,8 +64,11 @@ function TrackingPage() {
   const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutError, setCheckoutError] = useState("");
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [paymentProcessing, setPaymentProcessing] = useState(false);
+  const [checkoutError, setCheckoutError] = useState("");
+  const [paymentError, setPaymentError] = useState("");
+  const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('card');
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [videoOptionSelected, setVideoOptionSelected] = useState(false);
@@ -136,20 +143,22 @@ function TrackingPage() {
   ) => {
     if (!order) return;
     setCheckoutError("");
+    setPaymentError("");
+    setPaymentIntentClientSecret(null);
     setCheckoutLoading(true);
     try {
-      const result = await createCheckout({
+      const result = await createPaymentIntent({
         data: {
           id: order.id,
           secondVersion: withSecondVersion,
           videoOption: withVideoOption,
         },
       });
-      setCheckoutUrl(result.checkoutUrl);
+      setPaymentIntentClientSecret(result.clientSecret);
       setCheckoutDialogOpen(true);
       await search(order.id);
     } catch (error) {
-      setCheckoutError(error instanceof Error ? error.message : "Erro ao criar checkout Stripe.");
+      setCheckoutError(error instanceof Error ? error.message : "Erro ao criar pagamento Stripe.");
     } finally {
       setCheckoutLoading(false);
     }
@@ -264,6 +273,13 @@ function TrackingPage() {
             checkoutUrl={checkoutUrl}
             checkoutError={checkoutError}
             checkoutLoading={checkoutLoading}
+            paymentError={paymentError}
+            paymentIntentClientSecret={paymentIntentClientSecret}
+            paymentProcessing={paymentProcessing}
+            setPaymentProcessing={setPaymentProcessing}
+            setPaymentError={setPaymentError}
+            setPaymentIntentClientSecret={setPaymentIntentClientSecret}
+            refreshOrder={refreshOrder}
             previewError={previewError}
             previewLoading={previewLoading}
             approvalLoading={approvalLoading}
@@ -346,6 +362,13 @@ function Timeline({
   setVideoOptionSelected,
   checkoutDialogOpen,
   setCheckoutDialogOpen,
+  paymentError,
+  paymentIntentClientSecret,
+  paymentProcessing,
+  setPaymentProcessing,
+  setPaymentError,
+  setPaymentIntentClientSecret,
+  refreshOrder,
   handleGeneratePreview,
   selectedStatus,
   onSelectStatus,
@@ -370,6 +393,13 @@ function Timeline({
   setVideoOptionSelected: Dispatch<SetStateAction<boolean>>;
   checkoutDialogOpen: boolean;
   setCheckoutDialogOpen: Dispatch<SetStateAction<boolean>>;
+  paymentError: string;
+  paymentIntentClientSecret: string | null;
+  paymentProcessing: boolean;
+  setPaymentProcessing: Dispatch<SetStateAction<boolean>>;
+  setPaymentError: Dispatch<SetStateAction<string>>;
+  setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
+  refreshOrder: () => Promise<void>;
   paymentMethod: "pix" | "card";
   setPaymentMethod: Dispatch<SetStateAction<"pix" | "card">>;
   handleGeneratePreview: () => Promise<void>;
@@ -623,7 +653,8 @@ function Timeline({
                       </button>
                     </div>
                     <p className="mt-4 text-sm font-semibold text-foreground">
-                      Total do checkout: <strong className="text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
+                      Total do checkout:
+                      <strong className="ml-2 text-[var(--gold)] text-2xl">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
                     </p>
                     <p className="mt-2 text-sm text-muted-foreground">
                       Valor final inclui a letra aprovada mais as opções escolhidas. O pagamento será processado no checkout abaixo.
@@ -671,7 +702,7 @@ function Timeline({
                         <div className="mt-5 space-y-4 text-sm text-white/80">
                           <div className="flex items-center justify-between gap-4">
                             <span className="text-white/70">Nome</span>
-                            <span className="text-right font-semibold text-white">ANDERSON DA SILVA</span>
+                            <span className="text-right font-semibold text-white">Canção de Fé</span>
                           </div>
                           <div className="flex items-center justify-between gap-4 break-all">
                             <span className="text-white/70">Chave Pix</span>
@@ -716,6 +747,11 @@ function Timeline({
                           {checkoutMessages[checkoutMessageIndex]}
                         </div>
                       )}
+                    {videoOptionSelected && (
+                      <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
+                        Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99747-4516</strong>. Em seguida, confirme o envio pelo WhatsApp da empresa <strong>41 99723-2395</strong> e aguarde o vídeo ficar pronto.
+                      </div>
+                    )}
                     </div>
                   )}
                   {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
@@ -744,7 +780,7 @@ function Timeline({
               <div className="grid gap-2">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Total</span>
-                  <span className="text-2xl font-extrabold text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
                   <p className="font-semibold text-slate-900">Resumo do pedido</p>
@@ -759,23 +795,28 @@ function Timeline({
 
             <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
               <p className="text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
-              <p className="mt-2 text-sm text-slate-700">Clique no botão abaixo para seguir para o checkout na mesma página. O Stripe processará o pagamento no ambiente seguro deles.</p>
-              <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                <a
-                  href={checkoutUrl ?? order.stripe_checkout_url ?? "#"}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
-                >
-                  Ir para o checkout
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setCheckoutDialogOpen(false)}
-                  className="inline-flex items-center justify-center rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-slate-900"
-                >
-                  Fechar
-                </button>
+              <p className="mt-2 text-sm text-slate-700">Conclua o pagamento diretamente aqui mesmo na página, sem sair do acompanhamento.</p>
+              {paymentError && <p className="mt-3 text-sm text-destructive">{paymentError}</p>}
+              <div className="mt-4">
+                {paymentIntentClientSecret ? (
+                  <Elements stripe={stripePromise} options={{ clientSecret: paymentIntentClientSecret }}>
+                    <StripeCardPaymentForm
+                      order={order}
+                      clientSecret={paymentIntentClientSecret}
+                      amount={19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)}
+                      processing={paymentProcessing}
+                      onProcessingChange={setPaymentProcessing}
+                      onError={setPaymentError}
+                      onSuccess={async () => {
+                        setCheckoutDialogOpen(false);
+                        setPaymentIntentClientSecret(null);
+                        await refreshOrder();
+                      }}
+                    />
+                  </Elements>
+                ) : (
+                  <p className="text-sm text-slate-700">Preparando o checkout na página...</p>
+                )}
               </div>
             </div>
           </div>
@@ -859,4 +900,98 @@ function QRCodeImage({ value }: { value: string }) {
   if (!qrCode) return <div className="h-[200px] w-[200px] animate-pulse bg-[var(--soft-gray)]" />;
 
   return <img src={qrCode} alt="QR Code PIX" className="h-[200px] w-[200px]" />;
+}
+
+function StripeCardPaymentForm({
+  order,
+  clientSecret,
+  amount,
+  processing,
+  onProcessingChange,
+  onError,
+  onSuccess,
+}: {
+  order: Order;
+  clientSecret: string;
+  amount: number;
+  processing: boolean;
+  onProcessingChange: (processing: boolean) => void;
+  onError: (message: string) => void;
+  onSuccess: () => Promise<void>;
+}) {
+  const stripe = useStripe();
+  const elements = useElements();
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    if (!stripe || !elements) {
+      onError("Stripe não está pronto ainda.");
+      return;
+    }
+
+    const cardElement = elements.getElement(CardElement);
+    if (!cardElement) {
+      onError("Não foi possível localizar o campo do cartão.");
+      return;
+    }
+
+    onError("");
+    onProcessingChange(true);
+
+    const result = await stripe.confirmCardPayment(clientSecret, {
+      payment_method: {
+        card: cardElement,
+        billing_details: {
+          name: order.nome_cliente,
+          email: order.email_cliente ?? undefined,
+          phone: order.telefone_cliente ?? undefined,
+        },
+      },
+    });
+
+    if (result.error) {
+      onError(result.error.message ?? "Erro ao processar o pagamento.");
+      onProcessingChange(false);
+      return;
+    }
+
+    const paymentIntent = result.paymentIntent;
+    if (!paymentIntent || paymentIntent.status !== "succeeded") {
+      onError("O pagamento não foi concluído. Tente novamente.");
+      onProcessingChange(false);
+      return;
+    }
+
+    await onSuccess();
+    onProcessingChange(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="rounded-2xl border border-border bg-white p-4">
+        <label className="block text-sm font-semibold text-slate-900">Dados do cartão</label>
+        <div className="mt-4 rounded-2xl border border-border bg-background p-4">
+          <CardElement options={{
+            style: {
+              base: {
+                fontSize: "16px",
+                color: "#0f172a",
+                fontFamily: "Inter, sans-serif",
+                "::placeholder": { color: "#94a3b8" },
+              },
+              invalid: { color: "#f43f5e" },
+            },
+          }} />
+        </div>
+      </div>
+
+      <button
+        type="submit"
+        disabled={processing}
+        className="inline-flex w-full items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[0_10px_30px_rgba(252,211,77,0.3)] disabled:opacity-50"
+      >
+        {processing ? <Loader2 className="h-4 w-4 animate-spin" /> : `Pagar R$ ${amount.toFixed(2).replace(".", ",")}`}
+      </button>
+    </form>
+  );
 }

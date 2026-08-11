@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
-import { criarCheckoutStripe } from "@/lib/stripe.service";
+import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 
 const OrderSchema = z.object({
   nome_cliente: z.string().trim().min(2).max(120),
@@ -129,6 +129,20 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     return criarCheckoutStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
+  });
+
+export const createStripePaymentIntent = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        secondVersion: z.boolean().optional(),
+        videoOption: z.boolean().optional(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    return criarPaymentIntentStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
   });
 
 export const generateMusicPreview = createServerFn({ method: "POST" })

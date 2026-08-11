@@ -150,6 +150,87 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   };
 }
 
+export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false, videoOption = false) {
+  const { data: pedido, error } = await supabaseAdmin
+    .from("pedidos")
+    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_payment_intent_id, stripe_payment_status")
+    .eq("id", pedidoId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`Falha ao buscar pedido: ${error.message}`);
+  }
+
+  if (!pedido) {
+    throw new Error("Pedido não encontrado.");
+  }
+
+  if (!['letra_aprovada', 'pagamento'].includes(pedido.status as string)) {
+    throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
+  }
+
+  if (!STRIPE_SECRET_KEY) {
+    throw new Error("STRIPE_SECRET_KEY não configurado. Configure a variável de ambiente STRIPE_SECRET_KEY.");
+  }
+
+  if (!STRIPE_APP_URL) {
+    throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
+  }
+
+  const totalAmount = Math.round((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0) + (videoOption ? 49.9 : 0)) * 100);
+  const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''}${videoOption ? ' + Vídeo vertical' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
+
+  const paymentIntent = await stripe.paymentIntents.create({
+    amount: totalAmount,
+    currency: "brl",
+    payment_method_types: ["card"],
+    metadata: {
+      pedido_id: pedidoId,
+      origem: "Canção de Fé",
+      segunda_versao: String(secondVersion),
+      video_opcional: String(videoOption),
+    },
+    description,
+    receipt_email: pedido.email_cliente ?? undefined,
+  });
+
+  if (!paymentIntent.client_secret) {
+    throw new Error("Não foi possível criar o pagamento no Stripe.");
+  }
+
+  const agora = new Date().toISOString();
+  const { data: updatedPedido, error: updateError } = await supabaseAdmin
+    .from("pedidos")
+    .update({
+      stripe_payment_intent_id: paymentIntent.id,
+      stripe_payment_status: paymentIntent.status,
+      status: "pagamento",
+      status_atualizado_em: agora,
+    })
+    .eq("id", pedidoId)
+    .select("*")
+    .single();
+
+  if (updateError || !updatedPedido) {
+    throw new Error(`Falha ao salvar payment intent do pedido: ${updateError?.message ?? "pedido não encontrado"}`);
+  }
+
+  await supabaseAdmin.from("status_history").insert({
+    pedido_id: pedidoId,
+    status_anterior: pedido.status,
+    status_novo: "pagamento",
+    mensagem_whatsapp: "Pagamento Stripe criado e aguardando confirmação",
+    criado_em: agora,
+  });
+
+  return {
+    clientSecret: paymentIntent.client_secret,
+    amount: totalAmount,
+    currency: "brl",
+    paymentIntentId: paymentIntent.id,
+  };
+}
+
 export async function handleStripeWebhook(request: Request) {
   if (request.method === "GET") {
     return new Response("ok", { status: 200 });
