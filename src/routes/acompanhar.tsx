@@ -1,5 +1,5 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useEffect, useState, type Dispatch, type SetStateAction } from "react";
+import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
 import { approveLyric, createStripeCheckout, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
@@ -67,11 +67,18 @@ function TrackingPage() {
   const [previewError, setPreviewError] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState<PedidoStatus | null>(null);
+  const [autoRefreshMessageIndex, setAutoRefreshMessageIndex] = useState(0);
   const [err, setErr] = useState("");
+  const autoRefreshMessages = [
+    "Atualizando seu pedido automaticamente...",
+    "Verificando status do pagamento a cada 5 segundos...",
+    "Fique tranquilo, estamos mantendo tudo sincronizado...",
+    "Aguarde, seu pedido está sendo atualizado em segundo plano...",
+  ];
 
-  const search = async (orderId: string) => {
+  const search = useCallback(async (orderId: string) => {
     setLoading(true); setErr(""); setOrder(null); setHistory([]);
-    setPaymentMethod('card');
     try {
       const row = (await fetchStatus({ data: { id: orderId.trim() } })) as unknown as Order;
       setOrder(row);
@@ -83,7 +90,30 @@ function TrackingPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchStatus, fetchHistory]);
+
+  const refreshOrder = useCallback(async () => {
+    if (!order?.id) return;
+    try {
+      await search(order.id);
+    } catch {
+      // ignore refresh errors, user can retry manually
+    }
+  }, [order?.id, search]);
+
+  useEffect(() => {
+    if (!order?.id) {
+      setAutoRefreshMessageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      refreshOrder();
+      setAutoRefreshMessageIndex((prev) => (prev + 1) % autoRefreshMessages.length);
+    }, 5000);
+
+    return () => clearInterval(interval);
+  }, [order?.id, refreshOrder]);
 
   const openStripeCheckout = async (withSecondVersion = secondVersionSelected) => {
     if (!order) return;
@@ -99,6 +129,12 @@ function TrackingPage() {
       setCheckoutLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (order?.status) {
+      setSelectedStatus(order.status);
+    }
+  }, [order?.status]);
 
   const handleGeneratePreview = async () => {
     if (!order) return;
@@ -149,8 +185,7 @@ function TrackingPage() {
     if (initialId) {
       search(initialId);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialId]);
+  }, [initialId, search]);
 
   return (
     <div className="min-h-screen bg-[var(--soft-gray)]">
@@ -191,6 +226,13 @@ function TrackingPage() {
         </div>
 
         {order && (
+          <div className="w-full max-w-3xl rounded-3xl border border-border bg-white/80 p-4 shadow-[var(--shadow-soft)] transition-all duration-300 md:px-6 md:py-5">
+            <p className="text-sm font-medium text-primary">{autoRefreshMessages[autoRefreshMessageIndex]}</p>
+            <p className="mt-2 text-xs text-muted-foreground">Atualização automática a cada 5 segundos para manter o status do pedido e pagamento sincronizados.</p>
+          </div>
+        )}
+
+        {order && (
           <Timeline
             order={order}
             history={history}
@@ -209,6 +251,8 @@ function TrackingPage() {
             handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
             handleGeneratePreview={handleGeneratePreview}
+            selectedStatus={selectedStatus}
+            onSelectStatus={setSelectedStatus}
             key={order.id + order.status}
           />
         )}
@@ -268,6 +312,8 @@ function Timeline({
   handleRequestRevision,
   openStripeCheckout,
   handleGeneratePreview,
+  selectedStatus,
+  onSelectStatus,
 }: {
   order: Order;
   history: Array<any>;
@@ -286,6 +332,8 @@ function Timeline({
   paymentMethod: "pix" | "card";
   setPaymentMethod: Dispatch<SetStateAction<"pix" | "card">>;
   handleGeneratePreview: () => Promise<void>;
+  selectedStatus: PedidoStatus | null;
+  onSelectStatus: Dispatch<SetStateAction<PedidoStatus | null>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
@@ -359,35 +407,54 @@ function Timeline({
           const isCurrent = i === currentIdx;
           const isVisible = i < revealed;
           const isReached = i <= currentIdx;
+          const isSelected = selectedStatus === step;
 
           return (
             <li
               key={step}
               className={`relative transition-all duration-500 ${
                 isVisible ? "translate-y-0 opacity-100" : "translate-y-2 opacity-0"
-              }`}
+              }`
+              }
             >
-              <span
-                className={`absolute -left-[34px] grid h-7 w-7 place-items-center rounded-full border-2 transition-colors ${
-                  isCurrent
-                    ? "border-[var(--gold)] bg-[var(--gold)] text-primary shadow-[var(--shadow-gold)]"
-                    : isDone
-                      ? "border-[var(--sky-blue)] bg-[var(--sky-blue)] text-white"
-                      : "border-border bg-background text-muted-foreground"
-                }`}
+              <button
+                type="button"
+                onClick={() => onSelectStatus(step)}
+                className={`group flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition ${
+                  isSelected ? "bg-[var(--sky-blue)]/10 ring-2 ring-[var(--sky-blue)]/20" : "hover:bg-[var(--soft-gray)]"
+                } ${isReached ? "" : "opacity-70"}`}
               >
-                {isDone ? <CheckCircle2 className="h-4 w-4" /> : isCurrent ? <Sparkles className="h-3.5 w-3.5" /> : <ArrowRight className="h-3 w-3" />}
-              </span>
-              <div className={`rounded-2xl px-4 py-3 ${isCurrent ? "bg-[var(--gold)]/10 border border-[var(--gold)]/30" : isReached ? "" : "opacity-60"}`}>
-                <div className={`font-display text-base font-semibold ${isCurrent ? "text-primary" : isDone ? "text-primary" : "text-muted-foreground"}`}>
-                  {STATUS_LABELS[step]}
-                </div>
-                {isCurrent && (
-                  <div className="mt-1 text-xs text-muted-foreground">
-                    Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}
+                <span
+                  className={`grid h-7 w-7 place-items-center rounded-full border-2 transition-colors ${
+                    isCurrent
+                      ? "border-[var(--gold)] bg-[var(--gold)] text-primary shadow-[var(--shadow-gold)]"
+                      : isDone
+                        ? "border-[var(--sky-blue)] bg-[var(--sky-blue)] text-white"
+                        : "border-border bg-background text-muted-foreground"
+                  }`}
+                >
+                  {isDone ? <CheckCircle2 className="h-4 w-4" /> : isCurrent ? <Sparkles className="h-3.5 w-3.5" /> : <ArrowRight className="h-3 w-3" />}
+                </span>
+                <div className="flex-1">
+                  <div className={`font-display text-base font-semibold ${isCurrent ? "text-primary" : isDone ? "text-primary" : "text-muted-foreground"}`}>
+                    {STATUS_LABELS[step]}
                   </div>
-                )}
-              </div>
+                  {isCurrent && (
+                    <div className="mt-1 text-xs text-muted-foreground">
+                      Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}
+                    </div>
+                  )}
+                </div>
+              </button>
+
+              {isSelected && excerpt && (
+                <div className="mt-3 rounded-2xl border border-border bg-background/70 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Letra selecionada</p>
+                  <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">
+                    {excerpt}
+                  </div>
+                </div>
+              )}
 
               {isCurrent && step === "aguardando_aprovacao_letra" && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
