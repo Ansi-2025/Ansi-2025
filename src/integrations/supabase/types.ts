@@ -23,7 +23,6 @@ export type Database = {
           genero_musical: string | null
           id: string
           nome_cliente: string | null
-          nome_completo: string
           para_quem: string
           pix_qr_code: string | null
           pix_fixado: boolean
@@ -32,7 +31,6 @@ export type Database = {
           status: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em: string
           suno_job_id: string | null
-          tipo_musica: string
           url_musica: string | null
           url_previa: string | null
           valor_pix: string | null
@@ -55,7 +53,6 @@ export type Database = {
           genero_musical?: string | null
           id?: string
           nome_cliente?: string | null
-          nome_completo: string
           para_quem: string
           pix_qr_code?: string | null
           pix_fixado?: boolean
@@ -64,7 +61,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
           suno_job_id?: string | null
-          tipo_musica: string
           url_musica?: string | null
           url_previa?: string | null
           valor_pix?: string | null
@@ -87,7 +83,6 @@ export type Database = {
           genero_musical?: string | null
           id?: string
           nome_cliente?: string | null
-          nome_completo?: string
           para_quem?: string
           pix_qr_code?: string | null
           pix_fixado?: boolean
@@ -96,7 +91,6 @@ export type Database = {
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
           suno_job_id?: string | null
-          tipo_musica?: string
           url_musica?: string | null
           url_previa?: string | null
           valor_pix?: string | null
