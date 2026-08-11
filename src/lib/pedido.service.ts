@@ -18,12 +18,12 @@ export async function criarPedido(data: PedidoEntrada) {
   const agora = new Date().toISOString();
   const pedido = {
     nome_cliente: data.nome_cliente,
-    email_cliente: data.email_cliente ?? "",
-    telefone_cliente: data.telefone_cliente ?? "",
+    email_cliente: data.email_cliente ?? null,
+    telefone_cliente: data.telefone_cliente ?? null,
     descricao: data.descricao,
     genero_musical: data.genero_musical,
     duracao_segundos: data.duracao_segundos,
-    whatsapp: data.telefone_cliente ?? "",
+    whatsapp: data.telefone_cliente ?? null,
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
     letra_refazer_contador: 0,
