@@ -116,9 +116,9 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
   });
 
 export const createStripeCheckout = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), secondVersion: z.boolean().optional() }).parse(data))
   .handler(async ({ data }) => {
-    return criarCheckoutStripe(data.id);
+    return criarCheckoutStripe(data.id, data.secondVersion ?? false);
   });
 
 export const generateMusicPreview = createServerFn({ method: "POST" })

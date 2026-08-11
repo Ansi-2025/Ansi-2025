@@ -76,8 +76,11 @@ function TrackingPage() {
       setCheckoutUrl((row as Order).stripe_checkout_url ?? null);
       const hist = await fetchHistory({ data: { id: orderId.trim() } });
       setHistory(hist);
-    } catch (e) { setErr(e instanceof Error ? e.message : "Erro"); }
-    finally { setLoading(false); }
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Erro");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openStripeCheckout = async (withSecondVersion = secondVersionSelected) => {
@@ -137,7 +140,12 @@ function TrackingPage() {
     }
   };
 
-  useEffect(() => { if (initialId) search(initialId); /* eslint-disable-next-line */ }, [initialId]);
+  useEffect(() => {
+    if (initialId) {
+      search(initialId);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialId]);
 
   return (
     <div className="min-h-screen bg-[var(--soft-gray)]">
@@ -436,7 +444,7 @@ function Timeline({
                 </div>
               )}
 
-              {isCurrent && (step === "letra_aprovada" || step === "pagamento") && paymentBlockVisible && (
+              {isCurrent && paymentBlockVisible && (
                 <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
                   <div className="flex justify-center">
                     <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">Inter</div>
@@ -556,6 +564,7 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
   return (
     <button
       onClick={handleCopy}

@@ -33,7 +33,7 @@ function getCancelUrl(orderId: string) {
   return `${STRIPE_APP_URL}/acompanhar?id=${orderId}`;
 }
 
-export async function criarCheckoutStripe(pedidoId: string) {
+export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status")
@@ -60,6 +60,8 @@ export async function criarCheckoutStripe(pedidoId: string) {
     throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
   }
 
+  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
+
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
     mode: "payment",
@@ -68,9 +70,9 @@ export async function criarCheckoutStripe(pedidoId: string) {
         price_data: {
           currency: "brl",
           product_data: {
-            name: `${STRIPE_ITEM_TITLE} - ${pedido.nome_cliente ?? "Cliente"}`,
+            name: `${STRIPE_ITEM_TITLE}${secondVersion ? " + Segunda versão" : ""} - ${pedido.nome_cliente ?? "Cliente"}`,
           },
-          unit_amount: Math.round(STRIPE_ITEM_PRICE * 100),
+          unit_amount: Math.round(totalItemPrice * 100),
         },
         quantity: 1,
       },
@@ -79,6 +81,7 @@ export async function criarCheckoutStripe(pedidoId: string) {
     metadata: {
       pedido_id: pedidoId,
       origem: "Canção de Fé",
+      segunda_versao: String(secondVersion),
     },
     success_url: getSuccessUrl(pedidoId),
     cancel_url: getCancelUrl(pedidoId),
