@@ -100,9 +100,21 @@ export const approveLyric = createServerFn({ method: "POST" })
   });
 
 export const requestLyricRevision = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        feedback: z
+          .string()
+          .trim()
+          .max(1000)
+          .optional()
+          .transform((value) => value ?? ""),
+      })
+      .parse(data),
+  )
   .handler(async ({ data }) => {
-    return refazerLetraPedido(data.id);
+    return refazerLetraPedido(data.id, data.feedback);
   });
 
 export const createStripeCheckout = createServerFn({ method: "POST" })

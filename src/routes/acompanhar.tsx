@@ -61,6 +61,7 @@ function TrackingPage() {
   const [previewError, setPreviewError] = useState("");
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
+  const [revisionFeedback, setRevisionFeedback] = useState("");
   const [err, setErr] = useState("");
 
   const search = async (orderId: string) => {
@@ -123,7 +124,8 @@ function TrackingPage() {
     setApprovalError("");
     setApprovalLoading(true);
     try {
-      await requestRevisionFn({ data: { id: order.id } });
+      await requestRevisionFn({ data: { id: order.id, feedback: revisionFeedback } });
+      setRevisionFeedback("");
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao solicitar revisão da letra.");
@@ -262,8 +264,9 @@ function Timeline({
   const lyricPreview = order.letra_gerada
     ? order.letra_gerada.replace(/\s+/g, " ").trim()
     : "";
-  const excerpt = lyricPreview.length > 220 ? `${lyricPreview.slice(0, 220).trim()}...` : lyricPreview;
+  const excerpt = lyricPreview.length > 780 ? `${lyricPreview.slice(0, 780).trim()}...` : lyricPreview;
   const [showFullBrief, setShowFullBrief] = useState(false);
+  const [showFullLyric, setShowFullLyric] = useState(false);
   // reveal steps progressivamente (uma de cada vez)
   const [revealed, setRevealed] = useState(0);
   useEffect(() => {
@@ -351,10 +354,22 @@ function Timeline({
               {isCurrent && step === "aguardando_aprovacao_letra" && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra está pronta</p>
-                  <p className="text-sm text-muted-foreground">Confira o roteiro da música e escolha se você aprova ou pede uma revisão.</p>
+                  <p className="text-sm text-muted-foreground">Confira o roteiro e a letra da música, e escolha se você aprova ou pede uma revisão.</p>
 
                   {briefSections.length > 0 && (
                     <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Roteiro da música</p>
+                        {briefSections.length > 3 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowFullBrief((value) => !value)}
+                            className="text-xs font-semibold text-[var(--sky-blue)]"
+                          >
+                            {showFullBrief ? "Ver menos" : "Ver mais"}
+                          </button>
+                        )}
+                      </div>
                       <div className="space-y-3 text-sm text-muted-foreground">
                         {(showFullBrief ? briefSections : briefSections.slice(0, 3)).map((item) => (
                           <div key={item.label} className="rounded-xl border border-border/60 bg-card/40 p-3">
@@ -363,24 +378,40 @@ function Timeline({
                           </div>
                         ))}
                       </div>
-
-                      {briefSections.length > 3 && (
-                        <button
-                          type="button"
-                          onClick={() => setShowFullBrief((value) => !value)}
-                          className="mt-3 text-sm font-semibold text-[var(--sky-blue)]"
-                        >
-                          {showFullBrief ? "Ver menos" : "Ver mais"}
-                        </button>
-                      )}
                     </div>
                   )}
 
-                  {excerpt && !briefSections.length && (
-                    <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4 text-sm leading-6 text-muted-foreground whitespace-pre-wrap">
-                      {excerpt}
+                  {excerpt && (
+                    <div className="mt-4 rounded-2xl border border-border bg-[var(--card)] p-4">
+                      <div className="mb-3 flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Letra</p>
+                        {lyricPreview.length > 780 && (
+                          <button
+                            type="button"
+                            onClick={() => setShowFullLyric((value) => !value)}
+                            className="text-xs font-semibold text-[var(--sky-blue)]"
+                          >
+                            {showFullLyric ? "Ver menos" : "Ver mais"}
+                          </button>
+                        )}
+                      </div>
+                      <div className="whitespace-pre-wrap text-sm leading-7 text-foreground/90">
+                        {(showFullLyric ? lyricPreview : excerpt).replace(/\n{2,}/g, "\n")}
+                      </div>
                     </div>
                   )}
+
+                  <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
+                    <label className="block text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">O que você quer melhorar?</label>
+                    <textarea
+                      value={revisionFeedback}
+                      onChange={(event) => setRevisionFeedback(event.target.value)}
+                      rows={4}
+                      maxLength={1000}
+                      placeholder="Ex.: quero mais emoção no refrão, acrescentar uma parte sobre gratidão e mudar o último verso para ficar mais forte."
+                      className="mt-2 w-full rounded-xl border border-border bg-card px-3 py-3 text-sm text-foreground outline-none placeholder:text-muted-foreground focus:border-[var(--sky-blue)]"
+                    />
+                  </div>
 
                   <div className="mt-4 flex flex-col gap-3 sm:flex-row">
                     <button

@@ -113,9 +113,10 @@ async function obterPedidoParaRoteiro(pedidoId: string) {
   return pedido;
 }
 
-export async function refazerLetraPedido(pedidoId: string) {
+export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
+  const feedbackFormatado = (feedback ?? "").trim();
 
   if (pedido.letra_refazer_contador >= 4) {
     throw new Error("Você já usou todas as 4 revisões de letra.");
@@ -161,11 +162,15 @@ export async function refazerLetraPedido(pedidoId: string) {
     throw new Error(`Falha ao salvar revisão da letra: ${error?.message ?? "pedido não encontrado"}`);
   }
 
+  const mensagem = feedbackFormatado
+    ? `Revisão ${pedidoAtualizado.letra_refazer_contador} solicitada e aguardando aprovação. Ajustes solicitados: ${feedbackFormatado}`
+    : `Revisão ${pedidoAtualizado.letra_refazer_contador} solicitada e aguardando aprovação`;
+
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedidoId,
     status_anterior: "gerando_letra",
     status_novo: "aguardando_aprovacao_letra",
-    mensagem_whatsapp: `Revisão ${pedidoAtualizado.letra_refazer_contador} solicitada e aguardando aprovação`,
+    mensagem_whatsapp: mensagem,
     criado_em: agora,
   });
 
