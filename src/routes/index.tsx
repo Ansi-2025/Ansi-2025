@@ -126,6 +126,7 @@ function Header() {
 /* ---------------- Hero ---------------- */
 function Hero() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isExamplePlaying, setIsExamplePlaying] = useState(false);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -136,9 +137,12 @@ function Hero() {
     audio.muted = false;
 
     const startPlayback = () => {
-      audio.play().catch(() => {
-        // Browser may block autoplay until the user interacts with the page.
-      });
+      audio.play()
+        .then(() => setIsExamplePlaying(true))
+        .catch(() => {
+          // Browser may block autoplay until the user interacts with the page.
+          setIsExamplePlaying(false);
+        });
     };
 
     startPlayback();
@@ -151,17 +155,35 @@ function Hero() {
 
     audio.volume = 0.15;
     audio.currentTime = 0;
-    audio.play().catch(() => {
-      // Browser may require user interaction before audio playback.
-    });
+    audio.play()
+      .then(() => setIsExamplePlaying(true))
+      .catch(() => {
+        // Browser may require user interaction before audio playback.
+        setIsExamplePlaying(false);
+      });
 
     const target = document.getElementById("exemplos");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
+  const handlePauseExample = () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      audio.play()
+        .then(() => setIsExamplePlaying(true))
+        .catch(() => setIsExamplePlaying(false));
+      return;
+    }
+
+    audio.pause();
+    setIsExamplePlaying(false);
+  };
+
   return (
     <>
-      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" autoPlay playsInline />
+      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" autoPlay playsInline onPause={() => setIsExamplePlaying(false)} onPlay={() => setIsExamplePlaying(true)} />
       <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
         <div className="absolute inset-0 -z-10">
           <img
@@ -205,13 +227,22 @@ function Hero() {
           >
             <Sparkles className="h-4 w-4" /> Criar Minha Música
           </a>
-          <a
-            href="#exemplos"
-            onClick={handleExampleClick}
-            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
-          >
-            <Play className="h-4 w-4" /> Ouvir Exemplo
-          </a>
+          <div className="flex items-center gap-3">
+            <a
+              href="#exemplos"
+              onClick={handleExampleClick}
+              className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+            >
+              <Play className="h-4 w-4" /> Ouvir Exemplo
+            </a>
+            <button
+              type="button"
+              onClick={handlePauseExample}
+              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-4 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+            >
+              {isExamplePlaying ? "Pausar exemplo" : "Continuar exemplo"}
+            </button>
+          </div>
         </div>
 
         <div

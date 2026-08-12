@@ -1,5 +1,5 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
@@ -12,6 +12,7 @@ import QRCode from "qrcode";
 const searchSchema = z.object({ id: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
+const EXAMPLE_AUDIO_URL = "https://coivogokbzizhwfhywkp.supabase.co/storage/v1/object/public/musicas/Cancao%20de%20fe.mp3";
 const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
 const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
 
@@ -68,6 +69,7 @@ type Order = {
 };
 
 function TrackingPage() {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
   const { id: initialId } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
@@ -207,6 +209,17 @@ function TrackingPage() {
     });
   }, [order?.id, order?.email_cliente, order?.telefone_cliente, order?.cpf_cliente]);
 
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.15;
+    audio.loop = true;
+    audio.play().catch(() => {
+      // autoplay may be blocked until user interaction
+    });
+  }, [order?.id]);
+
   const saveCheckoutCustomerInfo = useCallback(async () => {
     if (!order) return;
 
@@ -304,6 +317,7 @@ function TrackingPage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" autoPlay playsInline loop />
       <header className="border-b border-border bg-card">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4 md:px-8">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">
