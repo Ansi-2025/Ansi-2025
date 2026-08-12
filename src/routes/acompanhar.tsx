@@ -2,17 +2,33 @@ import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
-import { Elements, CardElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
-import { approveLyric, createStripeCheckout, createStripePaymentIntent, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, type PedidoStatus } from "@/lib/order.functions";
+import { approveLyric, createStripeCheckout, createStripePaymentIntent, generateMusicPreview, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { z } from "zod";
 import QRCode from "qrcode";
 
 const searchSchema = z.object({ id: z.string().optional() });
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY ?? "");
+const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
 const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
+
+const formatPhone = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+};
+
+const formatCpf = (value: string) => {
+  const digits = value.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 3) return digits;
+  if (digits.length <= 6) return `${digits.slice(0, 3)}.${digits.slice(3)}`;
+  if (digits.length <= 9) return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6)}`;
+  return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
+};
 
 export const Route = createFileRoute("/acompanhar")({
   validateSearch: (s) => searchSchema.parse(s),
@@ -48,6 +64,7 @@ type Order = {
   stripe_session_id: string | null;
   stripe_payment_intent_id: string | null;
   stripe_payment_status: string | null;
+  cpf_cliente: string | null;
 };
 
 function TrackingPage() {
@@ -56,6 +73,7 @@ function TrackingPage() {
   const fetchHistory = useServerFn(getOrderStatusHistory);
   const createCheckout = useServerFn(createStripeCheckout);
   const createPaymentIntent = useServerFn(createStripePaymentIntent);
+  const updateCustomerInfo = useServerFn(updateCheckoutCustomerInfo);
   const generatePreviewFn = useServerFn(generateMusicPreview);
   const approveLyricFn = useServerFn(approveLyric);
   const requestRevisionFn = useServerFn(requestLyricRevision);
@@ -70,6 +88,7 @@ function TrackingPage() {
   const [paymentError, setPaymentError] = useState("");
   const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('card');
+  const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [videoOptionSelected, setVideoOptionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
@@ -145,6 +164,15 @@ function TrackingPage() {
     setCheckoutError("");
     setPaymentError("");
     setPaymentIntentClientSecret(null);
+
+    if (!stripePublishableKey) {
+      setCheckoutError("Stripe não configurado: faltando a variável VITE_STRIPE_PUBLISHABLE_KEY.");
+      return;
+    }
+
+    const saved = await saveCheckoutCustomerInfo();
+    if (!saved) return;
+
     setCheckoutLoading(true);
     try {
       const result = await createPaymentIntent({
@@ -169,6 +197,59 @@ function TrackingPage() {
       setSelectedStatus(order.status);
     }
   }, [order?.status]);
+
+  useEffect(() => {
+    if (!order) return;
+    setCheckoutCustomer({
+      email: order.email_cliente ?? "",
+      phone: order.telefone_cliente ?? "",
+      cpf: order.cpf_cliente ?? "",
+    });
+  }, [order?.id, order?.email_cliente, order?.telefone_cliente, order?.cpf_cliente]);
+
+  const saveCheckoutCustomerInfo = useCallback(async () => {
+    if (!order) return;
+
+    const email = checkoutCustomer.email.trim();
+    const phone = checkoutCustomer.phone.trim();
+    const cpf = checkoutCustomer.cpf.replace(/\D/g, "");
+
+    if (!email || !phone || !cpf) {
+      setCheckoutError("Preencha WhatsApp, e-mail e CPF antes de concluir o pagamento.");
+      return false;
+    }
+
+    const normalizedPhone = phone.replace(/\D/g, "");
+    const normalizedCpf = cpf.replace(/\D/g, "");
+
+    if (normalizedPhone.length < 10 || normalizedCpf.length < 11) {
+      setCheckoutError("WhatsApp e CPF precisam estar completos para continuar.");
+      return false;
+    }
+
+    try {
+      await updateCustomerInfo({
+        data: {
+          id: order.id,
+          email_cliente: email,
+          telefone_cliente: normalizedPhone,
+          cpf_cliente: normalizedCpf,
+        },
+      });
+
+      setOrder((current) => current ? {
+        ...current,
+        email_cliente: email,
+        telefone_cliente: normalizedPhone,
+        cpf_cliente: normalizedCpf,
+      } : current);
+
+      return true;
+    } catch (error) {
+      setCheckoutError(error instanceof Error ? error.message : "Não foi possível salvar os dados do cliente.");
+      return false;
+    }
+  }, [checkoutCustomer, order, updateCustomerInfo]);
 
   const handleGeneratePreview = async () => {
     if (!order) return;
@@ -750,7 +831,17 @@ function Timeline({
                       )}
                     {videoOptionSelected && (
                       <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
-                        Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99723-2395</strong>. Em seguida, confirme o envio pelo mesmo WhatsApp <strong>41 99723-2395</strong> e aguarde o vídeo ficar pronto.
+                        <p>Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99723-2395</strong> e aguarde a confirmação.</p>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <a
+                            href={PIX_PAYMENT_WA}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
+                          >
+                            Enviar fotos pelo WhatsApp
+                          </a>
+                        </div>
                       </div>
                     )}
                     </div>
@@ -770,9 +861,9 @@ function Timeline({
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
         <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>Checkout de pagamento</DialogTitle>
+            <DialogTitle>Finalize seu pagamento com segurança</DialogTitle>
             <DialogDescription>
-              Finalize seu pagamento para liberar a música. Se quiser, use o botão abaixo para abrir o checkout do Stripe.
+              Seu pedido está quase pronto. Complete os dados abaixo e finalize o pagamento com total segurança, sem sair da página.
             </DialogDescription>
           </DialogHeader>
 
@@ -795,11 +886,44 @@ function Timeline({
             </div>
 
             <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
-              <p className="text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
-              <p className="mt-2 text-sm text-slate-700">Conclua o pagamento diretamente aqui mesmo na página, sem sair do acompanhamento.</p>
+              <div className="space-y-4 rounded-[24px] border border-border bg-white/70 p-4">
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
+                  <input
+                    type="tel"
+                    value={checkoutCustomer.phone}
+                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                    placeholder="(41) 99999-9999"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
+                  <input
+                    type="email"
+                    value={checkoutCustomer.email}
+                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                    placeholder="seuemail@email.com"
+                  />
+                </div>
+                <div>
+                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
+                  <input
+                    type="text"
+                    value={checkoutCustomer.cpf}
+                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
+                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                    placeholder="000.000.000-00"
+                  />
+                </div>
+              </div>
+
+              <p className="mt-5 text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
+              <p className="mt-2 text-sm text-slate-700">Sua compra será processada com segurança e você ficará em uma experiência premium, sem sair do acompanhamento.</p>
               {paymentError && <p className="mt-3 text-sm text-destructive">{paymentError}</p>}
               <div className="mt-4">
-                {paymentIntentClientSecret ? (
+                {paymentIntentClientSecret && stripePromise ? (
                   <Elements stripe={stripePromise} options={{ clientSecret: paymentIntentClientSecret }}>
                     <StripeCardPaymentForm
                       order={order}
@@ -813,10 +937,14 @@ function Timeline({
                         setPaymentIntentClientSecret(null);
                         await refreshOrder();
                       }}
+                      customerEmail={checkoutCustomer.email}
+                      customerPhone={checkoutCustomer.phone}
                     />
                   </Elements>
                 ) : (
-                  <p className="text-sm text-slate-700">Preparando o checkout na página...</p>
+                  <p className="text-sm text-slate-700">
+                    {stripePublishableKey ? "Preparando o checkout na página..." : "Stripe não configurado. Adicione a variável VITE_STRIPE_PUBLISHABLE_KEY."}
+                  </p>
                 )}
               </div>
             </div>
@@ -911,6 +1039,8 @@ function StripeCardPaymentForm({
   onProcessingChange,
   onError,
   onSuccess,
+  customerEmail,
+  customerPhone,
 }: {
   order: Order;
   clientSecret: string;
@@ -919,70 +1049,148 @@ function StripeCardPaymentForm({
   onProcessingChange: (processing: boolean) => void;
   onError: (message: string) => void;
   onSuccess: () => Promise<void>;
+  customerEmail?: string;
+  customerPhone?: string;
 }) {
   const stripe = useStripe();
   const elements = useElements();
+  const [paymentType, setPaymentType] = useState<"credit" | "debit">("credit");
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (!stripe || !elements) {
-      onError("Stripe não está pronto ainda.");
+      onError("Stripe não está pronto ainda. Verifique se a chave pública está configurada corretamente.");
       return;
     }
 
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      onError("Não foi possível localizar o campo do cartão.");
+    const cardNumber = elements.getElement(CardNumberElement);
+    const cardExpiry = elements.getElement(CardExpiryElement);
+    const cardCvc = elements.getElement(CardCvcElement);
+
+    if (!cardNumber || !cardExpiry || !cardCvc) {
+      onError("Não foi possível localizar os campos do cartão.");
       return;
     }
 
     onError("");
     onProcessingChange(true);
 
-    const result = await stripe.confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: cardElement,
+    try {
+      const { paymentMethod, error: paymentMethodError } = await stripe.createPaymentMethod({
+        type: "card",
+        card: cardNumber,
         billing_details: {
           name: order.nome_cliente,
-          email: order.email_cliente ?? undefined,
-          phone: order.telefone_cliente ?? undefined,
+          email: customerEmail || order.email_cliente || undefined,
+          phone: customerPhone || order.telefone_cliente || undefined,
         },
-      },
-    });
+      });
 
-    if (result.error) {
-      onError(result.error.message ?? "Erro ao processar o pagamento.");
+      if (paymentMethodError || !paymentMethod) {
+        onError(paymentMethodError?.message ?? "Erro ao criar o método de pagamento.");
+        return;
+      }
+
+      const result = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: paymentMethod.id,
+      });
+
+      if (result.error) {
+        onError(result.error.message ?? "Erro ao processar o pagamento.");
+        return;
+      }
+
+      const paymentIntent = result.paymentIntent;
+      if (!paymentIntent || paymentIntent.status !== "succeeded") {
+        onError("O pagamento não foi concluído. Tente novamente.");
+        return;
+      }
+
+      await onSuccess();
+    } finally {
       onProcessingChange(false);
-      return;
     }
-
-    const paymentIntent = result.paymentIntent;
-    if (!paymentIntent || paymentIntent.status !== "succeeded") {
-      onError("O pagamento não foi concluído. Tente novamente.");
-      onProcessingChange(false);
-      return;
-    }
-
-    await onSuccess();
-    onProcessingChange(false);
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="rounded-2xl border border-border bg-white p-4">
         <label className="block text-sm font-semibold text-slate-900">Dados do cartão</label>
-        <div className="mt-4 rounded-2xl border border-border bg-background p-4">
-          <CardElement options={{
-            style: {
-              base: {
-                fontSize: "16px",
-                color: "#0f172a",
-                fontFamily: "Inter, sans-serif",
-                "::placeholder": { color: "#94a3b8" },
-              },
-              invalid: { color: "#f43f5e" },
-            },
-          }} />
+
+        <div className="mt-3 flex gap-2 rounded-2xl border border-border bg-background p-2">
+          <button
+            type="button"
+            onClick={() => setPaymentType("credit")}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${paymentType === "credit" ? "bg-[var(--gold)] text-primary" : "bg-transparent text-slate-600"}`}
+          >
+            Crédito
+          </button>
+          <button
+            type="button"
+            onClick={() => setPaymentType("debit")}
+            className={`flex-1 rounded-xl px-3 py-2 text-sm font-semibold transition ${paymentType === "debit" ? "bg-[var(--gold)] text-primary" : "bg-transparent text-slate-600"}`}
+          >
+            Débito
+          </button>
+        </div>
+
+        <p className="mt-3 text-xs text-slate-600">
+          {paymentType === "credit" ? "Pagamento com cartão de crédito." : "Pagamento com cartão de débito."}
+        </p>
+
+        <div className="mt-4 space-y-4 rounded-2xl border border-border bg-background p-4">
+          <div>
+            <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Número do cartão</label>
+            <div className="rounded-xl border border-border bg-white px-3 py-3">
+              <CardNumberElement options={{
+                style: {
+                  base: {
+                    fontSize: "16px",
+                    color: "#0f172a",
+                    fontFamily: "Inter, sans-serif",
+                    "::placeholder": { color: "#94a3b8" },
+                  },
+                  invalid: { color: "#f43f5e" },
+                },
+              }} />
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-500">Vencimento</label>
+              <div className="rounded-xl border border-border bg-white px-3 py-3">
+                <CardExpiryElement options={{
+                  style: {
+                    base: {
+                      fontSize: "16px",
+                      color: "#0f172a",
+                      fontFamily: "Inter, sans-serif",
+                      "::placeholder": { color: "#94a3b8" },
+                    },
+                    invalid: { color: "#f43f5e" },
+                  },
+                }} />
+              </div>
+            </div>
+
+            <div>
+              <label className="mb-2 block text-xs font-medium uppercase tracking-[0.12em] text-slate-500">CVC</label>
+              <div className="rounded-xl border border-border bg-white px-3 py-3">
+                <CardCvcElement options={{
+                  style: {
+                    base: {
+                      fontSize: "16px",
+                      color: "#0f172a",
+                      fontFamily: "Inter, sans-serif",
+                      "::placeholder": { color: "#94a3b8" },
+                    },
+                    invalid: { color: "#f43f5e" },
+                  },
+                }} />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 

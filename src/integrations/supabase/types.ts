@@ -20,6 +20,7 @@ export type Database = {
           descricao: string
           duracao_segundos: number | null
           email_cliente: string | null
+          cpf_cliente: string | null
           genero_musical: string | null
           id: string
           nome_cliente: string | null

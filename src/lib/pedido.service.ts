@@ -9,6 +9,7 @@ export type PedidoEntrada = {
   nome_cliente: string;
   email_cliente?: string | null;
   telefone_cliente?: string | null;
+  cpf_cliente?: string | null;
   para_quem: string;
   ocasiao: string;
   descricao: string;
@@ -22,6 +23,7 @@ export async function criarPedido(data: PedidoEntrada) {
     nome_cliente: data.nome_cliente,
     email_cliente: data.email_cliente ?? null,
     telefone_cliente: data.telefone_cliente ?? null,
+    cpf_cliente: data.cpf_cliente ?? null,
     descricao: data.descricao,
     genero_musical: data.genero_musical,
     duracao_segundos: data.duracao_segundos,
@@ -55,6 +57,33 @@ export async function criarPedido(data: PedidoEntrada) {
   });
 
   return inserted;
+}
+
+export async function atualizarDadosClientePedido(
+  pedidoId: string,
+  data: { email_cliente?: string | null; telefone_cliente?: string | null; cpf_cliente?: string | null },
+) {
+  const payload: Record<string, string | null> = {};
+
+  if (data.email_cliente !== undefined) payload.email_cliente = data.email_cliente?.trim() || null;
+  if (data.telefone_cliente !== undefined) payload.telefone_cliente = data.telefone_cliente?.trim() || null;
+  if (data.cpf_cliente !== undefined) payload.cpf_cliente = data.cpf_cliente?.replace(/\D/g, "") || null;
+
+  if (Object.keys(payload).length === 0) {
+    return { ok: true };
+  }
+
+  if (payload.telefone_cliente !== undefined) {
+    payload.whatsapp = payload.telefone_cliente;
+  }
+
+  const { error } = await supabaseAdmin.from("pedidos").update(payload as any).eq("id", pedidoId);
+
+  if (error) {
+    throw new Error(`Falha ao atualizar dados do cliente: ${error.message}`);
+  }
+
+  return { ok: true };
 }
 
 export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {

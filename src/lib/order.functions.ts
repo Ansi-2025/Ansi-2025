@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
+import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 
 const OrderSchema = z.object({
@@ -25,6 +25,16 @@ const OrderSchema = z.object({
       return value;
     },
     z.string().trim().max(30).optional().nullable(),
+  ),
+  cpf_cliente: z.preprocess(
+    (value) => {
+      if (typeof value === "string") {
+        const digits = value.replace(/\D/g, "");
+        return digits === "" ? undefined : digits;
+      }
+      return value;
+    },
+    z.string().trim().min(11).max(14).optional().nullable(),
   ),
   para_quem: z.string().trim().min(2).max(120),
   ocasiao: z.string().trim().min(2).max(120),
@@ -117,6 +127,25 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
     return refazerLetraPedido(data.id, data.feedback);
   });
 
+export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        email_cliente: z.string().trim().email().optional().nullable(),
+        telefone_cliente: z.string().trim().max(30).optional().nullable(),
+        cpf_cliente: z.string().trim().max(14).optional().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data }) => {
+    return atualizarDadosClientePedido(data.id, {
+      email_cliente: data.email_cliente,
+      telefone_cliente: data.telefone_cliente,
+      cpf_cliente: data.cpf_cliente,
+    });
+  });
+
 export const createStripeCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
@@ -157,7 +186,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, cpf_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -169,6 +198,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       nome_cliente: string;
       email_cliente: string;
       telefone_cliente: string;
+      cpf_cliente: string | null;
       genero_musical: string;
       duracao_segundos: number;
       descricao: string;

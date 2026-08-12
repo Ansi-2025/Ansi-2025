@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   Play,
@@ -50,6 +50,7 @@ export const Route = createFileRoute("/")({
 
 const CREATE_URL = "#pedido";
 const WHATSAPP_URL = "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
+const EXAMPLE_AUDIO_URL = "https://coivogokbzizhwfhywkp.supabase.co/storage/v1/object/public/musicas/Cancao%20de%20fe.mp3";
 const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
 const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
@@ -124,23 +125,59 @@ function Header() {
 
 /* ---------------- Hero ---------------- */
 function Hero() {
-  return (
-    <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
-      <div className="absolute inset-0 -z-10">
-        <img
-          src={heroImg}
-          alt="Família em oração ao pôr do sol"
-          width={1920}
-          height={1280}
-          className="h-full w-full object-cover opacity-80 animate-fade-in"
-        />
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.35),transparent_35%),linear-gradient(180deg,rgba(4,24,39,0.72)_0%,rgba(4,24,39,0.78)_30%,rgba(4,24,39,0.9)_100%)]" />
-        <div className="absolute inset-x-0 top-0 h-52 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.22),transparent_60%)]" />
-        <div className="absolute -left-12 top-12 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" />
-        <div className="absolute -right-12 top-20 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
-      </div>
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
-      <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.15;
+    audio.loop = true;
+    audio.muted = false;
+
+    const startPlayback = () => {
+      audio.play().catch(() => {
+        // Browser may block autoplay until the user interacts with the page.
+      });
+    };
+
+    startPlayback();
+  }, []);
+
+  const handleExampleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
+    event.preventDefault();
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    audio.volume = 0.15;
+    audio.currentTime = 0;
+    audio.play().catch(() => {
+      // Browser may require user interaction before audio playback.
+    });
+
+    const target = document.getElementById("exemplos");
+    target?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  return (
+    <>
+      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" autoPlay playsInline />
+      <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
+        <div className="absolute inset-0 -z-10">
+          <img
+            src={heroImg}
+            alt="Família em oração ao pôr do sol"
+            width={1920}
+            height={1280}
+            className="h-full w-full object-cover opacity-80 animate-fade-in"
+          />
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.35),transparent_35%),linear-gradient(180deg,rgba(4,24,39,0.72)_0%,rgba(4,24,39,0.78)_30%,rgba(4,24,39,0.9)_100%)]" />
+          <div className="absolute inset-x-0 top-0 h-52 bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.22),transparent_60%)]" />
+          <div className="absolute -left-12 top-12 h-64 w-64 rounded-full bg-sky-400/20 blur-3xl" />
+          <div className="absolute -right-12 top-20 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
+        </div>
+
+        <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
         <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
           <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
           Música Gospel Personalizada
@@ -170,6 +207,7 @@ function Hero() {
           </a>
           <a
             href="#exemplos"
+            onClick={handleExampleClick}
             className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
           >
             <Play className="h-4 w-4" /> Ouvir Exemplo
@@ -185,7 +223,8 @@ function Hero() {
           <Stat value="2h" label="Entrega média" />
         </div>
       </div>
-    </section>
+      </section>
+    </>
   );
 }
 
