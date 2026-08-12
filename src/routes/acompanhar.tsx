@@ -769,6 +769,25 @@ function Timeline({
                     </p>
                   </div>
 
+                  {videoOptionSelected && (
+                    <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
+                      <p className="font-semibold text-slate-900">Vídeo vertical com fotos pessoais</p>
+                      <p className="mt-2 leading-6">
+                        Para finalizar o vídeo vertical, envie 25 fotos para o WhatsApp do site. Depois que recebermos as imagens, seguimos com a edição e a produção do material.
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-3">
+                        <a
+                          href={PIX_PAYMENT_WA}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
+                        >
+                          Enviar 25 fotos no WhatsApp
+                        </a>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mt-4 rounded-[24px] border border-border bg-white/80 p-4 shadow-sm">
                     <div className="space-y-4">
                       <div>
@@ -891,21 +910,6 @@ function Timeline({
                           {checkoutMessages[checkoutMessageIndex]}
                         </div>
                       )}
-                    {videoOptionSelected && (
-                      <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
-                        <p>Para o vídeo vertical, envie 25 fotos pelo WhatsApp para o número <strong>41 99723-2395</strong> e aguarde a confirmação.</p>
-                        <div className="mt-3 flex flex-wrap gap-3">
-                          <a
-                            href={PIX_PAYMENT_WA}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
-                          >
-                            Enviar fotos pelo WhatsApp
-                          </a>
-                        </div>
-                      </div>
-                    )}
                     </div>
                   )}
                   {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
