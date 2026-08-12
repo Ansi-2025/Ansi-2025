@@ -4,6 +4,12 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 
+const orderIdSchema = z
+  .string()
+  .trim()
+  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "Código do pedido inválido.")
+  .transform((value) => value.trim());
+
 const OrderSchema = z.object({
   nome_cliente: z.string().trim().min(2).max(120),
   email_cliente: z.preprocess(
@@ -104,7 +110,7 @@ export const sendOrder = createServerFn({ method: "POST" })
   });
 
 export const approveLyric = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
   .handler(async ({ data }) => {
     return marcarLetraAprovada(data.id);
   });
@@ -113,7 +119,7 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        id: z.string().uuid(),
+        id: orderIdSchema,
         feedback: z
           .string()
           .trim()
@@ -131,7 +137,7 @@ export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        id: z.string().uuid(),
+        id: orderIdSchema,
         email_cliente: z.string().trim().email().optional().nullable(),
         telefone_cliente: z.string().trim().max(30).optional().nullable(),
         cpf_cliente: z.string().trim().max(14).optional().nullable(),
@@ -150,7 +156,7 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        id: z.string().uuid(),
+        id: orderIdSchema,
         secondVersion: z.boolean().optional(),
         videoOption: z.boolean().optional(),
       })
@@ -164,7 +170,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
       .object({
-        id: z.string().uuid(),
+        id: orderIdSchema,
         secondVersion: z.boolean().optional(),
         videoOption: z.boolean().optional(),
       })
@@ -175,13 +181,13 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
   });
 
 export const generateMusicPreview = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
   .handler(async ({ data }) => {
     return gerarMusicaPreview(data.id);
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
   .handler(async ({ data }) => {
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
@@ -221,7 +227,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
   });
 
 export const getOrderStatusHistory = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
   .handler(async ({ data }) => {
     const { data: rows, error } = await supabaseAdmin
       .from("status_history")

@@ -110,14 +110,23 @@ function Header() {
           <a href="#exemplos" className="transition-colors hover:text-white">Exemplos</a>
           <a href="#ocasioes" className="transition-colors hover:text-white">Ocasiões</a>
           <a href="#faq" className="transition-colors hover:text-white">Perguntas</a>
+          <a href="/acompanhar" className="transition-colors hover:text-white">Acompanhar Pedido</a>
         </nav>
-        <a
-          href={CREATE_URL}
-          style={GRADIENT_GOLD}
-          className="hidden md:inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
-        >
-          <Sparkles className="h-4 w-4" /> Criar Minha Música
-        </a>
+        <div className="hidden items-center gap-3 md:flex">
+          <a
+            href="/acompanhar"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+          >
+            <Music className="h-4 w-4" /> Acompanhar Pedido
+          </a>
+          <a
+            href={CREATE_URL}
+            style={GRADIENT_GOLD}
+            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+          >
+            <Sparkles className="h-4 w-4" /> Criar Minha Música
+          </a>
+        </div>
       </div>
     </header>
   );
@@ -226,6 +235,12 @@ function Hero() {
             className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
           >
             <Sparkles className="h-4 w-4" /> Criar Minha Música
+          </a>
+          <a
+            href="/acompanhar"
+            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+          >
+            <Music className="h-4 w-4" /> Acompanhar Pedido
           </a>
           <div className="flex items-center gap-3">
             <a

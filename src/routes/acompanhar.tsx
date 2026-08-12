@@ -31,6 +31,8 @@ const formatCpf = (value: string) => {
   return `${digits.slice(0, 3)}.${digits.slice(3, 6)}.${digits.slice(6, 9)}-${digits.slice(9)}`;
 };
 
+const isValidOrderId = (value: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(value.trim());
+
 export const Route = createFileRoute("/acompanhar")({
   validateSearch: (s) => searchSchema.parse(s),
   head: () => ({
@@ -110,7 +112,21 @@ function TrackingPage() {
   ];
 
   const search = useCallback(async (orderId: string, options?: { preserveExisting?: boolean }) => {
+    const trimmedId = orderId.trim();
     const preserveExisting = options?.preserveExisting ?? false;
+
+    if (!trimmedId) {
+      setErr("Informe o código do pedido.");
+      return;
+    }
+
+    if (!isValidOrderId(trimmedId)) {
+      setErr("Código do pedido inválido. Verifique o código e tente novamente.");
+      setOrder(null);
+      setHistory([]);
+      return;
+    }
+
     if (!preserveExisting) {
       setLoading(true);
       setErr("");
@@ -121,13 +137,13 @@ function TrackingPage() {
     }
 
     try {
-      const row = (await fetchStatus({ data: { id: orderId.trim() } })) as unknown as Order;
+      const row = (await fetchStatus({ data: { id: trimmedId } })) as unknown as Order;
       setOrder(row);
       setCheckoutUrl(row.stripe_checkout_url ?? null);
-      const hist = await fetchHistory({ data: { id: orderId.trim() } });
+      const hist = await fetchHistory({ data: { id: trimmedId } });
       setHistory(hist);
     } catch (e) {
-      setErr(e instanceof Error ? e.message : "Erro");
+      setErr(e instanceof Error ? e.message : "Erro ao buscar o pedido.");
     } finally {
       if (!preserveExisting) {
         setLoading(false);
