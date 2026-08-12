@@ -411,6 +411,8 @@ function TrackingPage() {
             onSelectStatus={setSelectedStatus}
             historyOpen={historyOpen}
             setHistoryOpen={setHistoryOpen}
+            checkoutCustomer={checkoutCustomer}
+            setCheckoutCustomer={setCheckoutCustomer}
             key={order.id + order.status}
           />
         )}
@@ -485,6 +487,8 @@ function Timeline({
   onSelectStatus,
   historyOpen,
   setHistoryOpen,
+  checkoutCustomer,
+  setCheckoutCustomer,
 }: {
   order: Order;
   history: Array<any>;
@@ -518,6 +522,8 @@ function Timeline({
   onSelectStatus: Dispatch<SetStateAction<PedidoStatus | null>>;
   historyOpen: boolean;
   setHistoryOpen: Dispatch<SetStateAction<boolean>>;
+  checkoutCustomer: { email: string; phone: string; cpf: string };
+  setCheckoutCustomer: Dispatch<SetStateAction<{ email: string; phone: string; cpf: string }>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
