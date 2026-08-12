@@ -637,15 +637,6 @@ function Timeline({
                 </div>
               </button>
 
-              {isSelected && excerpt && step === "aguardando_aprovacao_letra" && (
-                <div className="mt-3 rounded-2xl border border-border bg-background/70 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Letra selecionada</p>
-                  <div className="mt-3 whitespace-pre-wrap text-sm leading-7 text-foreground/90">
-                    {excerpt}
-                  </div>
-                </div>
-              )}
-
               {isCurrent && step === "aguardando_aprovacao_letra" && (
                 <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra está pronta</p>
