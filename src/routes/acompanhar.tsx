@@ -769,6 +769,41 @@ function Timeline({
                     </p>
                   </div>
 
+                  <div className="mt-4 rounded-[24px] border border-border bg-white/80 p-4 shadow-sm">
+                    <div className="space-y-4">
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
+                        <input
+                          type="tel"
+                          value={checkoutCustomer.phone}
+                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                          placeholder="(41) 99999-9999"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
+                        <input
+                          type="email"
+                          value={checkoutCustomer.email}
+                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                          placeholder="seuemail@email.com"
+                        />
+                      </div>
+                      <div>
+                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
+                        <input
+                          type="text"
+                          value={checkoutCustomer.cpf}
+                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                          placeholder="000.000.000-00"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="mt-4 flex flex-wrap gap-3">
                     <button
                       type="button"
@@ -913,39 +948,6 @@ function Timeline({
             </div>
 
             <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
-              <div className="space-y-4 rounded-[24px] border border-border bg-white/70 p-4">
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
-                  <input
-                    type="tel"
-                    value={checkoutCustomer.phone}
-                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                    placeholder="(41) 99999-9999"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
-                  <input
-                    type="email"
-                    value={checkoutCustomer.email}
-                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                    placeholder="seuemail@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
-                  <input
-                    type="text"
-                    value={checkoutCustomer.cpf}
-                    onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                    placeholder="000.000.000-00"
-                  />
-                </div>
-              </div>
-
               <p className="mt-5 text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
               <p className="mt-2 text-sm text-slate-700">Sua compra será processada com segurança e você ficará em uma experiência premium, sem sair do acompanhamento.</p>
               {paymentError && <p className="mt-3 text-sm text-destructive">{paymentError}</p>}
