@@ -286,8 +286,43 @@ export async function handleStripeWebhook(request: Request) {
     event.type === "payment_intent.payment_failed" ||
     ["failed", "canceled", "incomplete", "expired"].includes(paymentStatus);
 
-  if (!pedidoId) {
-    console.warn("Stripe webhook missing pedido_id metadata", event.type);
+  let resolvedPedidoId = pedidoId;
+
+  if (!resolvedPedidoId && (sessionId || paymentIntentId)) {
+    const lookupCandidates: Array<["stripe_session_id" | "stripe_payment_intent_id", string]> = [];
+
+    if (sessionId) {
+      lookupCandidates.push(["stripe_session_id", sessionId]);
+    }
+
+    if (paymentIntentId) {
+      lookupCandidates.push(["stripe_payment_intent_id", paymentIntentId]);
+    }
+
+    for (const [field, value] of lookupCandidates) {
+      const { data: matchingPedido, error: lookupError } = await supabaseAdmin
+        .from("pedidos")
+        .select("id")
+        .eq(field, value)
+        .maybeSingle();
+
+      if (lookupError) {
+        throw new Error(`Falha ao localizar pedido por ${field}: ${lookupError.message}`);
+      }
+
+      if (matchingPedido) {
+        resolvedPedidoId = matchingPedido.id;
+        break;
+      }
+    }
+  }
+
+  if (!resolvedPedidoId) {
+    console.warn("Stripe webhook missing pedido_id metadata and no Stripe session/payment intent match", {
+      eventType: event.type,
+      sessionId,
+      paymentIntentId,
+    });
     return new Response(JSON.stringify({ ok: true, message: "Missing pedido_id" }), {
       status: 200,
       headers: { "content-type": "application/json" },
@@ -298,7 +333,7 @@ export async function handleStripeWebhook(request: Request) {
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from("pedidos")
       .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, suno_task_id, letra_gerada")
-      .eq("id", pedidoId)
+      .eq("id", resolvedPedidoId)
       .maybeSingle();
 
     if (pedidoError) {
@@ -306,7 +341,7 @@ export async function handleStripeWebhook(request: Request) {
     }
 
     if (!pedido) {
-      console.warn("Stripe webhook did not find order", pedidoId);
+      console.warn("Stripe webhook did not find order", resolvedPedidoId);
       return new Response(JSON.stringify({ ok: true, message: "No matching order found" }), {
         status: 200,
         headers: { "content-type": "application/json" },
