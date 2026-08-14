@@ -501,7 +501,7 @@ function Timeline({
   }, [order.id, currentIdx]);
 
   useEffect(() => {
-    if (!paymentProcessing && order.status !== "pagamento") {
+    if (!paymentProcessing) {
       setCheckoutMessageIndex(0);
       return;
     }
@@ -511,7 +511,7 @@ function Timeline({
     }, 4200);
 
     return () => clearInterval(interval);
-  }, [paymentProcessing, order.status, paymentMessages.length]);
+  }, [paymentProcessing, paymentMessages.length]);
 
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
 
@@ -790,7 +790,7 @@ function Timeline({
 
                         <p className="mt-3 text-center text-sm text-[var(--dark-brown)]">Você será redirecionado para o ambiente seguro do Stripe.</p>
 
-                        {(paymentProcessing || order.status === "pagamento") && (
+                        {paymentProcessing && (
                           <div className="mt-4 flex items-center gap-3 rounded-[18px] border border-[#d7b64d] bg-[#f7d863] p-4 text-sm text-[#1a1400] shadow-[0_10px_26px_rgba(245,199,29,0.18)]">
                             <span className="grid h-7 w-7 place-items-center rounded-full border border-[#8b6300] bg-[#f3c93d] text-[#1a1400]">
                               <Loader2 className="h-4 w-4 animate-spin" />
@@ -835,7 +835,7 @@ function Timeline({
                 <button
                   type="button"
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
-                  className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a5f00] bg-[#d7a40d] text-[#1a1400] shadow-[0_8px_20px_rgba(215,164,13,0.25)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
+                  className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
                   <span>Quero a segunda versão</span>
                   <span>+R$ 9,90</span>
