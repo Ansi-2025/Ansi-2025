@@ -338,13 +338,6 @@ function TrackingPage() {
         </div>
 
         {order && (
-          <div className="w-full max-w-3xl rounded-3xl border border-border bg-white/80 p-4 shadow-[var(--shadow-soft)] transition-all duration-300 md:px-6 md:py-5">
-            <p className="text-sm font-medium text-primary">{autoRefreshMessages[autoRefreshMessageIndex]}</p>
-            <p className="mt-2 text-xs text-muted-foreground">Atualização automática a cada 5 segundos para manter o status do pedido e pagamento sincronizados.</p>
-          </div>
-        )}
-
-        {order && (
           <Timeline
             order={order}
             history={history}
@@ -715,7 +708,7 @@ function Timeline({
               )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
                 <div className="mt-3">
-                  <div className="grid gap-5 xl:grid-cols-[1.6fr_0.95fr]">
+                  <div className="grid gap-5 xl:grid-cols-1">
                     <div className="space-y-5">
                       <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-5 flex items-center gap-3">
@@ -774,12 +767,12 @@ function Timeline({
                           </div>
                         </div>
 
-                        <div className="mb-4 rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-4 text-sm text-primary">
+                        <div className="mb-4 rounded-[20px] border border-[#d7b64d] bg-[#f5e8b3] p-4 text-sm text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
                           <div className="flex items-start gap-3">
-                            <span className="mt-0.5 grid h-6 w-6 place-items-center rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]">✓</span>
+                            <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#bb8b00] bg-[#f9d34d] text-sm font-black text-primary">✓</span>
                             <div>
-                              <p className="font-semibold">Pagamento seguro</p>
-                              <p className="mt-1 text-muted-foreground">
+                              <p className="text-[1.05rem] font-bold">Pagamento seguro</p>
+                              <p className="mt-1 text-[0.98rem] leading-relaxed text-[#4b3d11]">
                                 Processado pelo Stripe, plataforma de pagamentos mais segura do mundo. Seus dados financeiros nunca são armazenados em nosso sistema.
                               </p>
                             </div>
@@ -790,17 +783,19 @@ function Timeline({
                           type="button"
                           onClick={() => void openStripeCheckout(secondVersionSelected)}
                           disabled={checkoutLoading}
-                          className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.1rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
+                          className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.05rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
                         >
                           {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Realizar Pagamento"}
                         </button>
 
-                        <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para o ambiente seguro do Stripe.</p>
+                        <p className="mt-3 text-center text-sm text-[var(--dark-brown)]">Você será redirecionado para o ambiente seguro do Stripe.</p>
 
                         {(paymentProcessing || order.status === "pagamento") && (
-                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d6a61e] bg-[#f8df7d] p-4 text-sm text-[#1a1400] shadow-[0_8px_22px_rgba(245,199,29,0.18)]">
-                            <Loader2 className="h-4 w-4 animate-spin text-[#1a1400]" />
-                            <span className="font-bold">{paymentMessages[checkoutMessageIndex]}</span>
+                          <div className="mt-4 flex items-center gap-3 rounded-[18px] border border-[#d7b64d] bg-[#f7d863] p-4 text-sm text-[#1a1400] shadow-[0_10px_26px_rgba(245,199,29,0.18)]">
+                            <span className="grid h-7 w-7 place-items-center rounded-full border border-[#8b6300] bg-[#f3c93d] text-[#1a1400]">
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            </span>
+                            <span className="text-[1.02rem] font-bold leading-relaxed">{paymentMessages[checkoutMessageIndex]}</span>
                           </div>
                         )}
 
