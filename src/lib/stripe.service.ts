@@ -202,6 +202,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
   const { data: updatedPedido, error: updateError } = await supabaseAdmin
     .from("pedidos")
     .update({
+      stripe_session_id: pedido.stripe_session_id ?? paymentIntent.id,
       stripe_payment_intent_id: paymentIntent.id,
       stripe_payment_status: paymentIntent.status,
       segunda_versao: secondVersion,
