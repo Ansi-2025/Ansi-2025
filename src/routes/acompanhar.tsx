@@ -877,6 +877,7 @@ function Timeline({
                       processing={paymentProcessing}
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}
+                      onSetPaymentConfirmed={setPaymentConfirmed}
                       onSuccess={async () => {
                         setPaymentConfirmed(true);
                         await refreshOrder();
@@ -986,6 +987,7 @@ function StripeCardPaymentForm({
   processing,
   onProcessingChange,
   onError,
+  onSetPaymentConfirmed,
   onSuccess,
   customerEmail,
   customerPhone,
@@ -996,6 +998,7 @@ function StripeCardPaymentForm({
   processing: boolean;
   onProcessingChange: (processing: boolean) => void;
   onError: (message: string) => void;
+  onSetPaymentConfirmed: (value: boolean) => void;
   onSuccess: () => Promise<void>;
   customerEmail?: string;
   customerPhone?: string;
