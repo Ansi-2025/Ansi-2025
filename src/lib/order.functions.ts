@@ -154,12 +154,11 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
       .object({
         id: orderIdSchema,
         secondVersion: z.boolean().optional(),
-        videoOption: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    return criarCheckoutStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
+    return criarCheckoutStripe(data.id, data.secondVersion ?? false);
   });
 
 export const createStripePaymentIntent = createServerFn({ method: "POST" })
@@ -168,12 +167,11 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
       .object({
         id: orderIdSchema,
         secondVersion: z.boolean().optional(),
-        videoOption: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
-    return criarPaymentIntentStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
+    return criarPaymentIntentStripe(data.id, data.secondVersion ?? false);
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })

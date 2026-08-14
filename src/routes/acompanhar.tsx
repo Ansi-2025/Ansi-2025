@@ -90,10 +90,9 @@ function TrackingPage() {
   const [checkoutError, setCheckoutError] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'whatsapp'>('card');
   const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
-  const [videoOptionSelected, setVideoOptionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
@@ -171,10 +170,7 @@ function TrackingPage() {
     return () => clearInterval(interval);
   }, [order?.id, refreshOrder]);
 
-  const openStripeCheckout = async (
-    withSecondVersion = secondVersionSelected,
-    withVideoOption = videoOptionSelected,
-  ) => {
+  const openStripeCheckout = async (withSecondVersion = secondVersionSelected) => {
     if (!order) return;
     setCheckoutError("");
     setPaymentError("");
@@ -194,7 +190,6 @@ function TrackingPage() {
         data: {
           id: order.id,
           secondVersion: withSecondVersion,
-          videoOption: withVideoOption,
         },
       });
       setPaymentIntentClientSecret(result.clientSecret);
@@ -215,12 +210,13 @@ function TrackingPage() {
 
   useEffect(() => {
     if (!order) return;
+    setSecondVersionSelected(Boolean(order.segunda_versao));
     setCheckoutCustomer({
       email: order.email_cliente ?? "",
       phone: order.telefone_cliente ?? "",
       cpf: order.cpf_cliente ?? "",
     });
-  }, [order?.id, order?.email_cliente, order?.telefone_cliente, order?.cpf_cliente]);
+  }, [order?.id, order?.email_cliente, order?.telefone_cliente, order?.cpf_cliente, order?.segunda_versao]);
 
   const saveCheckoutCustomerInfo = useCallback(async () => {
     if (!order) return;
@@ -273,7 +269,7 @@ function TrackingPage() {
     try {
       await approveLyricFn({ data: { id: order.id } });
       if (paymentMethod === "card") {
-        await openStripeCheckout(false, videoOptionSelected);
+        await openStripeCheckout(false);
       }
       await search(order.id);
     } catch (error) {
@@ -371,8 +367,6 @@ function TrackingPage() {
             handleApproveLyric={handleApproveLyric}
             handleRequestRevision={handleRequestRevision}
             openStripeCheckout={openStripeCheckout}
-            videoOptionSelected={videoOptionSelected}
-            setVideoOptionSelected={setVideoOptionSelected}
             checkoutDialogOpen={checkoutDialogOpen}
             setCheckoutDialogOpen={setCheckoutDialogOpen}
             selectedStatus={selectedStatus}
@@ -437,8 +431,6 @@ function Timeline({
   handleApproveLyric,
   handleRequestRevision,
   openStripeCheckout,
-  videoOptionSelected,
-  setVideoOptionSelected,
   checkoutDialogOpen,
   setCheckoutDialogOpen,
   paymentError,
@@ -466,9 +458,7 @@ function Timeline({
   setSecondVersionSelected: Dispatch<SetStateAction<boolean>>;
   handleApproveLyric: () => Promise<void>;
   handleRequestRevision: (feedback?: string) => Promise<void>;
-  openStripeCheckout: (withSecondVersion?: boolean, withVideoOption?: boolean) => Promise<void>;
-  videoOptionSelected: boolean;
-  setVideoOptionSelected: Dispatch<SetStateAction<boolean>>;
+  openStripeCheckout: (withSecondVersion?: boolean) => Promise<void>;
   checkoutDialogOpen: boolean;
   setCheckoutDialogOpen: Dispatch<SetStateAction<boolean>>;
   paymentError: string;
@@ -478,8 +468,8 @@ function Timeline({
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
   refreshOrder: () => Promise<void>;
-  paymentMethod: "pix" | "card";
-  setPaymentMethod: Dispatch<SetStateAction<"pix" | "card">>;
+  paymentMethod: "pix" | "card" | "whatsapp";
+  setPaymentMethod: Dispatch<SetStateAction<"pix" | "card" | "whatsapp">>;
   selectedStatus: PedidoStatus | null;
   onSelectStatus: Dispatch<SetStateAction<PedidoStatus | null>>;
   historyOpen: boolean;
@@ -489,11 +479,11 @@ function Timeline({
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
-  const checkoutMessages = [
-    "Estamos validando seu pagamento com cuidado...",
-    "Quase lá! Configurando o checkout para você...",
-    "Seu pedido está sendo preparado para a finalização segura...",
-    "Aguarde só um instante, estamos confirmando os detalhes...",
+  const paymentMessages = [
+    "Estamos confirmando seu pagamento...",
+    "Fique calma, estamos quase lá...",
+    "Seu pedido está sendo validado com segurança...",
+    "Obrigado por sua compra! Estamos finalizando tudo com carinho...",
   ];
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
@@ -515,17 +505,17 @@ function Timeline({
   }, [order.id, currentIdx]);
 
   useEffect(() => {
-    if (!checkoutLoading) {
+    if (!checkoutLoading && order.status !== "pagamento") {
       setCheckoutMessageIndex(0);
       return;
     }
 
     const interval = setInterval(() => {
-      setCheckoutMessageIndex((prev) => (prev + 1) % checkoutMessages.length);
-    }, 2800);
+      setCheckoutMessageIndex((prev) => (prev + 1) % paymentMessages.length);
+    }, 2500);
 
     return () => clearInterval(interval);
-  }, [checkoutLoading, checkoutMessages.length]);
+  }, [checkoutLoading, order.status, paymentMessages.length]);
 
   return (
     <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
@@ -540,6 +530,13 @@ function Timeline({
             {order.segunda_versao ? "2 versões incluídas" : "1 versão"}
           </span>
         </div>
+
+        {order.status === "pago" && (
+          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+            <p className="font-semibold">Obrigado pela sua compra! 💛</p>
+            <p className="mt-1">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
+          </div>
+        )}
         {(order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta") && (order.url_musica || order.url_musica_segunda_versao) && (
           <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
             <p className="font-semibold text-destructive">Atenção:</p>
@@ -711,185 +708,236 @@ function Timeline({
                 </div>
               )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
-                <div className="mt-3 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Pagamento necessário</p>
-                  <p className="text-sm text-muted-foreground">
-                    O próximo passo é validar o pagamento para liberar a produção da música final com a sua letra aprovada.
-                  </p>
-                  <p className="mt-2 text-sm text-muted-foreground">
-                    A música é produzida somente após a confirmação do pagamento. Se você desejar uma nova versão com a mesma história, mas com letra diferente, esse serviço pode ser feito por R$ 9,90.
-                  </p>
+                <div className="mt-3">
+                  <div className="grid gap-5 xl:grid-cols-[1.7fr_0.9fr]">
+                    <div className="space-y-5">
+                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <div className="mb-5 flex items-center gap-3">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">1</span>
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
+                            <h3 className="font-display text-xl font-semibold text-primary">Seus dados</h3>
+                          </div>
+                        </div>
 
-                  <div className="mt-4 rounded-3xl border-2 border-emerald-300 bg-emerald-50 p-5 shadow-[0_10px_30px_rgba(16,185,129,0.12)]">
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <button
-                        type="button"
-                        onClick={() => setSecondVersionSelected((prev) => !prev)}
-                        className={`inline-flex items-center justify-center rounded-full border px-4 py-3 text-sm font-semibold transition ${secondVersionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-foreground hover:border-[var(--gold)]"}`}
-                      >
-                        {secondVersionSelected ? "Remover segunda versão" : "Quero a segunda versão +R$ 9,90"}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setVideoOptionSelected((prev) => !prev)}
-                        className={`inline-flex items-center justify-center rounded-full border px-4 py-3 text-sm font-semibold transition ${videoOptionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-foreground hover:border-[var(--gold)]"}`}
-                      >
-                        {videoOptionSelected ? "Remover vídeo vertical" : "Vídeo vertical por +R$ 49,90"}
-                      </button>
-                    </div>
-                    <p className="mt-4 text-base font-bold tracking-tight text-emerald-950">
-                      Total do checkout:
-                      <strong className="ml-3 text-4xl text-emerald-900">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</strong>
-                    </p>
-                    <p className="mt-2 text-sm text-emerald-700">
-                      Valor final inclui a letra aprovada mais as opções escolhidas. O pagamento será processado no checkout abaixo.
-                    </p>
-                  </div>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
+                            <input
+                              type="tel"
+                              value={checkoutCustomer.phone}
+                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
+                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                              placeholder="(41) 99999-9999"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
+                            <input
+                              type="email"
+                              value={checkoutCustomer.email}
+                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
+                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                              placeholder="seuemail@email.com"
+                            />
+                          </div>
+                          <div>
+                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
+                            <input
+                              type="text"
+                              value={checkoutCustomer.cpf}
+                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
+                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
+                              placeholder="000.000.000-00"
+                            />
+                          </div>
+                        </div>
 
-                  {videoOptionSelected && (
-                    <div className="mt-4 rounded-2xl border border-dashed border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-slate-700">
-                      <p className="font-semibold text-slate-900">Vídeo vertical com fotos pessoais</p>
-                      <p className="mt-2 leading-6">
-                        Para finalizar o vídeo vertical, envie 25 fotos para o WhatsApp do site. Depois que recebermos as imagens, seguimos com a edição e a produção do material.
-                      </p>
-                      <div className="mt-3 flex flex-wrap gap-3">
-                        <a
-                          href={PIX_PAYMENT_WA}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-4 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
-                        >
-                          Enviar 25 fotos no WhatsApp
-                        </a>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mt-4 rounded-[24px] border border-border bg-white/80 p-4 shadow-sm">
-                    <div className="space-y-4">
-                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
-                        <input
-                          type="tel"
-                          value={checkoutCustomer.phone}
-                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                          placeholder="(41) 99999-9999"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
-                        <input
-                          type="email"
-                          value={checkoutCustomer.email}
-                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                          placeholder="seuemail@email.com"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
-                        <input
-                          type="text"
-                          value={checkoutCustomer.cpf}
-                          onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
-                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                          placeholder="000.000.000-00"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="mt-4 flex flex-wrap gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-background text-foreground hover:border-[var(--gold)] hover:text-[var(--gold)]"}`}
-                    >
-                      Pagar com cartão
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("pix")}
-                      className={`inline-flex items-center justify-center rounded-full border px-5 py-3 text-sm font-semibold transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-background text-foreground hover:border-[var(--gold)] hover:text-[var(--gold)]"}`}
-                    >
-                      Pagar por Pix
-                    </button>
-                  </div>
-
-                  {paymentMethod === "pix" ? (
-                    <div className="mt-4 rounded-[28px] border border-white/10 bg-[#1d1f22] p-6 text-white shadow-[0_18px_40px_rgba(14,18,22,0.45)]">
-                      <div className="flex justify-center">
-                        <div className="text-center text-[28px] font-black tracking-[-0.06em] text-[var(--gold)]">Inter</div>
-                      </div>
-                      <div className="mt-3 text-center text-3xl font-bold tracking-[-0.04em] text-white">Pix</div>
-                      <p className="mt-3 text-center text-sm text-white/70">Informe o valor quando for pagar</p>
-
-                      <div className="mt-5 border-t border-dashed border-white/20" />
-
-                      <div className="mt-5 flex justify-center">
-                        <div className="rounded-2xl bg-white p-3 shadow-inner">
-                          <QRCodeImage value={PIX_PAYMENT_CODE} />
+                        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">✓</span>
+                          <span>Utilizamos criptografia e não compartilhamos suas informações.</span>
                         </div>
                       </div>
 
-                      <div className="mt-5 border-t border-dashed border-white/20" />
+                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <div className="mb-5 flex items-center gap-3">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">2</span>
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
+                            <h3 className="font-display text-xl font-semibold text-primary">Escolha a forma de pagamento</h3>
+                          </div>
+                        </div>
 
-                      <div className="mt-5">
-                        <p className="text-2xl font-bold tracking-[-0.04em] text-white">Sobre o QR Code</p>
+                        <div className="space-y-3">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("card")}
+                            className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)]/10 shadow-[0_10px_25px_rgba(244,198,71,0.12)]" : "border-border bg-background hover:border-[var(--gold)]/60"}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)]" : "border-slate-300 bg-white"}`}>
+                                {paymentMethod === "card" && <span className="h-2 w-2 rounded-full bg-primary" />}
+                              </span>
+                              <div>
+                                <p className="text-base font-semibold text-primary">Cartão de crédito</p>
+                                <p className="text-xs text-muted-foreground">Visa, Mastercard, Elo, Hipercard e mais</p>
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="rounded-sm bg-[#1a1f71] px-1.5 py-1 text-[10px] font-bold text-white">VISA</span>
+                              <span className="rounded-sm bg-[#eb001b] px-1.5 py-1 text-[10px] font-bold text-white">MC</span>
+                              <span className="rounded-sm bg-[#ff5b2e] px-1.5 py-1 text-[10px] font-bold text-white">Elo</span>
+                            </div>
+                          </button>
 
-                        <div className="mt-5 space-y-4 text-sm text-white/80">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("pix")}
+                            className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)]/10 shadow-[0_10px_25px_rgba(244,198,71,0.12)]" : "border-border bg-background hover:border-[var(--gold)]/60"}`}
+                          >
+                            <div className="flex items-center gap-3">
+                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)]" : "border-slate-300 bg-white"}`}>
+                                {paymentMethod === "pix" && <span className="h-2 w-2 rounded-full bg-primary" />}
+                              </span>
+                              <div>
+                                <p className="text-base font-semibold text-primary">Pix</p>
+                                <p className="text-xs text-muted-foreground">Pagamento instantâneo</p>
+                              </div>
+                            </div>
+                            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">5% OFF</span>
+                          </button>
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-4 text-sm text-primary">
+                          <div className="flex items-start gap-3">
+                            <span className="mt-0.5 grid h-6 w-6 place-items-center rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]">✓</span>
+                            <div>
+                              <p className="font-semibold">Pagamento seguro</p>
+                              <p className="mt-1 text-muted-foreground">
+                                Processado pelo Stripe, plataforma de pagamentos mais segura do mundo. Seus dados financeiros nunca são armazenados em nosso sistema.
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <div className="mb-4 flex items-center gap-3">
+                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">3</span>
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
+                            <h3 className="font-display text-xl font-semibold text-primary">Finalizar pagamento</h3>
+                          </div>
+                        </div>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (paymentMethod === "pix") {
+                              setCheckoutDialogOpen(false);
+                              return;
+                            }
+                            void openStripeCheckout(secondVersionSelected);
+                          }}
+                          disabled={checkoutLoading}
+                          className="w-full rounded-2xl bg-[var(--gold)] px-5 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                        >
+                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Finalizar pagamento"}
+                        </button>
+
+                        <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para a ambiente seguro do Stripe.</p>
+
+                        {paymentMethod === "pix" && (
+                          <div className="mt-4 rounded-[22px] border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
+                            <p className="font-semibold">Pagamento via Pix</p>
+                            <p className="mt-1">Seu pedido será validado após o envio do comprovante.</p>
+                          </div>
+                        )}
+
+                        {(checkoutLoading || order.status === "pagamento") && (
+                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-[var(--gold)]">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            {paymentMessages[checkoutMessageIndex]}
+                          </div>
+                        )}
+
+                        {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
+                      </div>
+                    </div>
+
+                    <aside className="space-y-5">
+                      <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <div className="mb-4 flex items-center gap-3">
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/10 text-[var(--gold)]">
+                            <span className="text-lg">♪</span>
+                          </span>
+                          <div>
+                            <p className="font-display text-2xl font-semibold text-primary">Resumo do pedido</p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-3 rounded-2xl border border-border bg-[var(--soft-gray)] p-3">
+                          <div className="h-16 w-16 rounded-2xl bg-[radial-gradient(circle_at_top,_#7c5cff,_#171f2d_70%)]" />
+                          <div className="flex-1">
+                            <p className="font-semibold text-primary">Música Personalizada</p>
+                            <p className="text-sm text-muted-foreground">Letra aprovada</p>
+                          </div>
+                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">Aprovada</span>
+                        </div>
+
+                        <div className="mt-4 space-y-3 text-sm text-slate-700">
                           <div className="flex items-center justify-between gap-4">
-                            <span className="text-white/70">Nome</span>
-                            <span className="text-right font-semibold text-white">Canção de Fé</span>
+                            <span>Música personalizada</span>
+                            <span>R$ 19,90</span>
                           </div>
-                          <div className="flex items-center justify-between gap-4 break-all">
-                            <span className="text-white/70">Chave Pix</span>
-                            <span className="text-right font-semibold text-white">{PIX_PAYMENT_CODE}</span>
+                          {secondVersionSelected && (
+                            <div className="flex items-center justify-between gap-4">
+                              <span>Segunda versão da música</span>
+                              <span>+ R$ 9,90</span>
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="mt-4 border-t border-border pt-4">
+                          <div className="flex items-center justify-between gap-4 text-lg font-bold text-primary">
+                            <span>Total</span>
+                            <span>R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</span>
                           </div>
                         </div>
 
-                        <div className="mt-5 flex flex-wrap items-center gap-3">
-                          <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-900">
+                          Valor final inclui a letra aprovada e as opções selecionadas.
                         </div>
-
-                        <p className="mt-5 text-sm text-white/70">
-                          Depois do pagamento, envie o comprovante para o WhatsApp <a href={PIX_PAYMENT_WA} target="_blank" rel="noreferrer" className="font-semibold text-[var(--gold)]">41 99723-2395</a>.
-                        </p>
-                        <p className="mt-2 text-sm text-white/70">
-                          O responsável pelo projeto é o Anderson, então fique tranquilo: ele vai confirmar o pagamento e seguir com sua música com segurança.
-                        </p>
                       </div>
-                    </div>
-                  ) : (
-                    <div className="mt-4 flex flex-col gap-3 sm:flex-row">
-                      {!checkoutUrl && !order.stripe_checkout_url ? (
-                        <button
-                          type="button"
-                          onClick={() => openStripeCheckout(secondVersionSelected, videoOptionSelected)}
-                          disabled={checkoutLoading}
-                          className="inline-flex items-center justify-center rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
-                        >
-                          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Validar pagamento"}
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={() => openStripeCheckout(secondVersionSelected, videoOptionSelected)}
-                          disabled={checkoutLoading}
-                          className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-5 py-3 text-sm font-semibold text-[var(--sky-blue)] disabled:opacity-50"
-                        >
-                          {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Abrir checkout"}
-                        </button>
-                      )}
-                      {checkoutLoading && (
-                        <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-[var(--gold)]">
-                          {checkoutMessages[checkoutMessageIndex]}
+
+                      <div className="rounded-[28px] border border-[var(--gold)]/15 bg-[var(--gold)]/5 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <p className="font-display text-2xl font-semibold text-primary">Como funciona?</p>
+                        <div className="mt-4 space-y-4 text-sm text-slate-700">
+                          <div className="flex gap-3">
+                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">1</span>
+                            <p>Pagamento aprovado e processado em ambiente seguro.</p>
+                          </div>
+                          <div className="flex gap-3">
+                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">2</span>
+                            <p>Iniciamos a produção da sua música personalizada.</p>
+                          </div>
+                          <div className="flex gap-3">
+                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">3</span>
+                            <p>Você recebe sua música pronta por e-mail e no WhatsApp.</p>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  )}
-                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
+                      </div>
+
+                      <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                        <p className="font-display text-xl font-semibold text-primary">Segurança garantida</p>
+                        <div className="mt-4 flex items-center justify-between gap-3">
+                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">stripe</span>
+                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">SSL</span>
+                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">privado</span>
+                        </div>
+                      </div>
+                    </aside>
+                  </div>
                 </div>
               )}
             </li>
@@ -915,14 +963,13 @@ function Timeline({
               <div className="grid gap-2">
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Total</span>
-                  <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)).toFixed(2).replace(".", ",")}</span>
+                  <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</span>
                 </div>
                 <div className="rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
                   <p className="font-semibold text-slate-900">Resumo do pedido</p>
                   <div className="mt-3 space-y-2">
                     <p className="flex justify-between"><span>Letra aprovada</span><span>R$ 19,90</span></p>
                     {secondVersionSelected && <p className="flex justify-between"><span>Segunda versão</span><span>R$ 9,90</span></p>}
-                    {videoOptionSelected && <p className="flex justify-between"><span>Vídeo vertical</span><span>R$ 49,90</span></p>}
                   </div>
                 </div>
               </div>
@@ -938,7 +985,7 @@ function Timeline({
                     <StripeCardPaymentForm
                       order={order}
                       clientSecret={paymentIntentClientSecret}
-                      amount={19.9 + (secondVersionSelected ? 9.9 : 0) + (videoOptionSelected ? 49.9 : 0)}
+                      amount={19.9 + (secondVersionSelected ? 9.9 : 0)}
                       processing={paymentProcessing}
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}

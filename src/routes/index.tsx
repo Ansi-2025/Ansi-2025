@@ -266,7 +266,7 @@ function Hero() {
         >
           <Stat value="1.350+" label="Músicas criadas" />
           <Stat value="4.9" label="Avaliação média" icon={<Star className="h-3 w-3 fill-current" />} />
-          <Stat value="2h" label="Entrega média" />
+          <Stat value="Imediata" label="Entrega" />
         </div>
       </div>
       </section>

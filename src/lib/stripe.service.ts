@@ -42,11 +42,11 @@ function getCancelUrl(orderId: string) {
   return `${STRIPE_APP_URL}/acompanhar?id=${orderId}`;
 }
 
-export async function criarCheckoutStripe(pedidoId: string, secondVersion = false, videoOption = false) {
+export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status",
+      "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, segunda_versao",
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -59,7 +59,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("Pedido não encontrado.");
   }
 
-  if ((pedido.status as string) === "pagamento" && pedido.stripe_checkout_url && !secondVersion && !videoOption) {
+  if ((pedido.status as string) === "pagamento" && pedido.stripe_checkout_url && !secondVersion && !pedido.segunda_versao) {
     return {
       checkoutUrl: pedido.stripe_checkout_url,
       sessionId: pedido.stripe_session_id,
@@ -79,7 +79,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0) + (videoOption ? 49.9 : 0);
+  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -124,6 +124,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
       stripe_session_id: sessionId,
       stripe_payment_intent_id: paymentIntentId,
       stripe_payment_status: session.payment_status ?? "open",
+      segunda_versao: secondVersion,
       status: "pagamento",
       status_atualizado_em: agora,
     })
@@ -150,10 +151,10 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   };
 }
 
-export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false, videoOption = false) {
+export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
-    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_payment_intent_id, stripe_payment_status")
+    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_payment_intent_id, stripe_payment_status, segunda_versao")
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -177,8 +178,8 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalAmount = Math.round((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0) + (videoOption ? 49.9 : 0)) * 100);
-  const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''}${videoOption ? ' + Vídeo vertical' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
+  const totalAmount = Math.round((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0)) * 100);
+  const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
 
   const paymentIntent = await stripe.paymentIntents.create({
     amount: totalAmount,
@@ -188,7 +189,6 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
       pedido_id: pedidoId,
       origem: "Canção de Fé",
       segunda_versao: String(secondVersion),
-      video_opcional: String(videoOption),
     },
     description,
     receipt_email: pedido.email_cliente ?? undefined,
@@ -204,6 +204,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     .update({
       stripe_payment_intent_id: paymentIntent.id,
       stripe_payment_status: paymentIntent.status,
+      segunda_versao: secondVersion,
       status: "pagamento",
       status_atualizado_em: agora,
     })
@@ -320,10 +321,10 @@ export async function handleStripeWebhook(request: Request) {
     } as any;
 
     if (isSuccessfulPayment && (paymentStatus === "paid" || event.type === "payment_intent.succeeded")) {
-      updates.status = (pedido.status === "entregue" ? pedido.status : "pagamento") as any;
+      updates.status = "pago";
       updates.pago_em = new Date().toISOString();
       updates.status_atualizado_em = new Date().toISOString();
-      novoStatus = updates.status as PedidoStatus;
+      novoStatus = "pago";
 
       if (!pedido.suno_task_id && pedido.letra_gerada) {
         try {
@@ -348,12 +349,15 @@ export async function handleStripeWebhook(request: Request) {
       throw new Error(`Falha ao atualizar pedido: ${updateError.message}`);
     }
 
-    if (pedido.status !== novoStatus && novoStatus === "pagamento") {
+    if (pedido.status !== novoStatus) {
       await supabaseAdmin.from("status_history").insert({
         pedido_id: pedido.id,
         status_anterior: pedido.status,
         status_novo: novoStatus,
-        mensagem_whatsapp: "Pagamento confirmado via Stripe. Música em geração.",
+        mensagem_whatsapp:
+          novoStatus === "pago"
+            ? "Pagamento confirmado via Stripe. Música em geração."
+            : "Status do pedido atualizado pelo webhook da Stripe.",
         criado_em: new Date().toISOString(),
       });
     }
