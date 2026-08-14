@@ -350,6 +350,7 @@ function TrackingPage() {
             paymentIntentClientSecret={paymentIntentClientSecret}
             paymentProcessing={paymentProcessing}
             paymentConfirmed={paymentConfirmed}
+            setPaymentConfirmed={setPaymentConfirmed}
             setPaymentProcessing={setPaymentProcessing}
             setPaymentError={setPaymentError}
             setPaymentIntentClientSecret={setPaymentIntentClientSecret}
@@ -433,6 +434,7 @@ function Timeline({
   paymentIntentClientSecret,
   paymentProcessing,
   paymentConfirmed,
+  setPaymentConfirmed,
   setPaymentProcessing,
   setPaymentError,
   setPaymentIntentClientSecret,
@@ -462,6 +464,7 @@ function Timeline({
   paymentIntentClientSecret: string | null;
   paymentProcessing: boolean;
   paymentConfirmed: boolean;
+  setPaymentConfirmed: Dispatch<SetStateAction<boolean>>;
   setPaymentProcessing: Dispatch<SetStateAction<boolean>>;
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
@@ -482,8 +485,11 @@ function Timeline({
     "Pagamento confirmado com sucesso.",
     "Estamos preparando sua música...",
   ];
-  const currentIdx = STATUS_FLOW.indexOf(order.status);
-  const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
+  const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
+    ? "pago"
+    : order.status;
+  const currentIdx = STATUS_FLOW.indexOf(effectiveStatus);
+  const paymentBlockVisible = order.status === "letra_aprovada" || (order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
   const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;

@@ -210,11 +210,12 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
 
 export async function gerarMusicaFinal(pedidoId: string) {
   if (!SUNO_GENERATION_ENABLED) {
+    const agora = new Date().toISOString();
     return await supabaseAdmin
       .from("pedidos")
       .update({
-        status: "pagamento",
-        status_atualizado_em: new Date().toISOString(),
+        status: "pago",
+        status_atualizado_em: agora,
       })
       .eq("id", pedidoId)
       .select("*")
