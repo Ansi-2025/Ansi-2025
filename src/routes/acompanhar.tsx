@@ -94,6 +94,7 @@ function TrackingPage() {
   const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PedidoStatus | null>(null);
@@ -175,6 +176,7 @@ function TrackingPage() {
     setCheckoutError("");
     setPaymentError("");
     setPaymentIntentClientSecret(null);
+    setPaymentConfirmed(false);
 
     if (!stripePublishableKey) {
       setCheckoutError("Stripe não configurado: faltando a variável VITE_STRIPE_PUBLISHABLE_KEY.");
@@ -474,12 +476,8 @@ function Timeline({
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
   const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
   const paymentMessages = [
-    "Estamos confirmando seu pagamento...",
-    "Fique tranquila, estamos quase lá...",
-    "Seu pedido está sendo validado com segurança...",
-    "Os dados do pagamento estão sendo revisados com cuidado...",
-    "Estamos preparando sua música com carinho e atenção...",
-    "Quase pronto! Sua música está sendo organizada para entrega...",
+    "Pagamento confirmado com sucesso.",
+    "Estamos preparando sua música...",
   ];
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
@@ -799,6 +797,13 @@ function Timeline({
                           </div>
                         )}
 
+                        {paymentConfirmed && (
+                          <div className="mt-4 rounded-[18px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+                            <p className="font-bold">Pagamento confirmado com sucesso.</p>
+                            <p className="mt-1">Estamos preparando sua música...</p>
+                          </div>
+                        )}
+
                         {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
                       </div>
                     </div>
@@ -870,9 +875,13 @@ function Timeline({
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}
                       onSuccess={async () => {
-                        setCheckoutDialogOpen(false);
-                        setPaymentIntentClientSecret(null);
+                        setPaymentConfirmed(true);
                         await refreshOrder();
+                        setTimeout(() => {
+                          setCheckoutDialogOpen(false);
+                          setPaymentIntentClientSecret(null);
+                          setPaymentConfirmed(false);
+                        }, 2200);
                       }}
                       customerEmail={checkoutCustomer.email}
                       customerPhone={checkoutCustomer.phone}
