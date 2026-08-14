@@ -808,51 +808,6 @@ function Timeline({
                       </div>
                     </div>
 
-                    <aside className="space-y-4">
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-4 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <div className="mb-4 flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
-                            <span className="text-lg">♪</span>
-                          </span>
-                          <div>
-                            <p className="font-display text-[2rem] leading-none font-semibold text-primary">Resumo do pedido</p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-3 rounded-2xl border border-[#dccdb3] bg-[var(--soft-gray)] p-3">
-                          <div className="h-16 w-16 rounded-2xl bg-[radial-gradient(circle_at_top,_#7c5cff,_#171f2d_70%)]" />
-                          <div className="flex-1">
-                            <p className="font-semibold text-primary">Música Personalizada</p>
-                            <p className="text-sm text-muted-foreground">Letra aprovada</p>
-                          </div>
-                          <span className="rounded-full bg-emerald-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">Aprovada</span>
-                        </div>
-
-                        <div className="mt-4 space-y-3 text-sm text-slate-700">
-                          <div className="flex items-center justify-between gap-4">
-                            <span>Música personalizada</span>
-                            <span>R$ 19,90</span>
-                          </div>
-                          {secondVersionSelected && (
-                            <div className="flex items-center justify-between gap-4">
-                              <span>Segunda versão da música</span>
-                              <span>+ R$ 9,90</span>
-                            </div>
-                          )}
-                        </div>
-
-                        <div className="mt-4 border-t border-border pt-4">
-                          <div className="flex items-center justify-between gap-4 text-lg font-bold text-primary">
-                            <span>Total</span>
-                            <span>R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-center text-sm text-emerald-900">
-                          Valor final inclui a letra aprovada e as opções selecionadas.
-                        </div>
-                      </div>
-                    </aside>
                   </div>
                 </div>
               )}
@@ -878,14 +833,14 @@ function Timeline({
             <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
               <div className="flex items-center justify-between gap-4">
                 <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Total</span>
-                <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
+                <span className="text-4xl font-black tracking-[-0.04em] text-[#1f9d5a]">R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
               </div>
 
               <div className="mt-4 rounded-[28px] border-[3px] border-[#d2a410] bg-[#f9d34d] p-5 shadow-[0_14px_28px_rgba(245,186,39,0.22)]">
                 <button
                   type="button"
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
-                  className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#a77200] bg-[#f4c630] text-[#1a1400]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
+                  className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a5f00] bg-[#d7a40d] text-[#1a1400] shadow-[0_8px_20px_rgba(215,164,13,0.25)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
                   <span>Quero a segunda versão</span>
                   <span>+R$ 9,90</span>
@@ -903,13 +858,6 @@ function Timeline({
                 </div>
               </div>
 
-              <div className="mt-4 rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
-                <p className="font-semibold text-slate-900">Resumo do pedido</p>
-                <div className="mt-3 space-y-2">
-                  <p className="flex justify-between"><span>Letra aprovada</span><span>R$ 19,90</span></p>
-                  {secondVersionSelected && <p className="flex justify-between"><span>Segunda versão</span><span>R$ 9,90</span></p>}
-                </div>
-              </div>
             </div>
 
             <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
