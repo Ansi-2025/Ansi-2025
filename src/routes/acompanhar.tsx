@@ -349,6 +349,7 @@ function TrackingPage() {
             paymentError={paymentError}
             paymentIntentClientSecret={paymentIntentClientSecret}
             paymentProcessing={paymentProcessing}
+            paymentConfirmed={paymentConfirmed}
             setPaymentProcessing={setPaymentProcessing}
             setPaymentError={setPaymentError}
             setPaymentIntentClientSecret={setPaymentIntentClientSecret}
@@ -431,6 +432,7 @@ function Timeline({
   paymentError,
   paymentIntentClientSecret,
   paymentProcessing,
+  paymentConfirmed,
   setPaymentProcessing,
   setPaymentError,
   setPaymentIntentClientSecret,
@@ -459,6 +461,7 @@ function Timeline({
   paymentError: string;
   paymentIntentClientSecret: string | null;
   paymentProcessing: boolean;
+  paymentConfirmed: boolean;
   setPaymentProcessing: Dispatch<SetStateAction<boolean>>;
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
@@ -880,7 +883,6 @@ function Timeline({
                         setTimeout(() => {
                           setCheckoutDialogOpen(false);
                           setPaymentIntentClientSecret(null);
-                          setPaymentConfirmed(false);
                         }, 2200);
                       }}
                       customerEmail={checkoutCustomer.email}
