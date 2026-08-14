@@ -846,9 +846,9 @@ function Timeline({
                             void openStripeCheckout(secondVersionSelected);
                           }}
                           disabled={checkoutLoading}
-                          className="w-full rounded-[18px] bg-[var(--gold)] px-5 py-4 text-base font-bold text-primary shadow-[0_8px_20px_rgba(244,198,71,0.18)] disabled:opacity-50"
+                          className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.1rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
                         >
-                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Finalizar pagamento"}
+                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Pagar R$ 19,90"}
                         </button>
 
                         <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para a ambiente seguro do Stripe.</p>
@@ -861,9 +861,9 @@ function Timeline({
                         )}
 
                         {(checkoutLoading || order.status === "pagamento") && (
-                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-primary">
-                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                            <span className="font-medium">{paymentMessages[checkoutMessageIndex]}</span>
+                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d6a61e] bg-[#f8df7d] p-4 text-sm text-[#1a1400] shadow-[0_8px_22px_rgba(245,199,29,0.18)]">
+                            <Loader2 className="h-4 w-4 animate-spin text-[#1a1400]" />
+                            <span className="font-bold">{paymentMessages[checkoutMessageIndex]}</span>
                           </div>
                         )}
 
@@ -871,7 +871,7 @@ function Timeline({
                       </div>
                     </div>
 
-                    <aside className="space-y-5">
+                    <aside className="space-y-4">
                       <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-4 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-4 flex items-center gap-3">
                           <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
@@ -915,33 +915,6 @@ function Timeline({
                           Valor final inclui a letra aprovada e as opções selecionadas.
                         </div>
                       </div>
-
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <p className="font-display text-[2rem] leading-none font-semibold text-primary">Como funciona?</p>
-                        <div className="mt-4 space-y-4 text-sm text-slate-700">
-                          <div className="flex gap-3">
-                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">1</span>
-                            <p>Pagamento aprovado e processado em ambiente seguro.</p>
-                          </div>
-                          <div className="flex gap-3">
-                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">2</span>
-                            <p>Iniciamos a produção da sua música personalizada.</p>
-                          </div>
-                          <div className="flex gap-3">
-                            <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">3</span>
-                            <p>Você recebe sua música pronta por e-mail e no WhatsApp.</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-4 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <p className="font-display text-[1.8rem] leading-none font-semibold text-primary">Segurança garantida</p>
-                        <div className="mt-4 flex items-center justify-between gap-3">
-                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">stripe</span>
-                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">SSL</span>
-                          <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">privado</span>
-                        </div>
-                      </div>
                     </aside>
                   </div>
                 </div>
@@ -971,15 +944,26 @@ function Timeline({
                 <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
               </div>
 
-              <div className="mt-4 rounded-[24px] border border-[var(--gold)]/25 bg-[var(--gold)]/5 p-4">
+              <div className="mt-4 rounded-[28px] border-[3px] border-[#d2a410] bg-[#f9d34d] p-5 shadow-[0_14px_28px_rgba(245,186,39,0.22)]">
                 <button
                   type="button"
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
-                  className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${secondVersionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-primary hover:border-[var(--gold)]"}`}
+                  className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#a77200] bg-[#f4c630] text-[#1a1400]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
                   <span>Quero a segunda versão</span>
                   <span>+R$ 9,90</span>
                 </button>
+                <p className="mt-4 text-[0.97rem] font-medium leading-relaxed text-[#1a1400]">
+                  A nova versão mantém a sua história base, mas com um estilo diferente, letra reimaginada e nova interpretação musical.
+                </p>
+
+                <div className="mt-4 rounded-[18px] border border-[#d5a221] bg-[#fef4c8] p-3 text-[#1a1400] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                  <p className="text-[0.78rem] font-bold uppercase tracking-[0.12em] text-[#6b4d00]">Depoimento</p>
+                  <p className="mt-2 text-[0.98rem] font-semibold leading-relaxed italic">
+                    “Vale muito a pena. A segunda versão ficou com uma energia totalmente diferente e ficou incrível.”
+                  </p>
+                  <p className="mt-2 text-[0.8rem] font-bold text-[#6b4d00]">— Cliente Canção de Fé</p>
+                </div>
               </div>
 
               <div className="mt-4 rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
