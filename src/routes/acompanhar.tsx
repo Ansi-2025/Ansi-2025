@@ -479,11 +479,14 @@ function Timeline({
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
+  const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
   const paymentMessages = [
     "Estamos confirmando seu pagamento...",
-    "Fique calma, estamos quase lá...",
+    "Fique tranquila, estamos quase lá...",
     "Seu pedido está sendo validado com segurança...",
-    "Obrigado por sua compra! Estamos finalizando tudo com carinho...",
+    "Os dados do pagamento estão sendo revisados com cuidado...",
+    "Estamos preparando sua música com carinho e atenção...",
+    "Quase pronto! Sua música está sendo organizada para entrega...",
   ];
   const currentIdx = STATUS_FLOW.indexOf(order.status);
   const paymentBlockVisible = order.status === "letra_aprovada" || order.status === "pagamento";
@@ -512,10 +515,12 @@ function Timeline({
 
     const interval = setInterval(() => {
       setCheckoutMessageIndex((prev) => (prev + 1) % paymentMessages.length);
-    }, 2500);
+    }, 4200);
 
     return () => clearInterval(interval);
   }, [checkoutLoading, order.status, paymentMessages.length]);
+
+  const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
 
   return (
     <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
@@ -523,7 +528,8 @@ function Timeline({
         <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pedido de</p>
         <h2 className="mt-1 font-display text-2xl font-semibold text-primary">{order.nome_cliente}</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          {order.genero_musical ?? "Gênero não informado"} · {order.duracao_segundos ? `${order.duracao_segundos}s` : "Duração não informada"}
+          {order.genero_musical ?? "Gênero não informado"}
+          {shouldShowDuration ? ` · ${order.duracao_segundos}s` : ""}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
           <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border border-border bg-background text-muted-foreground"}`}>
@@ -709,14 +715,14 @@ function Timeline({
               )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
                 <div className="mt-3">
-                  <div className="grid gap-5 xl:grid-cols-[1.7fr_0.9fr]">
+                  <div className="grid gap-5 xl:grid-cols-[1.6fr_0.95fr]">
                     <div className="space-y-5">
-                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-5 flex items-center gap-3">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">1</span>
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">1</span>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-xl font-semibold text-primary">Seus dados</h3>
+                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Seus dados</h3>
                           </div>
                         </div>
 
@@ -759,12 +765,12 @@ function Timeline({
                         </div>
                       </div>
 
-                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-5 flex items-center gap-3">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">2</span>
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">2</span>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-xl font-semibold text-primary">Escolha a forma de pagamento</h3>
+                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Escolha a forma de pagamento</h3>
                           </div>
                         </div>
 
@@ -772,39 +778,39 @@ function Timeline({
                           <button
                             type="button"
                             onClick={() => setPaymentMethod("card")}
-                            className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)]/10 shadow-[0_10px_25px_rgba(244,198,71,0.12)]" : "border-border bg-background hover:border-[var(--gold)]/60"}`}
+                            className={`flex w-full items-center justify-between rounded-[18px] border p-4 text-left transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] shadow-[0_8px_20px_rgba(244,198,71,0.18)]" : "border-[#d9cfb3] bg-[#f4f0e7] hover:border-[var(--gold)]/60"}`}
                           >
                             <div className="flex items-center gap-3">
-                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)]" : "border-slate-300 bg-white"}`}>
+                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "card" ? "border-primary bg-[var(--gold)]" : "border-slate-400 bg-white"}`}>
                                 {paymentMethod === "card" && <span className="h-2 w-2 rounded-full bg-primary" />}
                               </span>
                               <div>
-                                <p className="text-base font-semibold text-primary">Cartão de crédito</p>
+                                <p className="text-[1.05rem] font-bold text-primary">Cartão de crédito</p>
                                 <p className="text-xs text-muted-foreground">Visa, Mastercard, Elo, Hipercard e mais</p>
                               </div>
                             </div>
                             <div className="flex items-center gap-2">
-                              <span className="rounded-sm bg-[#1a1f71] px-1.5 py-1 text-[10px] font-bold text-white">VISA</span>
-                              <span className="rounded-sm bg-[#eb001b] px-1.5 py-1 text-[10px] font-bold text-white">MC</span>
-                              <span className="rounded-sm bg-[#ff5b2e] px-1.5 py-1 text-[10px] font-bold text-white">Elo</span>
+                              <span className="rounded-sm bg-[#1a1f71] px-1.5 py-1 text-[10px] font-black text-white">VISA</span>
+                              <span className="rounded-sm bg-[#eb001b] px-1.5 py-1 text-[10px] font-black text-white">MC</span>
+                              <span className="rounded-sm bg-[#ff5b2e] px-1.5 py-1 text-[10px] font-black text-white">Elo</span>
                             </div>
                           </button>
 
                           <button
                             type="button"
                             onClick={() => setPaymentMethod("pix")}
-                            className={`flex w-full items-center justify-between rounded-2xl border p-4 text-left transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)]/10 shadow-[0_10px_25px_rgba(244,198,71,0.12)]" : "border-border bg-background hover:border-[var(--gold)]/60"}`}
+                            className={`flex w-full items-center justify-between rounded-[18px] border p-4 text-left transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] shadow-[0_8px_20px_rgba(244,198,71,0.18)]" : "border-[#d9cfb3] bg-[#f4f0e7] hover:border-[var(--gold)]/60"}`}
                           >
                             <div className="flex items-center gap-3">
-                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)]" : "border-slate-300 bg-white"}`}>
+                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "pix" ? "border-primary bg-[var(--gold)]" : "border-slate-400 bg-white"}`}>
                                 {paymentMethod === "pix" && <span className="h-2 w-2 rounded-full bg-primary" />}
                               </span>
                               <div>
-                                <p className="text-base font-semibold text-primary">Pix</p>
+                                <p className="text-[1.05rem] font-bold text-primary">Pix</p>
                                 <p className="text-xs text-muted-foreground">Pagamento instantâneo</p>
                               </div>
                             </div>
-                            <span className="rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] text-emerald-700">5% OFF</span>
+                            <span className="rounded-full bg-[#e7f6eb] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">5% OFF</span>
                           </button>
                         </div>
 
@@ -821,12 +827,12 @@ function Timeline({
                         </div>
                       </div>
 
-                      <div className="rounded-[28px] border border-border bg-white p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-4 flex items-center gap-3">
-                          <span className="grid h-8 w-8 place-items-center rounded-full bg-[var(--gold)] text-sm font-bold text-primary">3</span>
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">3</span>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-xl font-semibold text-primary">Finalizar pagamento</h3>
+                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Finalizar pagamento</h3>
                           </div>
                         </div>
 
@@ -840,7 +846,7 @@ function Timeline({
                             void openStripeCheckout(secondVersionSelected);
                           }}
                           disabled={checkoutLoading}
-                          className="w-full rounded-2xl bg-[var(--gold)] px-5 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] disabled:opacity-50"
+                          className="w-full rounded-[18px] bg-[var(--gold)] px-5 py-4 text-base font-bold text-primary shadow-[0_8px_20px_rgba(244,198,71,0.18)] disabled:opacity-50"
                         >
                           {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Finalizar pagamento"}
                         </button>
@@ -855,9 +861,9 @@ function Timeline({
                         )}
 
                         {(checkoutLoading || order.status === "pagamento") && (
-                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-[var(--gold)]">
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                            {paymentMessages[checkoutMessageIndex]}
+                          <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4 text-sm text-primary">
+                            <Loader2 className="h-4 w-4 animate-spin text-primary" />
+                            <span className="font-medium">{paymentMessages[checkoutMessageIndex]}</span>
                           </div>
                         )}
 
@@ -866,17 +872,17 @@ function Timeline({
                     </div>
 
                     <aside className="space-y-5">
-                      <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-4 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
                         <div className="mb-4 flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/10 text-[var(--gold)]">
+                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
                             <span className="text-lg">♪</span>
                           </span>
                           <div>
-                            <p className="font-display text-2xl font-semibold text-primary">Resumo do pedido</p>
+                            <p className="font-display text-[2rem] leading-none font-semibold text-primary">Resumo do pedido</p>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-3 rounded-2xl border border-border bg-[var(--soft-gray)] p-3">
+                        <div className="flex items-center gap-3 rounded-2xl border border-[#dccdb3] bg-[var(--soft-gray)] p-3">
                           <div className="h-16 w-16 rounded-2xl bg-[radial-gradient(circle_at_top,_#7c5cff,_#171f2d_70%)]" />
                           <div className="flex-1">
                             <p className="font-semibold text-primary">Música Personalizada</p>
@@ -901,7 +907,7 @@ function Timeline({
                         <div className="mt-4 border-t border-border pt-4">
                           <div className="flex items-center justify-between gap-4 text-lg font-bold text-primary">
                             <span>Total</span>
-                            <span>R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</span>
+                            <span>R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
                           </div>
                         </div>
 
@@ -910,8 +916,8 @@ function Timeline({
                         </div>
                       </div>
 
-                      <div className="rounded-[28px] border border-[var(--gold)]/15 bg-[var(--gold)]/5 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
-                        <p className="font-display text-2xl font-semibold text-primary">Como funciona?</p>
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
+                        <p className="font-display text-[2rem] leading-none font-semibold text-primary">Como funciona?</p>
                         <div className="mt-4 space-y-4 text-sm text-slate-700">
                           <div className="flex gap-3">
                             <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-bold text-primary">1</span>
@@ -928,8 +934,8 @@ function Timeline({
                         </div>
                       </div>
 
-                      <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_12px_35px_rgba(15,23,42,0.05)]">
-                        <p className="font-display text-xl font-semibold text-primary">Segurança garantida</p>
+                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-4 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
+                        <p className="font-display text-[1.8rem] leading-none font-semibold text-primary">Segurança garantida</p>
                         <div className="mt-4 flex items-center justify-between gap-3">
                           <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">stripe</span>
                           <span className="inline-flex items-center justify-center rounded-xl border border-border bg-background px-3 py-2 text-sm font-bold text-slate-700">SSL</span>
@@ -959,18 +965,28 @@ function Timeline({
           </DialogHeader>
 
           <div className="space-y-4 pt-4">
-            <div className="rounded-[32px] border border-border bg-white p-6 shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
-              <div className="grid gap-2">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Total</span>
-                  <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {(19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2).replace(".", ",")}</span>
-                </div>
-                <div className="rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
-                  <p className="font-semibold text-slate-900">Resumo do pedido</p>
-                  <div className="mt-3 space-y-2">
-                    <p className="flex justify-between"><span>Letra aprovada</span><span>R$ 19,90</span></p>
-                    {secondVersionSelected && <p className="flex justify-between"><span>Segunda versão</span><span>R$ 9,90</span></p>}
-                  </div>
+            <div className="rounded-[28px] border border-border bg-white p-4 shadow-[0_30px_60px_rgba(0,0,0,0.08)]">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">Total</span>
+                <span className="text-4xl font-black tracking-[-0.04em] text-[var(--gold)]">R$ {totalPedido.toFixed(2).replace(".", ",")}</span>
+              </div>
+
+              <div className="mt-4 rounded-[24px] border border-[var(--gold)]/25 bg-[var(--gold)]/5 p-4">
+                <button
+                  type="button"
+                  onClick={() => setSecondVersionSelected((prev) => !prev)}
+                  className={`flex w-full items-center justify-between rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${secondVersionSelected ? "border-[var(--gold)] bg-[var(--gold)] text-primary" : "border-border bg-white text-primary hover:border-[var(--gold)]"}`}
+                >
+                  <span>Quero a segunda versão</span>
+                  <span>+R$ 9,90</span>
+                </button>
+              </div>
+
+              <div className="mt-4 rounded-3xl bg-[var(--soft-gray)] p-4 text-sm text-slate-700">
+                <p className="font-semibold text-slate-900">Resumo do pedido</p>
+                <div className="mt-3 space-y-2">
+                  <p className="flex justify-between"><span>Letra aprovada</span><span>R$ 19,90</span></p>
+                  {secondVersionSelected && <p className="flex justify-between"><span>Segunda versão</span><span>R$ 9,90</span></p>}
                 </div>
               </div>
             </div>
