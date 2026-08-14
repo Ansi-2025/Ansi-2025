@@ -508,7 +508,7 @@ function Timeline({
   }, [order.id, currentIdx]);
 
   useEffect(() => {
-    if (!checkoutLoading && order.status !== "pagamento") {
+    if (!paymentProcessing && order.status !== "pagamento") {
       setCheckoutMessageIndex(0);
       return;
     }
@@ -518,7 +518,7 @@ function Timeline({
     }, 4200);
 
     return () => clearInterval(interval);
-  }, [checkoutLoading, order.status, paymentMessages.length]);
+  }, [paymentProcessing, order.status, paymentMessages.length]);
 
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
 
@@ -797,7 +797,7 @@ function Timeline({
 
                         <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para o ambiente seguro do Stripe.</p>
 
-                        {(checkoutLoading || order.status === "pagamento") && (
+                        {(paymentProcessing || order.status === "pagamento") && (
                           <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d6a61e] bg-[#f8df7d] p-4 text-sm text-[#1a1400] shadow-[0_8px_22px_rgba(245,199,29,0.18)]">
                             <Loader2 className="h-4 w-4 animate-spin text-[#1a1400]" />
                             <span className="font-bold">{paymentMessages[checkoutMessageIndex]}</span>
