@@ -973,9 +973,9 @@ function Footer() {
         <div>
           <div className="text-xs font-semibold uppercase tracking-[0.18em] text-primary">Links</div>
           <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
-            <li><a href="#" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
-            <li><a href="#" className="hover:text-primary transition-colors">Termos de Uso</a></li>
-            <li><a href={WHATSAPP_URL} className="hover:text-primary transition-colors">Contato</a></li>
+            <li><a href="/privacy-policy" className="hover:text-primary transition-colors">Política de Privacidade</a></li>
+            <li><a href="/terms-of-service" className="hover:text-primary transition-colors">Termos de Uso</a></li>
+            <li><a href="/support" className="hover:text-primary transition-colors">Suporte</a></li>
           </ul>
         </div>
         <div>

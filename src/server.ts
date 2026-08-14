@@ -45,6 +45,10 @@ export default {
       url.pathname === "/api/webhooks/stripe" ||
       url.pathname === "/api/webhooks/stripe/";
 
+    const isSunoWebhookPath =
+      url.pathname === "/api/webhooks/suno" ||
+      url.pathname === "/api/webhooks/suno/";
+
     if (isStripeWebhookPath) {
       if (request.method === "GET") {
         return new Response("ok", { status: 200 });
@@ -62,6 +66,30 @@ export default {
         return await handleStripeWebhook(request);
       } catch (error) {
         console.error("Error handling Stripe webhook:", error);
+        return new Response(JSON.stringify({ error: "Webhook handler error" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
+
+    if (isSunoWebhookPath) {
+      if (request.method === "GET") {
+        return new Response("ok", { status: 200 });
+      }
+
+      if (request.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method not allowed" }), {
+          status: 405,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      try {
+        const { handleSunoWebhook } = await import("./lib/suno-webhook");
+        return await handleSunoWebhook(request);
+      } catch (error) {
+        console.error("Error handling Suno webhook:", error);
         return new Response(JSON.stringify({ error: "Webhook handler error" }), {
           status: 500,
           headers: { "content-type": "application/json" },

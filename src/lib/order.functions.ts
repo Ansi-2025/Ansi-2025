@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
+import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 
 const orderIdSchema = z
@@ -74,9 +74,7 @@ export const STATUS_FLOW = [
   "letra_aprovada",
   "pagamento",
   "gerando_musica",
-  "previa",
   "musica_pronta",
-  "pago",
   "entregue",
 ] as const;
 export type PedidoStatus = (typeof STATUS_FLOW)[number];
@@ -87,11 +85,9 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   letra_pronta: "Letra pronta",
   aguardando_aprovacao_letra: "Aguardando aprovação da letra",
   letra_aprovada: "Letra aprovada",
-  pagamento: "Pagamento e validação",
-  gerando_musica: "Gerando música",
-  previa: "Prévia pronta",
-  musica_pronta: "Música pronta",
-  pago: "Pago",
+  pagamento: "Aguardando pagamento",
+  gerando_musica: "Música em produção",
+  musica_pronta: "Música disponível",
   entregue: "Entregue",
 };
 
@@ -180,19 +176,13 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
     return criarPaymentIntentStripe(data.id, data.secondVersion ?? false, data.videoOption ?? false);
   });
 
-export const generateMusicPreview = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
-  .handler(async ({ data }) => {
-    return gerarMusicaPreview(data.id);
-  });
-
 export const getOrderStatus = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
   .handler(async ({ data }) => {
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, cpf_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_previa, url_musica, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, cpf_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_musica, url_musica_segunda_versao, segunda_versao, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -211,8 +201,9 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       status: PedidoStatus;
       letra_gerada: string | null;
       roteiro_ia: string | null;
-      url_previa: string | null;
       url_musica: string | null;
+      url_musica_segunda_versao: string | null;
+      segunda_versao: boolean;
       pix_qr_code: string | null;
       pix_fixado: boolean;
       valor_pix: string | null;

@@ -5,22 +5,27 @@ export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const roteiro = gerarRoteiroMusical(pedido);
 
   const prompt = `
-Nome do cliente: ${pedido.nome_cliente}
-Para quem é a música: ${pedido.para_quem}
-Ocasião: ${pedido.ocasiao}
-Estilo musical: ${pedido.genero_musical}
+Você é um compositor profissional de música emocional e moderna.
 
-História:
-${pedido.descricao}
+Contexto do pedido:
+- Nome do cliente: ${pedido.nome_cliente}
+- Destinatário: ${pedido.para_quem}
+- Ocasião: ${pedido.ocasiao}
+- Estilo musical: ${pedido.genero_musical}
+- Sensação principal: ${pedido.descricao}
 
-Crie uma letra em formato pronto para música gospel, com estrutura profissional e pronta para uso em geração musical.
+Diretiva do roteiro para a letra:
+${roteiro}
+
+Crie uma letra final, pronta para ser usada como prompt de música gerada por Suno em customMode true.
 
 Regras obrigatórias:
-- Use sempre divisões em blocos como [Intro], [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Final Chorus], [Outro].
-- A letra deve ser emocional, memorável, com boa cadência e fácil de cantar.
-- Sempre inclua o nome do cliente e o nome do destinatário de forma natural na letra, sem parecer que está explicando o contexto.
-- Não inclua comentários, explicações, texto fora da letra, nem instruções técnicas.
-- Escreva só a letra final, organizada em blocos e pronta para Suno.
+- Escreva somente a letra final, sem explicações, sem comentários técnicos, sem texto fora da letra.
+- Estruture em blocos como [Intro], [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Final Chorus], [Outro].
+- A letra deve ser emocional, memorável, com boa cadência, fácil de cantar e com refrão forte.
+- Use o nome do cliente e da pessoa destinatária de forma natural dentro da própria letra.
+- A linguagem pode ser poética, mas clara e funcional para música.
+- A letra deve ser pronta para a Suno cantar exatamente essa letra com arranjo e batida.
   `;
 
   const result = await gerarLetraComFlatkey(prompt);

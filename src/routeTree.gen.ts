@@ -9,10 +9,28 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
+import { Route as SupportRouteImport } from './routes/support'
+import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AcompanharRouteImport } from './routes/acompanhar'
 import { Route as IndexRouteImport } from './routes/index'
 
+const TermsOfServiceRoute = TermsOfServiceRouteImport.update({
+  id: '/terms-of-service',
+  path: '/terms-of-service',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SupportRoute = SupportRouteImport.update({
+  id: '/support',
+  path: '/support',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
+  id: '/privacy-policy',
+  path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminRoute = AdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -33,34 +51,86 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/privacy-policy': typeof PrivacyPolicyRoute
+  '/support': typeof SupportRoute
+  '/terms-of-service': typeof TermsOfServiceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/acompanhar' | '/admin'
+  fullPaths:
+    | '/'
+    | '/acompanhar'
+    | '/admin'
+    | '/privacy-policy'
+    | '/support'
+    | '/terms-of-service'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/acompanhar' | '/admin'
-  id: '__root__' | '/' | '/acompanhar' | '/admin'
+  to:
+    | '/'
+    | '/acompanhar'
+    | '/admin'
+    | '/privacy-policy'
+    | '/support'
+    | '/terms-of-service'
+  id:
+    | '__root__'
+    | '/'
+    | '/acompanhar'
+    | '/admin'
+    | '/privacy-policy'
+    | '/support'
+    | '/terms-of-service'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcompanharRoute: typeof AcompanharRoute
   AdminRoute: typeof AdminRoute
+  PrivacyPolicyRoute: typeof PrivacyPolicyRoute
+  SupportRoute: typeof SupportRoute
+  TermsOfServiceRoute: typeof TermsOfServiceRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/terms-of-service': {
+      id: '/terms-of-service'
+      path: '/terms-of-service'
+      fullPath: '/terms-of-service'
+      preLoaderRoute: typeof TermsOfServiceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/support': {
+      id: '/support'
+      path: '/support'
+      fullPath: '/support'
+      preLoaderRoute: typeof SupportRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/privacy-policy': {
+      id: '/privacy-policy'
+      path: '/privacy-policy'
+      fullPath: '/privacy-policy'
+      preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin': {
       id: '/admin'
       path: '/admin'
@@ -89,6 +159,9 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcompanharRoute: AcompanharRoute,
   AdminRoute: AdminRoute,
+  PrivacyPolicyRoute: PrivacyPolicyRoute,
+  SupportRoute: SupportRoute,
+  TermsOfServiceRoute: TermsOfServiceRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

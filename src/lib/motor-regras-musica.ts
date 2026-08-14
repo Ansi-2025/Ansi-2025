@@ -16,16 +16,42 @@ export function gerarRoteiroMusical(pedido: DadosPedidoParaRoteiro) {
   const estilo = pedido.genero_musical;
   const instrumentos = selecionarInstrumentos(pedido.genero_musical);
   const estrutura = [
-    "Introdução",
-    "Verso 1",
-    "Pré-Refrão",
-    "Refrão",
-    "Verso 2",
-    "Ponte",
-    "Refrão Final",
+    "[Intro]",
+    "[Verse 1]",
+    "[Pre-Chorus]",
+    "[Chorus]",
+    "[Verse 2]",
+    "[Bridge]",
+    "[Final Chorus]",
+    "[Outro]",
   ];
 
-  return `Tema:\n${tema}\n\nNarrativa:\n${narrativa}\n\nTom:\n${tom}\n\nEstilo:\n${estilo}\n\nInstrumentos:\n${instrumentos.join("\n")}\n\nEstrutura:\n${estrutura.join("\n")}`;
+  return [
+    "Objetivo da música:",
+    `${tema}.`,
+    "",
+    "Narrativa:",
+    narrativa,
+    "",
+    "Tom emocional:",
+    tom,
+    "",
+    "Estilo musical:",
+    estilo,
+    "",
+    "Produção e instrumentos:",
+    instrumentos.join(", "),
+    "",
+    "Estrutura da letra:",
+    estrutura.join(" -> "),
+    "",
+    "Instruções para a letra:",
+    "- Escrever uma letra memorável, natural e fácil de cantar.",
+    "- Manter o foco emocional e inspirador.",
+    "- Incluir o nome do cliente e o destinatário de forma orgânica.",
+    "- Usar linguagem clara, com refrão forte e letras que cabem em melodia.",
+    "- Finalizar com refrão marcante e sensação de conclusão emocional.",
+  ].join("\n");
 }
 
 function gerarTema(pedido: DadosPedidoParaRoteiro) {

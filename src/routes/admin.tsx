@@ -316,9 +316,14 @@ function AdminPage() {
                         <div>{order.telefone_cliente || "—"}</div>
                       </td>
                       <td className="px-5 py-4">
-                        <span className="inline-flex rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
-                          {order.status}
-                        </span>
+                        <div className="flex flex-col gap-2">
+                          <span className="inline-flex rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-primary">
+                            {order.status}
+                          </span>
+                          <span className={`inline-flex w-fit rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border border-border bg-background text-muted-foreground"}`}>
+                            {order.segunda_versao ? "2 versões incluídas" : "1 versão"}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-5 py-4 text-muted-foreground">
                         <div>{order.stripe_payment_status || "Pix / manual"}</div>

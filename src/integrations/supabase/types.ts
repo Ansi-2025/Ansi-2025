@@ -35,13 +35,13 @@ export type Database = {
           status_atualizado_em: string
           suno_job_id: string | null
           url_musica: string | null
-          url_previa: string | null
+          url_musica_segunda_versao: string | null
+          segunda_versao: boolean
           valor_pix: string | null
           whatsapp: string
           telefone_cliente: string | null
           letra_gerada: string | null
           letra_aprovada: boolean
-          preview_gerada_em: string | null
           musica_gerada_em: string | null
           stripe_checkout_url: string | null
           stripe_session_id: string | null
@@ -67,13 +67,13 @@ export type Database = {
           status_atualizado_em?: string
           suno_job_id?: string | null
           url_musica?: string | null
-          url_previa?: string | null
+          url_musica_segunda_versao?: string | null
+          segunda_versao?: boolean
           valor_pix?: string | null
           whatsapp: string
           telefone_cliente?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
-          preview_gerada_em?: string | null
           musica_gerada_em?: string | null
           stripe_checkout_url?: string | null
           stripe_session_id?: string | null
@@ -99,13 +99,13 @@ export type Database = {
           status_atualizado_em?: string
           suno_job_id?: string | null
           url_musica?: string | null
-          url_previa?: string | null
+          url_musica_segunda_versao?: string | null
+          segunda_versao?: boolean
           valor_pix?: string | null
           whatsapp?: string
           telefone_cliente?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
-          preview_gerada_em?: string | null
           musica_gerada_em?: string | null
           stripe_checkout_url?: string | null
           stripe_session_id?: string | null
@@ -167,9 +167,7 @@ export type Database = {
         | "letra_aprovada"
         | "pagamento"
         | "gerando_musica"
-        | "previa"
         | "musica_pronta"
-        | "pago"
         | "entregue"
     }
     CompositeTypes: {

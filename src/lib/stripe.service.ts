@@ -296,7 +296,7 @@ export async function handleStripeWebhook(request: Request) {
   try {
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from("pedidos")
-      .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id")
+      .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, suno_task_id, letra_gerada")
       .eq("id", pedidoId)
       .maybeSingle();
 
@@ -324,6 +324,15 @@ export async function handleStripeWebhook(request: Request) {
       updates.pago_em = new Date().toISOString();
       updates.status_atualizado_em = new Date().toISOString();
       novoStatus = updates.status as PedidoStatus;
+
+      if (!pedido.suno_task_id && pedido.letra_gerada) {
+        try {
+          const { gerarMusicaFinal } = await import("./pedido.service");
+          await gerarMusicaFinal(pedido.id);
+        } catch (error) {
+          console.error("Erro ao disparar geração da música após pagamento:", error);
+        }
+      }
     } else if (isFailedOrExpiredPayment) {
       updates.status = (pedido.status === "entregue" ? pedido.status : "letra_aprovada") as any;
       updates.status_atualizado_em = new Date().toISOString();
@@ -344,7 +353,7 @@ export async function handleStripeWebhook(request: Request) {
         pedido_id: pedido.id,
         status_anterior: pedido.status,
         status_novo: novoStatus,
-        mensagem_whatsapp: "Pagamento confirmado via Stripe, gerando música final",
+        mensagem_whatsapp: "Pagamento confirmado via Stripe. Música em geração.",
         criado_em: new Date().toISOString(),
       });
     }

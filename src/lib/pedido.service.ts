@@ -208,65 +208,6 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
   return pedidoAtualizado;
 }
 
-export async function gerarMusicaPreview(pedidoId: string) {
-  if (!SUNO_GENERATION_ENABLED) {
-    throw new Error("Geração de música desativada no momento. Habilite ENABLE_SUNO_GENERATION para ativar a API do Suno.");
-  }
-
-  const agora = new Date().toISOString();
-  const pedido = await obterPedidoParaRoteiro(pedidoId);
-
-  if (pedido.status !== "letra_aprovada") {
-    throw new Error("A prévia só pode ser gerada após a letra ser aprovada.");
-  }
-
-  const roteiro = pedido.roteiro_ia || gerarRoteiroMusical({
-    nome_cliente: pedido.nome_cliente ?? "Cliente",
-    email_cliente: pedido.email_cliente ?? "",
-    telefone_cliente: pedido.telefone_cliente ?? "",
-    descricao: pedido.descricao,
-    genero_musical: pedido.genero_musical ?? "Gospel",
-    duracao_segundos: pedido.duracao_segundos ?? 45,
-    para_quem: pedido.para_quem,
-    ocasiao: pedido.ocasiao ?? "",
-  });
-
-  await supabaseAdmin
-    .from("pedidos")
-    .update({ status: "gerando_musica", status_atualizado_em: agora })
-    .eq("id", pedidoId);
-
-  const { url_previa, suno_job_id } = await gerarMusicaComSuno(roteiro, pedidoId, 45);
-
-  const { data: pedidoAtualizado, error } = await supabaseAdmin
-    .from("pedidos")
-    .update({
-      roteiro_ia: roteiro,
-      url_previa,
-      suno_job_id,
-      preview_gerada_em: agora,
-      status: "previa",
-      status_atualizado_em: agora,
-    })
-    .eq("id", pedidoId)
-    .select("*")
-    .single();
-
-  if (error || !pedidoAtualizado) {
-    throw new Error(`Falha ao salvar prévia do pedido: ${error?.message ?? "pedido não encontrado"}`);
-  }
-
-  await supabaseAdmin.from("status_history").insert({
-    pedido_id: pedidoId,
-    status_anterior: "gerando_musica",
-    status_novo: "previa",
-    mensagem_whatsapp: "Prévia gerada e aguardando pagamento",
-    criado_em: agora,
-  });
-
-  return pedidoAtualizado;
-}
-
 export async function gerarMusicaFinal(pedidoId: string) {
   if (!SUNO_GENERATION_ENABLED) {
     return await supabaseAdmin
@@ -283,8 +224,8 @@ export async function gerarMusicaFinal(pedidoId: string) {
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
 
-  if (!["previa", "pagamento"].includes(pedido.status)) {
-    throw new Error("A música final só pode ser gerada após a prévia ou a confirmação de pagamento.");
+  if (!["pagamento", "letra_aprovada"].includes(pedido.status)) {
+    throw new Error("A música final só pode ser gerada após a confirmação de pagamento.");
   }
 
   const roteiro = pedido.roteiro_ia || gerarRoteiroMusical({
@@ -303,15 +244,16 @@ export async function gerarMusicaFinal(pedidoId: string) {
     .update({ status: "gerando_musica", status_atualizado_em: agora })
     .eq("id", pedidoId);
 
-  const { url_musica, suno_job_id } = await gerarMusicaComSuno(roteiro, pedidoId, pedido.duracao_segundos ?? 90);
+  // Gerar música com Suno - agora retorna taskId
+  const { taskId } = await gerarMusicaComSuno(roteiro, pedidoId, pedido.duracao_segundos ?? 90);
 
+  // Salvar taskId e manter status como "gerando_musica" até o webhook retornar
   const { data: pedidoAtualizado, error } = await supabaseAdmin
     .from("pedidos")
     .update({
-      url_musica,
-      suno_job_id,
+      suno_task_id: taskId,
       musica_gerada_em: agora,
-      status: "pago",
+      // Status permanece "gerando_musica" até o webhook do Suno confirmar
       status_atualizado_em: agora,
     })
     .eq("id", pedidoId)
@@ -325,8 +267,8 @@ export async function gerarMusicaFinal(pedidoId: string) {
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedidoId,
     status_anterior: "pagamento",
-    status_novo: "pago",
-    mensagem_whatsapp: "Pagamento confirmado e música final gerada",
+    status_novo: "gerando_musica",
+    mensagem_whatsapp: "Gerando música final...",
     criado_em: agora,
   });
 
