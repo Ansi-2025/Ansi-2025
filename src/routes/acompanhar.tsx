@@ -770,51 +770,11 @@ function Timeline({
                           <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">2</span>
                           <div>
                             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Escolha a forma de pagamento</h3>
+                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Escolher forma de pagamento</h3>
                           </div>
                         </div>
 
-                        <div className="space-y-3">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod("card")}
-                            className={`flex w-full items-center justify-between rounded-[18px] border p-4 text-left transition ${paymentMethod === "card" ? "border-[var(--gold)] bg-[var(--gold)] shadow-[0_8px_20px_rgba(244,198,71,0.18)]" : "border-[#d9cfb3] bg-[#f4f0e7] hover:border-[var(--gold)]/60"}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "card" ? "border-primary bg-[var(--gold)]" : "border-slate-400 bg-white"}`}>
-                                {paymentMethod === "card" && <span className="h-2 w-2 rounded-full bg-primary" />}
-                              </span>
-                              <div>
-                                <p className="text-[1.05rem] font-bold text-primary">Cartão de crédito</p>
-                                <p className="text-xs text-muted-foreground">Visa, Mastercard, Elo, Hipercard e mais</p>
-                              </div>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="rounded-sm bg-[#1a1f71] px-1.5 py-1 text-[10px] font-black text-white">VISA</span>
-                              <span className="rounded-sm bg-[#eb001b] px-1.5 py-1 text-[10px] font-black text-white">MC</span>
-                              <span className="rounded-sm bg-[#ff5b2e] px-1.5 py-1 text-[10px] font-black text-white">Elo</span>
-                            </div>
-                          </button>
-
-                          <button
-                            type="button"
-                            onClick={() => setPaymentMethod("pix")}
-                            className={`flex w-full items-center justify-between rounded-[18px] border p-4 text-left transition ${paymentMethod === "pix" ? "border-[var(--gold)] bg-[var(--gold)] shadow-[0_8px_20px_rgba(244,198,71,0.18)]" : "border-[#d9cfb3] bg-[#f4f0e7] hover:border-[var(--gold)]/60"}`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <span className={`grid h-5 w-5 place-items-center rounded-full border-2 ${paymentMethod === "pix" ? "border-primary bg-[var(--gold)]" : "border-slate-400 bg-white"}`}>
-                                {paymentMethod === "pix" && <span className="h-2 w-2 rounded-full bg-primary" />}
-                              </span>
-                              <div>
-                                <p className="text-[1.05rem] font-bold text-primary">Pix</p>
-                                <p className="text-xs text-muted-foreground">Pagamento instantâneo</p>
-                              </div>
-                            </div>
-                            <span className="rounded-full bg-[#e7f6eb] px-2 py-1 text-[10px] font-bold uppercase tracking-[0.12em] text-emerald-700">5% OFF</span>
-                          </button>
-                        </div>
-
-                        <div className="mt-5 rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-4 text-sm text-primary">
+                        <div className="mb-4 rounded-2xl border border-[var(--gold)]/20 bg-[var(--gold)]/5 p-4 text-sm text-primary">
                           <div className="flex items-start gap-3">
                             <span className="mt-0.5 grid h-6 w-6 place-items-center rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]">✓</span>
                             <div>
@@ -825,40 +785,17 @@ function Timeline({
                             </div>
                           </div>
                         </div>
-                      </div>
-
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <div className="mb-4 flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">3</span>
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Finalizar pagamento</h3>
-                          </div>
-                        </div>
 
                         <button
                           type="button"
-                          onClick={() => {
-                            if (paymentMethod === "pix") {
-                              setCheckoutDialogOpen(false);
-                              return;
-                            }
-                            void openStripeCheckout(secondVersionSelected);
-                          }}
+                          onClick={() => void openStripeCheckout(secondVersionSelected)}
                           disabled={checkoutLoading}
                           className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.1rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
                         >
-                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Pagar R$ 19,90"}
+                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Realizar Pagamento"}
                         </button>
 
-                        <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para a ambiente seguro do Stripe.</p>
-
-                        {paymentMethod === "pix" && (
-                          <div className="mt-4 rounded-[22px] border border-emerald-200 bg-emerald-50/80 p-4 text-sm text-emerald-900">
-                            <p className="font-semibold">Pagamento via Pix</p>
-                            <p className="mt-1">Seu pedido será validado após o envio do comprovante.</p>
-                          </div>
-                        )}
+                        <p className="mt-3 text-center text-xs text-muted-foreground">Você será redirecionado para o ambiente seguro do Stripe.</p>
 
                         {(checkoutLoading || order.status === "pagamento") && (
                           <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d6a61e] bg-[#f8df7d] p-4 text-sm text-[#1a1400] shadow-[0_8px_22px_rgba(245,199,29,0.18)]">
