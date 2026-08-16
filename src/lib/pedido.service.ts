@@ -3,7 +3,8 @@ import { gerarLetraDoPedido } from "@/lib/lyric.service";
 import { gerarMusicaComSuno } from "@/integrations/suno/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
-const SUNO_GENERATION_ENABLED = (process.env.ENABLE_SUNO_GENERATION ?? "false").toLowerCase() === "true";
+const hasSunoApiKey = Boolean(process.env.SUNO_API_KEY);
+const SUNO_GENERATION_ENABLED = (process.env.ENABLE_SUNO_GENERATION ?? (hasSunoApiKey ? "true" : "false")).toLowerCase() === "true";
 
 export type PedidoEntrada = {
   nome_cliente: string;
