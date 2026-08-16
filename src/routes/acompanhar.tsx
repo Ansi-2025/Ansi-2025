@@ -76,7 +76,6 @@ function TrackingPage() {
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
   const createCheckout = useServerFn(createStripeCheckout);
-  const createPaymentIntent = useServerFn(createStripePaymentIntent);
   const updateCustomerInfo = useServerFn(updateCheckoutCustomerInfo);
   const approveLyricFn = useServerFn(approveLyric);
   const requestRevisionFn = useServerFn(requestLyricRevision);
@@ -183,25 +182,20 @@ function TrackingPage() {
     setPaymentError("");
     setPaymentIntentClientSecret(null);
 
-    if (!stripePublishableKey) {
-      setCheckoutError("Stripe não configurado: faltando a variável VITE_STRIPE_PUBLISHABLE_KEY.");
-      return;
-    }
-
-    const saved = await saveCheckoutCustomerInfo();
-    if (!saved) return;
-
     setCheckoutLoading(true);
     try {
-      const result = await createPaymentIntent({
+      const result = await createCheckout({
         data: {
           id: order.id,
           secondVersion: withSecondVersion,
         },
       });
-      setPaymentIntentClientSecret(result.clientSecret);
-      setCheckoutDialogOpen(true);
-      await search(order.id);
+
+      if (!result.checkoutUrl) {
+        throw new Error("Não foi possível abrir o checkout do Stripe.");
+      }
+
+      window.location.href = result.checkoutUrl;
     } catch (error) {
       setCheckoutError(error instanceof Error ? error.message : "Erro ao criar pagamento Stripe.");
     } finally {
@@ -716,110 +710,48 @@ function Timeline({
                 </div>
               )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
-                <div className="mt-3">
-                  <div className="grid gap-5 xl:grid-cols-1">
-                    <div className="space-y-5">
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <div className="mb-5 flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">1</span>
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Seus dados</h3>
-                          </div>
-                        </div>
+                <div className="mt-3 rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
+                  <div className="mb-5 flex items-center gap-3">
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">1</span>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Checkout</p>
+                      <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Pagar no Stripe</h3>
+                    </div>
+                  </div>
 
-                        <div className="space-y-4">
-                          <div>
-                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">WhatsApp</label>
-                            <input
-                              type="tel"
-                              value={checkoutCustomer.phone}
-                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, phone: formatPhone(e.target.value) }))}
-                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                              placeholder="(41) 99999-9999"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">E-mail</label>
-                            <input
-                              type="email"
-                              value={checkoutCustomer.email}
-                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, email: e.target.value }))}
-                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                              placeholder="seuemail@email.com"
-                            />
-                          </div>
-                          <div>
-                            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">CPF</label>
-                            <input
-                              type="text"
-                              value={checkoutCustomer.cpf}
-                              onChange={(e) => setCheckoutCustomer((prev) => ({ ...prev, cpf: formatCpf(e.target.value) }))}
-                              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm text-slate-900 outline-none focus:border-[var(--sky-blue)]"
-                              placeholder="000.000.000-00"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="mt-5 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
-                          <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-700">✓</span>
-                          <span>Utilizamos criptografia e não compartilhamos suas informações.</span>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
-                        <div className="mb-5 flex items-center gap-3">
-                          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">2</span>
-                          <div>
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Etapa</p>
-                            <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Escolher forma de pagamento</h3>
-                          </div>
-                        </div>
-
-                        <div className="mb-4 rounded-[20px] border border-[#d7b64d] bg-[#f5e8b3] p-4 text-sm text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
-                          <div className="flex items-start gap-3">
-                            <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#bb8b00] bg-[#f9d34d] text-sm font-black text-primary">✓</span>
-                            <div>
-                              <p className="text-[1.05rem] font-bold">Pagamento seguro</p>
-                              <p className="mt-1 text-[0.98rem] leading-relaxed text-[#4b3d11]">
-                                Processado pelo Stripe, plataforma de pagamentos mais segura do mundo. Seus dados financeiros nunca são armazenados em nosso sistema.
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={() => void openStripeCheckout(secondVersionSelected)}
-                          disabled={checkoutLoading}
-                          className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.05rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
-                        >
-                          {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : "Realizar Pagamento"}
-                        </button>
-
-                        <p className="mt-3 text-center text-sm text-[var(--dark-brown)]">Você será redirecionado para o ambiente seguro do Stripe.</p>
-
-                        {paymentProcessing && (
-                          <div className="mt-4 flex items-center gap-3 rounded-[18px] border border-[#d7b64d] bg-[#f7d863] p-4 text-sm text-[#1a1400] shadow-[0_10px_26px_rgba(245,199,29,0.18)]">
-                            <span className="grid h-7 w-7 place-items-center rounded-full border border-[#8b6300] bg-[#f3c93d] text-[#1a1400]">
-                              <Loader2 className="h-4 w-4 animate-spin" />
-                            </span>
-                            <span className="text-[1.02rem] font-bold leading-relaxed">{paymentMessages[checkoutMessageIndex]}</span>
-                          </div>
-                        )}
-
-                        {paymentConfirmed && (
-                          <div className="mt-4 rounded-[18px] border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-                            <p className="font-bold">Pagamento confirmado com sucesso.</p>
-                            <p className="mt-1">Estamos preparando sua música...</p>
-                          </div>
-                        )}
-
-                        {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
+                  <div className="mb-4 rounded-[20px] border border-[#d7b64d] bg-[#f5e8b3] p-4 text-sm text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                    <div className="flex items-start gap-3">
+                      <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#bb8b00] bg-[#f9d34d] text-sm font-black text-primary">✓</span>
+                      <div>
+                        <p className="text-[1.05rem] font-bold">Pagamento seguro</p>
+                        <p className="mt-1 text-[0.98rem] leading-relaxed text-[#4b3d11]">
+                          Você será redirecionado para o ambiente seguro do Stripe, onde o valor final será calculado corretamente e a confirmação acontece oficialmente.
+                        </p>
                       </div>
                     </div>
-
                   </div>
+
+                  <button
+                    type="button"
+                    onClick={() => void openStripeCheckout(secondVersionSelected)}
+                    disabled={checkoutLoading}
+                    className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.05rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
+                  >
+                    {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `Ir para o Stripe · R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
+                  </button>
+
+                  <div className="mt-4 rounded-[18px] border border-[#d5a221] bg-[#fef4c8] p-3 text-[#1a1400] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                    <button
+                      type="button"
+                      onClick={() => setSecondVersionSelected((prev) => !prev)}
+                      className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
+                    >
+                      <span>Quero a segunda versão</span>
+                      <span>+R$ 9,90</span>
+                    </button>
+                  </div>
+
+                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
                 </div>
               )}
             </li>
