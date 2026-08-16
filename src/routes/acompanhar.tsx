@@ -481,11 +481,23 @@ function Timeline({
     "Validando o pagamento no Stripe...",
     "Estamos preparando sua música...",
   ];
+  const isStripeProcessing = order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase());
   const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
     ? "pago"
     : order.status;
   const currentIdx = STATUS_FLOW.indexOf(effectiveStatus);
   const paymentBlockVisible = order.status === "letra_aprovada" || (order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
+  const timelineLabel = (step: PedidoStatus) => {
+    if (step === "pagamento" && isStripeProcessing) {
+      return "Pagamento em análise";
+    }
+
+    if (step === "pago" && order.status === "pago") {
+      return "Pagamento recebido - liberando seu produto";
+    }
+
+    return STATUS_LABELS[step];
+  };
   const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
   const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;
@@ -533,9 +545,15 @@ function Timeline({
           </span>
         </div>
 
+        {isStripeProcessing && (
+          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+            <p className="font-semibold">Pagamento em análise</p>
+            <p className="mt-1">Aguarde por gentileza. Estamos confirmando o pagamento com a Stripe e em seguida liberamos sua música.</p>
+          </div>
+        )}
         {order.status === "pago" && (
           <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
-            <p className="font-semibold">Obrigado pela sua compra! 💛</p>
+            <p className="font-semibold">Pagamento recebido - liberando seu produto</p>
             <p className="mt-1">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
           </div>
         )}
@@ -605,7 +623,7 @@ function Timeline({
                 </span>
                 <div className="flex-1">
                   <div className={`font-display text-base font-semibold ${isCurrent ? "text-primary" : isDone ? "text-primary" : "text-muted-foreground"}`}>
-                    {STATUS_LABELS[step]}
+                    {timelineLabel(step)}
                   </div>
                   {isCurrent && (
                     <div className="mt-1 text-xs text-muted-foreground">
