@@ -3,6 +3,7 @@ import { z } from "zod";
 import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+import { gerarMusicaFinal } from "@/lib/pedido.service";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
   .split(",")
@@ -142,6 +143,14 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
     mensagem_whatsapp: "Pagamento confirmado manualmente pelo painel administrativo.",
     criado_em: agora,
   });
+
+  try {
+    if (!pedido.suno_task_id && pedido.letra_gerada) {
+      await gerarMusicaFinal(pedido.id);
+    }
+  } catch (error) {
+    console.error("Erro ao disparar geração da música após confirmação manual do pagamento:", error);
+  }
 
   return pedido;
 }
