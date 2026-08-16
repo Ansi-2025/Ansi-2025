@@ -94,7 +94,6 @@ function TrackingPage() {
   const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
-  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
   const [approvalError, setApprovalError] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<PedidoStatus | null>(null);
@@ -107,6 +106,13 @@ function TrackingPage() {
     "Fique tranquilo, estamos mantendo tudo sincronizado...",
     "Aguarde, seu pedido está sendo atualizado em segundo plano...",
   ];
+  const paymentConfirmed = Boolean(
+    order &&
+      (order.status === "pago" ||
+        order.status === "musica_pronta" ||
+        order.status === "entregue" ||
+        ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())),
+  );
 
   const search = useCallback(async (orderId: string, options?: { preserveExisting?: boolean }) => {
     const trimmedId = orderId.trim();
@@ -176,7 +182,6 @@ function TrackingPage() {
     setCheckoutError("");
     setPaymentError("");
     setPaymentIntentClientSecret(null);
-    setPaymentConfirmed(false);
 
     if (!stripePublishableKey) {
       setCheckoutError("Stripe não configurado: faltando a variável VITE_STRIPE_PUBLISHABLE_KEY.");
@@ -350,7 +355,6 @@ function TrackingPage() {
             paymentIntentClientSecret={paymentIntentClientSecret}
             paymentProcessing={paymentProcessing}
             paymentConfirmed={paymentConfirmed}
-            setPaymentConfirmed={setPaymentConfirmed}
             setPaymentProcessing={setPaymentProcessing}
             setPaymentError={setPaymentError}
             setPaymentIntentClientSecret={setPaymentIntentClientSecret}
@@ -434,7 +438,6 @@ function Timeline({
   paymentIntentClientSecret,
   paymentProcessing,
   paymentConfirmed,
-  setPaymentConfirmed,
   setPaymentProcessing,
   setPaymentError,
   setPaymentIntentClientSecret,
@@ -464,7 +467,6 @@ function Timeline({
   paymentIntentClientSecret: string | null;
   paymentProcessing: boolean;
   paymentConfirmed: boolean;
-  setPaymentConfirmed: Dispatch<SetStateAction<boolean>>;
   setPaymentProcessing: Dispatch<SetStateAction<boolean>>;
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
@@ -482,7 +484,7 @@ function Timeline({
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
   const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
   const paymentMessages = [
-    "Pagamento confirmado com sucesso.",
+    "Validando o pagamento no Stripe...",
     "Estamos preparando sua música...",
   ];
   const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
@@ -884,7 +886,6 @@ function Timeline({
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}
                       onSuccess={async () => {
-                        setPaymentConfirmed(true);
                         await refreshOrder();
                         setTimeout(() => {
                           setCheckoutDialogOpen(false);
