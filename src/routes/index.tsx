@@ -73,7 +73,6 @@ function Index() {
         <FinalCTA />
       </main>
       <Footer />
-      <FloatingWhatsApp />
     </div>
   );
 }
@@ -1570,23 +1569,6 @@ function TikTokIcon({ className }: { className?: string }) {
     <svg viewBox="0 0 24 24" fill="currentColor" className={className} aria-hidden>
       <path d="M16.5 3a5.5 5.5 0 0 0 4.5 4.5v3a8.4 8.4 0 0 1-4.5-1.3v6.6a5.7 5.7 0 1 1-5.7-5.7c.3 0 .6 0 .9.1v3.1a2.7 2.7 0 1 0 1.8 2.5V3h3z" />
     </svg>
-  );
-}
-
-/* ---------------- Floating WhatsApp ---------------- */
-function FloatingWhatsApp() {
-  return (
-    <a
-      href={WHATSAPP_URL}
-      target="_blank"
-      rel="noopener noreferrer"
-      aria-label="Falar no WhatsApp"
-      className="fixed bottom-5 right-5 z-50 grid h-14 w-14 place-items-center rounded-full bg-[#25D366] text-white shadow-[0_12px_30px_-8px_rgba(37,211,102,0.6)] transition-transform hover:scale-110 animate-float"
-    >
-      <svg viewBox="0 0 24 24" fill="currentColor" className="h-7 w-7" aria-hidden>
-        <path d="M20.5 3.5A11 11 0 0 0 3.2 17.3L2 22l4.8-1.2A11 11 0 1 0 20.5 3.5zM12 20.1a8.1 8.1 0 0 1-4.1-1.1l-.3-.2-2.8.7.8-2.7-.2-.3a8.1 8.1 0 1 1 6.6 3.6zm4.7-6.1c-.3-.1-1.5-.7-1.8-.8s-.4-.1-.6.1-.7.8-.8 1-.3.2-.6.1a6.6 6.6 0 0 1-3.3-2.9c-.3-.4.3-.4.7-1.3a.5.5 0 0 0 0-.5c-.1-.1-.6-1.4-.8-1.9s-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-1 2.3 5.3 5.3 0 0 0 1.1 2.8 12.1 12.1 0 0 0 4.6 4 5.4 5.4 0 0 0 3.3.6 2.7 2.7 0 0 0 1.8-1.3 2.2 2.2 0 0 0 .2-1.3c-.1-.1-.3-.2-.6-.3z" />
-      </svg>
-    </a>
   );
 }
 
