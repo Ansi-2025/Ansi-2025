@@ -301,41 +301,51 @@ function TrackingPage() {
   }, [initialId, search]);
 
   return (
-    <div className="min-h-screen bg-white">
-      <header className="border-b border-border bg-card">
+    <div
+      className="min-h-screen bg-[#090b10] text-zinc-100"
+      style={{
+        ["--sky-blue" as any]: "#ff5d73",
+        ["--gold" as any]: "#d4af69",
+        ["--soft-gray" as any]: "#0f141b",
+        ["--card" as any]: "#111821",
+        ["--primary" as any]: "#f8f5f2",
+        ["--muted-foreground" as any]: "#a7b1c2",
+      }}
+    >
+      <header className="border-b border-white/10 bg-[#0f1218]/90 backdrop-blur-md">
         <div className="mx-auto flex max-w-3xl items-center gap-3 px-5 py-4 md:px-8">
-          <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">
+          <span className="grid h-9 w-9 place-items-center rounded-full bg-[#ff5d73]/10 text-[#ff7a8d] ring-1 ring-[#ff5d73]/20">
             <Music className="h-4 w-4" />
           </span>
           <div>
-            <h1 className="font-display text-base font-semibold text-primary">Acompanhar Pedido</h1>
-            <p className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">Canção de Fé</p>
+            <h1 className="font-display text-base font-semibold text-[#f8f5f2]">Acompanhar Pedido</h1>
+            <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Canção de Fé</p>
           </div>
         </div>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-5 py-12 md:px-8">
-        <div className="w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
+        <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] md:p-8">
           <label className="block">
-            <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Código do pedido</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">Código do pedido</span>
             <div className="mt-2 flex gap-2">
               <input
                 value={id}
                 onChange={(e) => setId(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && id && search(id)}
                 placeholder="Cole aqui o código que você recebeu"
-                className="flex-1 rounded-xl border border-border bg-background px-4 py-3 font-mono text-sm outline-none focus:border-[var(--sky-blue)]"
+                className="flex-1 rounded-xl border border-white/10 bg-[#0d1117] px-4 py-3 font-mono text-sm text-zinc-50 outline-none placeholder:text-zinc-500 focus:border-[#ff5d73]"
               />
               <button
                 onClick={() => id && search(id)}
                 disabled={!id || loading}
-                className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4d6d] via-[#d946ef] to-[#8b5cf6] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(217,70,239,0.35)] disabled:opacity-50"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </button>
             </div>
           </label>
-          {err && <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">{err}</p>}
+          {err && <p className="mt-4 rounded-xl border border-[#ff5d73]/30 bg-[#ff5d73]/10 px-4 py-3 text-sm text-[#ffb3bf]">{err}</p>}
         </div>
 
         {order && (
@@ -531,44 +541,44 @@ function Timeline({
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
 
   return (
-    <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-8">
+    <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] md:p-8">
       <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pedido de</p>
-        <h2 className="mt-1 font-display text-2xl font-semibold text-primary">{order.nome_cliente}</h2>
-        <p className="mt-1 text-sm text-muted-foreground">
+        <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Pedido de</p>
+        <h2 className="mt-1 font-display text-2xl font-semibold text-[#f8f5f2]">{order.nome_cliente}</h2>
+        <p className="mt-1 text-sm text-zinc-400">
           {order.genero_musical ?? "Gênero não informado"}
           {shouldShowDuration ? ` · ${order.duracao_segundos}s` : ""}
         </p>
         <div className="mt-3 flex flex-wrap gap-2">
-          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border border-[var(--gold)] bg-[var(--gold)]/10 text-[var(--gold)]" : "border border-border bg-background text-muted-foreground"}`}>
+          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d]" : "border border-white/10 bg-[#0d1117] text-zinc-400"}`}>
             {order.segunda_versao ? "2 versões incluídas" : "1 versão"}
           </span>
         </div>
 
         {isStripeProcessing && (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          <div className="mt-4 rounded-2xl border border-[#d4af69]/30 bg-[#d4af69]/10 p-4 text-sm text-[#f3d59d]">
             <p className="font-semibold">Pagamento em análise</p>
-            <p className="mt-1">Aguarde por gentileza. Estamos confirmando o pagamento com a Stripe e em seguida liberamos sua música.</p>
+            <p className="mt-1 text-zinc-300">Aguarde por gentileza. Estamos confirmando o pagamento com a Stripe e em seguida liberamos sua música.</p>
           </div>
         )}
         {order.status === "pago" && (
-          <div className="mt-4 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900">
+          <div className="mt-4 rounded-2xl border border-[#34d399]/30 bg-[#34d399]/10 p-4 text-sm text-[#bbf7d0]">
             <p className="font-semibold">Pagamento recebido - liberando seu produto</p>
-            <p className="mt-1">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
+            <p className="mt-1 text-zinc-200">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
           </div>
         )}
         {(order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta") && (order.url_musica || order.url_musica_segunda_versao) && (
-          <div className="mt-4 rounded-2xl border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive">
-            <p className="font-semibold text-destructive">Atenção:</p>
-            <p className="mt-2">Sua música está disponível para download aqui no site em menos de 1 hora — essa é a melhor opção para receber o arquivo rapidamente.</p>
-            <p className="mt-2">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
-            <p className="mt-2 font-medium">Aviso: a música será apagada dentro de 24 horas após a liberação.</p>
+          <div className="mt-4 rounded-2xl border border-[#ff5d73]/20 bg-[#ff5d73]/10 p-4 text-sm text-[#ffc9d1]">
+            <p className="font-semibold text-[#ffb4c0]">Atenção:</p>
+            <p className="mt-2 text-zinc-200">Sua música está disponível para download aqui no site em menos de 1 hora — essa é a melhor opção para receber o arquivo rapidamente.</p>
+            <p className="mt-2 text-zinc-200">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
+            <p className="mt-2 font-medium text-[#ffd7dd]">Aviso: a música será apagada dentro de 24 horas após a liberação.</p>
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               {order.url_musica && (
                 <a
                   href={order.url_musica}
                   download
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--sky-blue)] px-4 py-3 text-sm font-semibold text-white hover:bg-[var(--sky-blue)]/90"
+                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff5d73] to-[#d946ef] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(217,70,239,0.3)] hover:brightness-110"
                 >
                   <Download className="h-4 w-4" /> {order.url_musica_segunda_versao ? "Baixar versão 1" : "Baixar música"}
                 </a>
@@ -577,7 +587,7 @@ function Timeline({
                 <a
                   href={order.url_musica_segunda_versao}
                   download
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[var(--gold)] bg-[var(--gold)]/10 px-4 py-3 text-sm font-semibold text-primary hover:bg-[var(--gold)]/20"
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d4af69] bg-[#d4af69]/10 px-4 py-3 text-sm font-semibold text-[#f3d59d] hover:bg-[#d4af69]/15"
                 >
                   <Download className="h-4 w-4" /> Baixar versão 2
                 </a>
@@ -607,26 +617,26 @@ function Timeline({
                 type="button"
                 onClick={() => onSelectStatus(step)}
                 className={`group flex w-full items-start gap-3 rounded-2xl px-4 py-3 text-left transition ${
-                  isSelected ? "bg-[var(--sky-blue)]/10 ring-2 ring-[var(--sky-blue)]/20" : "hover:bg-[var(--soft-gray)]"
+                  isSelected ? "bg-[#ff5d73]/10 ring-2 ring-[#ff5d73]/20" : "hover:bg-[#171d26]"
                 } ${isReached ? "" : "opacity-70"}`}
               >
                 <span
                   className={`grid h-7 w-7 place-items-center rounded-full border-2 transition-colors ${
                     isCurrent
-                      ? "border-[var(--gold)] bg-[var(--gold)] text-primary shadow-[var(--shadow-gold)]"
+                      ? "border-[#d4af69] bg-[#d4af69] text-[#100d09] shadow-[0_10px_25px_rgba(212,175,105,0.35)]"
                       : isDone
-                        ? "border-[var(--sky-blue)] bg-[var(--sky-blue)] text-white"
-                        : "border-border bg-background text-muted-foreground"
+                        ? "border-[#ff5d73] bg-[#ff5d73] text-white"
+                        : "border-white/10 bg-[#0d1117] text-zinc-400"
                   }`}
                 >
                   {isDone ? <CheckCircle2 className="h-4 w-4" /> : isCurrent ? <Sparkles className="h-3.5 w-3.5" /> : <ArrowRight className="h-3 w-3" />}
                 </span>
                 <div className="flex-1">
-                  <div className={`font-display text-base font-semibold ${isCurrent ? "text-primary" : isDone ? "text-primary" : "text-muted-foreground"}`}>
+                  <div className={`font-display text-base font-semibold ${isCurrent ? "text-[#f8f5f2]" : isDone ? "text-[#f8f5f2]" : "text-zinc-400"}`}>
                     {timelineLabel(step)}
                   </div>
                   {isCurrent && (
-                    <div className="mt-1 text-xs text-muted-foreground">
+                    <div className="mt-1 text-xs text-zinc-400">
                       Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}
                     </div>
                   )}
@@ -634,9 +644,9 @@ function Timeline({
               </button>
 
               {isCurrent && step === "aguardando_aprovacao_letra" && (
-                <div className="mt-3 rounded-2xl border border-[var(--gold)]/30 bg-[var(--gold)]/5 p-4">
-                  <p className="mb-3 text-xs font-semibold text-primary uppercase tracking-[0.18em]">Sua letra está pronta</p>
-                  <p className="text-sm text-muted-foreground">Confira o roteiro e a letra da música, e escolha se você aprova ou pede uma revisão.</p>
+                <div className="mt-3 rounded-2xl border border-[#d4af69]/25 bg-[#d4af69]/5 p-4">
+                  <p className="mb-3 text-xs font-semibold text-[#f3d59d] uppercase tracking-[0.18em]">Sua letra está pronta</p>
+                  <p className="text-sm text-zinc-300">Confira o roteiro e a letra da música, e escolha se você aprova ou pede uma revisão.</p>
 
                   {briefSections.length > 0 && (
                     <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
@@ -711,7 +721,7 @@ function Timeline({
                       type="button"
                       onClick={handleApproveLyric}
                       disabled={approvalLoading}
-                      className="inline-flex items-center justify-center rounded-full bg-[var(--sky-blue)] px-5 py-3 text-sm font-semibold text-white disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(217,70,239,0.35)] disabled:opacity-50"
                     >
                       {approvalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Aprovar letra"}
                     </button>
@@ -719,7 +729,7 @@ function Timeline({
                       type="button"
                       onClick={() => handleRequestRevision(revisionFeedback)}
                       disabled={approvalLoading}
-                      className="inline-flex items-center justify-center rounded-full border border-[var(--gold)] bg-background px-5 py-3 text-sm font-semibold text-[var(--gold)] disabled:opacity-50"
+                      className="inline-flex items-center justify-center rounded-full border border-[#d4af69] bg-[#0d1117] px-5 py-3 text-sm font-semibold text-[#f3d59d] disabled:opacity-50"
                     >
                       {approvalLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Pedir revisão"}
                     </button>
@@ -728,21 +738,21 @@ function Timeline({
                 </div>
               )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
-                <div className="mt-3 rounded-[28px] border border-[#eadfca] bg-[#f7f1e4] p-5 shadow-[0_12px_35px_rgba(15,23,42,0.04)]">
+                <div className="mt-3 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
                   <div className="mb-5 flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)] text-sm font-black text-primary">1</span>
+                    <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] to-[#8b5cf6] text-sm font-black text-white">1</span>
                     <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--sky-blue)]">Checkout</p>
-                      <h3 className="font-display text-[2rem] leading-none font-semibold text-primary">Pagar no Stripe</h3>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff99a8]">Checkout</p>
+                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Pagar no Stripe</h3>
                     </div>
                   </div>
 
-                  <div className="mb-4 rounded-[20px] border border-[#d7b64d] bg-[#f5e8b3] p-4 text-sm text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.35)]">
+                  <div className="mb-4 rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     <div className="flex items-start gap-3">
-                      <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#bb8b00] bg-[#f9d34d] text-sm font-black text-primary">✓</span>
+                      <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#ff5d73] bg-[#ff5d73]/15 text-sm font-black text-[#ffd5dc]">✓</span>
                       <div>
-                        <p className="text-[1.05rem] font-bold">Pagamento seguro</p>
-                        <p className="mt-1 text-[0.98rem] leading-relaxed text-[#4b3d11]">
+                        <p className="text-[1.05rem] font-bold text-[#f8f5f2]">Pagamento seguro</p>
+                        <p className="mt-1 text-[0.98rem] leading-relaxed text-zinc-300">
                           Você será redirecionado para o ambiente seguro do Stripe, onde o valor final será calculado corretamente e a confirmação acontece oficialmente.
                         </p>
                       </div>
@@ -753,23 +763,23 @@ function Timeline({
                     type="button"
                     onClick={() => void openStripeCheckout(secondVersionSelected)}
                     disabled={checkoutLoading}
-                    className="w-full rounded-[18px] bg-[#f5c71d] px-5 py-4 text-[1.05rem] font-black text-[#0f172a] shadow-[0_12px_26px_rgba(245,199,29,0.35)] disabled:opacity-50"
+                    className="w-full rounded-[18px] bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-[1.05rem] font-black text-white shadow-[0_12px_30px_rgba(217,70,239,0.28)] disabled:opacity-50"
                   >
                     {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `Ir para o Stripe · R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
                   </button>
 
-                  <div className="mt-4 rounded-[18px] border border-[#d5a221] bg-[#fef4c8] p-3 text-[#1a1400] shadow-[inset_0_1px_0_rgba(255,255,255,0.5)]">
+                  <div className="mt-4 rounded-[18px] border border-[#d4af69]/25 bg-[#1b1b23] p-3 text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     <button
                       type="button"
                       onClick={() => setSecondVersionSelected((prev) => !prev)}
-                      className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
+                      className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d] hover:bg-[#d4af69]/15"}`}
                     >
                       <span>Quero a segunda versão</span>
                       <span>+R$ 9,90</span>
                     </button>
                   </div>
 
-                  {checkoutError && <p className="mt-3 text-sm text-destructive">{checkoutError}</p>}
+                  {checkoutError && <p className="mt-3 text-sm text-[#ffb3bf]">{checkoutError}</p>}
                 </div>
               )}
             </li>
@@ -782,10 +792,10 @@ function Timeline({
       </p>
 
       <Dialog open={checkoutDialogOpen} onOpenChange={setCheckoutDialogOpen}>
-        <DialogContent className="max-w-xl">
+        <DialogContent className="max-w-xl border border-white/10 bg-[#0f141b] text-zinc-100">
           <DialogHeader>
-            <DialogTitle>Finalize seu pagamento com segurança</DialogTitle>
-            <DialogDescription>
+            <DialogTitle className="text-[#f8f5f2]">Finalize seu pagamento com segurança</DialogTitle>
+            <DialogDescription className="text-zinc-300">
               Seu pedido está quase pronto. Complete os dados abaixo e finalize o pagamento com total segurança, sem sair da página.
             </DialogDescription>
           </DialogHeader>
@@ -858,19 +868,19 @@ function Timeline({
       </Dialog>
 
       {history.length > 0 && (
-        <div className="mt-8 rounded-3xl border border-border bg-[var(--soft-gray)]/50 p-6">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+        <div className="mt-8 rounded-3xl border border-white/10 bg-[#10161d] p-6 shadow-[0_20px_50px_rgba(0,0,0,0.35)]">
+          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-2">
-              <Clock className="h-4 w-4 text-[var(--sky-blue)]" />
+              <Clock className="h-4 w-4 text-[#ff99a8]" />
               <div>
-                <h3 className="font-display text-sm font-semibold text-primary">Histórico de Atualizações</h3>
-                <p className="text-xs text-muted-foreground">{history.length} atualização{history.length > 1 ? "s" : ""}</p>
+                <h3 className="font-display text-sm font-semibold text-[#f8f5f2]">Histórico de Atualizações</h3>
+                <p className="text-xs text-zinc-400">{history.length} atualização{history.length > 1 ? "s" : ""}</p>
               </div>
             </div>
             <button
               type="button"
               onClick={() => setHistoryOpen((prev) => !prev)}
-              className="inline-flex items-center justify-center rounded-full border border-[var(--sky-blue)] bg-background px-4 py-2 text-sm font-semibold text-[var(--sky-blue)]"
+              className="inline-flex items-center justify-center rounded-full border border-[#ff5d73]/40 bg-[#0d1117] px-4 py-2 text-sm font-semibold text-[#ffb7c3]"
             >
               {historyOpen ? "Ocultar histórico" : "Mostrar histórico"}
             </button>
