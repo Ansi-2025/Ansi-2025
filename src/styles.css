@@ -53,32 +53,32 @@
 :root {
   --radius: 1rem;
 
-  /* Warm, light palette for love and faith */
-  --sky-blue: oklch(0.86 0.18 40);       /* soft rose */
-  --deep-blue: oklch(0.36 0.18 32);      /* deep berry */
-  --gold: oklch(0.92 0.24 95);            /* bright gold */
-  --gold-soft: oklch(0.94 0.16 90);
-  --soft-gray: oklch(0.96 0.04 75);      /* warm cream */
+  /* Darker premium palette with stronger contrast */
+  --sky-blue: oklch(0.74 0.14 220);
+  --deep-blue: oklch(0.28 0.12 235);
+  --gold: oklch(0.82 0.18 88);
+  --gold-soft: oklch(0.88 0.12 86);
+  --soft-gray: oklch(0.21 0.03 86);
 
-  --background: oklch(0.98 0.04 95);
-  --foreground: oklch(0.15 0.04 25);
-  --card: oklch(0.99 0.02 96);
-  --card-foreground: oklch(0.12 0.04 20);
-  --popover: oklch(0.99 0.02 96);
-  --popover-foreground: oklch(0.12 0.04 20);
-  --primary: oklch(0.28 0.22 40);         /* sacred red */
-  --primary-foreground: oklch(0.98 0.02 100);
-  --secondary: oklch(0.65 0.16 38);       /* blush */
-  --secondary-foreground: oklch(0.12 0.04 20);
-  --muted: oklch(0.92 0.05 80);
-  --muted-foreground: oklch(0.34 0.06 30);
+  --background: oklch(0.12 0.04 82);
+  --foreground: oklch(0.95 0.04 90);
+  --card: oklch(0.17 0.04 82);
+  --card-foreground: oklch(0.97 0.03 90);
+  --popover: oklch(0.17 0.04 82);
+  --popover-foreground: oklch(0.97 0.03 90);
+  --primary: oklch(0.90 0.08 68);
+  --primary-foreground: oklch(0.12 0.04 25);
+  --secondary: oklch(0.72 0.12 40);
+  --secondary-foreground: oklch(0.98 0.02 100);
+  --muted: oklch(0.22 0.04 86);
+  --muted-foreground: oklch(0.75 0.05 90);
   --accent: var(--gold);
-  --accent-foreground: oklch(0.12 0.04 20);
+  --accent-foreground: oklch(0.12 0.04 25);
   --destructive: oklch(0.68 0.24 35);
   --destructive-foreground: oklch(0.98 0.02 100);
-  --border: oklch(0.85 0.04 70);
-  --input: oklch(0.97 0.02 92);
-  --ring: oklch(0.34 0.22 35);
+  --border: oklch(0.35 0.04 80);
+  --input: oklch(0.19 0.03 86);
+  --ring: oklch(0.80 0.10 75);
 }
 
 @layer base {
