@@ -321,7 +321,7 @@ function StartMusicWidget({
         </button>
       </DialogTrigger>
       <DialogContent className="max-w-[920px] overflow-hidden border border-[var(--sky-blue)]/25 bg-[#031926] p-0 text-white shadow-[0_30px_80px_rgba(1,10,22,0.75)] sm:rounded-[28px]">
-        <div className="bg-[radial-gradient(circle_at_top,rgba(103,176,245,0.18),transparent_40%),linear-gradient(180deg,rgba(3,25,38,0.96),rgba(3,20,32,0.98))] px-6 py-6 sm:px-8 sm:py-8">
+        <div className="max-h-[80vh] overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(103,176,245,0.18),transparent_40%),linear-gradient(180deg,rgba(3,25,38,0.96),rgba(3,20,32,0.98))] px-6 py-6 sm:px-8 sm:py-8">
           <div className="mb-8">
             <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-sky-100/75">
               <span>{current.eyebrow}</span>
