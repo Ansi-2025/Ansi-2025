@@ -6,13 +6,20 @@ const client = new OpenAI({
 });
 
 export async function gerarLetraComFlatkey(prompt: string) {
-  const response = await client.chat.completions.create({
-    model: "gpt-4.1-mini",
-    temperature: 0.8,
-    messages: [
-      {
-        role: "system",
-        content: `
+  if (!process.env.FLATKEY_API_KEY) {
+    console.error("[gerarLetraComFlatkey] FLATKEY_API_KEY não configurada!");
+    throw new Error("Variável de ambiente FLATKEY_API_KEY não está configurada.");
+  }
+
+  console.log("[gerarLetraComFlatkey] Chamando API Flatkey...");
+  try {
+    const response = await client.chat.completions.create({
+      model: "gpt-4.1-mini",
+      temperature: 0.8,
+      messages: [
+        {
+          role: "system",
+          content: `
 Você é um compositor profissional de música emocional e moderna.
 
 Sua função é transformar a história real de uma pessoa
@@ -40,16 +47,24 @@ ESTRUTURA:
 [Ponte]
 [Refrão Final]
         `,
-      },
-      {
-        role: "user",
-        content: prompt,
-      },
-    ],
-  });
+        },
+        {
+          role: "user",
+          content: prompt,
+        },
+      ],
+    });
 
-  return {
-    letra: response.choices[0].message.content,
-    uso: response.usage,
-  };
+    const letra = response.choices[0].message.content;
+    console.log("[gerarLetraComFlatkey] Letra gerada com sucesso, tokens:", response.usage?.total_tokens);
+    
+    return {
+      letra,
+      uso: response.usage,
+    };
+  } catch (error) {
+    const mensagem = error instanceof Error ? error.message : String(error);
+    console.error("[gerarLetraComFlatkey] Erro ao chamar API Flatkey:", mensagem, error);
+    throw new Error(`Falha ao gerar letra com Flatkey: ${mensagem}`);
+  }
 }

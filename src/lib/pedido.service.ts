@@ -21,6 +21,8 @@ export type PedidoEntrada = {
 
 export async function criarPedido(data: PedidoEntrada) {
   const agora = new Date().toISOString();
+  console.log("[criarPedido] Criando novo pedido para:", data.nome_cliente);
+  
   const pedido = {
     nome_cliente: data.nome_cliente,
     email_cliente: data.email_cliente ?? null,
@@ -46,10 +48,12 @@ export async function criarPedido(data: PedidoEntrada) {
     .single();
 
   if (insertError || !inserted) {
+    console.error("[criarPedido] Erro ao inserir pedido:", insertError?.message);
     throw new Error(`Falha ao criar pedido: ${insertError?.message ?? "dados inválidos"}`);
   }
 
   const pedidoId = inserted.id as string;
+  console.log("[criarPedido] Pedido criado com ID:", pedidoId);
 
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedidoId,
@@ -92,12 +96,15 @@ export async function atualizarDadosClientePedido(
 export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
   const agora = new Date().toISOString();
 
+  console.log("[gerarLetraPedido] Atualizando status para gerando_letra...", { pedidoId });
   await supabaseAdmin
     .from("pedidos")
     .update({ status: "gerando_letra", status_atualizado_em: agora })
     .eq("id", pedidoId);
 
+  console.log("[gerarLetraPedido] Chamando gerarLetraDoPedido...");
   const { roteiro, letra } = await gerarLetraDoPedido(data);
+  console.log("[gerarLetraPedido] Letra gerada com sucesso, atualizando pedido...");
 
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
@@ -113,8 +120,11 @@ export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
     .single();
 
   if (error || !pedido) {
+    console.error("[gerarLetraPedido] Erro ao salvar letra:", error?.message);
     throw new Error(`Falha ao salvar letra do pedido: ${error?.message ?? "pedido não encontrado"}`);
   }
+
+  console.log("[gerarLetraPedido] Pedido atualizado com sucesso");
 
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedido.id,

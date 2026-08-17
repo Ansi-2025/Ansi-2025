@@ -136,15 +136,27 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
 export const sendOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => OrderSchema.parse(data))
   .handler(async ({ data }) => {
-    const pedidoData: PedidoEntrada = data;
-    const pedido = await criarPedido(pedidoData);
-    const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);
-    return {
-      ok: true,
-      id: pedido.id,
-      letra_gerada: pedidoComLetra.letra_gerada,
-      status: pedidoComLetra.status,
-    };
+    try {
+      console.log("[sendOrder] Iniciando criação de pedido...", { nome: data.nome_cliente, telefone: data.telefone_cliente });
+      const pedidoData: PedidoEntrada = data;
+      const pedido = await criarPedido(pedidoData);
+      console.log("[sendOrder] Pedido criado com ID:", pedido.id);
+      
+      console.log("[sendOrder] Gerando letra...");
+      const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);
+      console.log("[sendOrder] Letra gerada com sucesso");
+      
+      return {
+        ok: true,
+        id: pedido.id,
+        letra_gerada: pedidoComLetra.letra_gerada,
+        status: pedidoComLetra.status,
+      };
+    } catch (error) {
+      const mensagem = error instanceof Error ? error.message : String(error);
+      console.error("[sendOrder] Erro ao criar pedido:", mensagem, error);
+      throw new Error(`Erro ao criar sua música: ${mensagem}`);
+    }
   });
 
 export const approveLyric = createServerFn({ method: "POST" })
