@@ -21,6 +21,28 @@ export type SunoCallbackData = {
   }>;
 };
 
+function inferirTituloDaLetra(letra: string, fallback: string): string {
+  const linhas = letra
+    .split(/\n/)
+    .map((linha) => linha.replace(/^\s*[-*•]\s*/, "").trim())
+    .filter(Boolean)
+    .filter((linha) => !/^\[[^\]]+\]$/.test(linha));
+
+  const tituloBase = linhas.find((linha) => linha.length > 3 && !/^\s*(eu|meu|nossa|você|amor|deus|fé)\b/i.test(linha))
+    ?? linhas[0]
+    ?? fallback;
+
+  const titulo = tituloBase
+    .replace(/[\r\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[*#_~`\[\]\(\)]/g, "")
+    .trim();
+
+  if (!titulo) return "Música especial";
+
+  return titulo.length > 60 ? `${titulo.slice(0, 57).trimEnd()}...` : titulo;
+}
+
 export function construirPromptSunoParaPedido(
   letra: string,
   generoMusical: string,
@@ -28,9 +50,10 @@ export function construirPromptSunoParaPedido(
   paraQuem: string,
   ocasiao: string,
   duracaoSegundos: number,
+  tipoCantor: "feminino" | "masculino" = "feminino",
 ): { title: string; style: string; prompt: string } {
-  const title = `Canção de Fé - ${nomeCliente} - ${paraQuem}`.slice(0, 100).trim();
-  const style = `${generoMusical || "Pop brasileiro"}, emocional, moderno, com melodia memorável, produção profissional, voz clara, arranjo contemporâneo`.slice(0, 1000).trim();
+  const title = inferirTituloDaLetra(letra, `${nomeCliente} e ${paraQuem}`);
+  const style = `${generoMusical || "Pop brasileiro"}, emocional, moderno, com melodia memorável, produção profissional, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, arranjo contemporâneo`.slice(0, 1000).trim();
 
   const promptBase = letra
     .replace(/\r/g, "")
@@ -44,6 +67,7 @@ export function construirPromptSunoParaPedido(
     `Duração: ${duracaoSegundos} segundos.`,
     `Ocasião: ${ocasiao}.`,
     `Destinatário: ${paraQuem}.`,
+    `Voz: ${tipoCantor === "masculino" ? "masculina" : "feminina"}.`,
     "",
     "LETRA:",
     promptBase,
@@ -65,7 +89,8 @@ export async function gerarMusicaComSuno(
   pedidoId: string,
   duracaoSegundos: number = 180,
   generoMusical: string = "Pop brasileiro moderno",
-  title: string = `Canção de Fé - Pedido #${pedidoId}`,
+  title?: string,
+  tipoCantor: "feminino" | "masculino" = "feminino",
 ): Promise<ResultadoSuno> {
   const apiKey = process.env.SUNO_API_KEY;
   const appUrl = process.env.STRIPE_APP_URL
@@ -87,8 +112,17 @@ export async function gerarMusicaComSuno(
   }
 
   const callbackUrl = `${appUrl}/api/webhooks/suno`;
-  const model = duracaoSegundos > 120 ? "V5_5" : "V5";
-  const prompt = letraFinal?.trim() || "Uma música emocional e inspiradora.";
+  const model = "V5";
+  const prompt = letraFinal?.trim();
+
+  if (!prompt) {
+    throw new Error("A letra final não foi fornecida para a API da Suno. O payload precisa conter a letra gerada e aprovada.");
+  }
+
+  const resolvedTitle = (title ?? inferirTituloDaLetra(prompt, `Música especial #${pedidoId}`)).trim() || `Música especial #${pedidoId}`;
+  const vocalGender = tipoCantor === "masculino" ? "m" : "f";
+
+  const style = `${generoMusical.slice(0, 1000)}, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, emocional, moderno, com melodia memorável, produção profissional`;
 
   const requestBody = {
     prompt: prompt.slice(0, 5000),
@@ -96,10 +130,9 @@ export async function gerarMusicaComSuno(
     instrumental: false,
     model,
     callBackUrl: callbackUrl,
-    style: generoMusical.slice(0, 1000),
-    title: title.slice(0, 100),
-    duration: model === "V5_5" ? Math.min(duracaoSegundos, 360) : undefined,
-    vocalGender: "m",
+    style: style.slice(0, 1000),
+    title: resolvedTitle.slice(0, 100),
+    vocalGender,
     styleWeight: 0.8,
     weirdnessConstraint: 0.4,
   };
