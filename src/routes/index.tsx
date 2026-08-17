@@ -1132,7 +1132,7 @@ function OrderForm() {
           subtitle="Responda uma pergunta de cada vez. Leva menos de 2 minutos."
         />
 
-        <div className="reveal mt-12 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10">
+        <div className="reveal mt-12 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10 max-h-[80vh] overflow-y-auto">
           {status === "ok" ? (
             <div className="py-10 text-center">
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">

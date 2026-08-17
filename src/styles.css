@@ -136,3 +136,28 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Scrollbar customizada com ouro e tons escuros */
+.overflow-y-auto {
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.80 0.17 90) oklch(0.14 0.03 220);
+}
+
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: oklch(0.14 0.03 220);
+  border-radius: 4px;
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: oklch(0.80 0.17 90);
+  border-radius: 4px;
+  border: 2px solid oklch(0.14 0.03 220);
+}
+
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: oklch(0.85 0.18 88);
+}
