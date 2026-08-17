@@ -30,7 +30,7 @@ const OrderSchema = z.object({
       }
       return value;
     },
-    z.string().trim().max(30).optional().nullable(),
+    z.string().trim().min(10, "Informe um WhatsApp válido.").max(30),
   ),
   cpf_cliente: z.preprocess(
     (value) => {
@@ -47,6 +47,7 @@ const OrderSchema = z.object({
   descricao: z.string().trim().min(15).max(2000),
   genero_musical: z.string().trim().min(2).max(80),
   outro_genero: z.string().trim().max(120).optional(),
+  tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
 })
 .superRefine((data, ctx) => {
   if (data.genero_musical === "Outro" && !data.outro_genero?.trim()) {
@@ -63,6 +64,7 @@ const OrderSchema = z.object({
     data.genero_musical === "Outro" && data.outro_genero?.trim()
       ? data.outro_genero.trim()
       : data.genero_musical,
+  tipo_cantor: data.tipo_cantor ?? "feminino",
   duracao_segundos: 45,
 }));
 

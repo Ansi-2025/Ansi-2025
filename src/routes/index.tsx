@@ -20,6 +20,7 @@ import {
 import heroImg from "@/assets/hero-family.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { sendOrder } from "@/lib/order.functions";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -119,16 +120,267 @@ function Header() {
           >
             <Music className="h-4 w-4" /> Acompanhar Pedido
           </a>
-          <a
-            href={CREATE_URL}
-            style={GRADIENT_GOLD}
-            className="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
-          >
-            <Sparkles className="h-4 w-4" /> Criar Minha Música
-          </a>
+          <StartMusicWidget
+            buttonClassName="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            buttonStyle={GRADIENT_GOLD}
+            label="Criar Minha Música"
+            icon={<Sparkles className="h-4 w-4" />}
+          />
         </div>
       </div>
     </header>
+  );
+}
+
+function StartMusicWidget({
+  buttonClassName,
+  buttonStyle,
+  label,
+  icon,
+}: {
+  buttonClassName?: string;
+  buttonStyle?: React.CSSProperties;
+  label: string;
+  icon?: React.ReactNode;
+}) {
+  const send = useServerFn(sendOrder);
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [widgetStep, setWidgetStep] = useState(0);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [form, setForm] = useState<OrderFormState>({
+    nome_cliente: "",
+    telefone_cliente: "",
+    email_cliente: "",
+    para_quem: "",
+    ocasiao: "",
+    genero_musical: TIPOS_MUSICA[0],
+    outro_genero: "",
+    tipo_cantor: "feminino",
+    descricao: "",
+  });
+
+  const widgetSteps = [
+    { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5", placeholder: "Ex.: Maria Silva Souza" },
+    { key: "telefone_cliente", label: "Qual é o seu WhatsApp? (obrigatório)", eyebrow: "Passo 2 de 5", placeholder: "(99) 99999-9999" },
+    { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 3 de 5", placeholder: "Ex.: Minha esposa, meu filho" },
+    { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 4 de 5", placeholder: "Ex.: Aniversário, casamento" },
+    { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 5", placeholder: "Ex.: Quero uma música emocionante sobre nossa história..." },
+  ] as const;
+
+  const current = widgetSteps[widgetStep];
+  const progress = ((widgetStep + 1) / widgetSteps.length) * 100;
+
+  const reset = () => {
+    setStatus("idle");
+    setErrorMsg("");
+    setWidgetStep(0);
+    setForm({
+      nome_cliente: "",
+      telefone_cliente: "",
+      email_cliente: "",
+      para_quem: "",
+      ocasiao: "",
+      genero_musical: TIPOS_MUSICA[0],
+      outro_genero: "",
+      tipo_cantor: "feminino",
+      descricao: "",
+    });
+  };
+
+  const validateStep = (): string | null => {
+    if (current.key === "nome_cliente") {
+      return form.nome_cliente.trim().length < 2 ? "Informe seu nome completo para continuar." : null;
+    }
+    if (current.key === "telefone_cliente") {
+      const digits = form.telefone_cliente.replace(/\D/g, "");
+      if (digits.length < 10) return "Informe um WhatsApp válido para receber a música.";
+      if (form.email_cliente.trim() && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email_cliente.trim())) {
+        return "Digite um e-mail válido ou deixe em branco.";
+      }
+      return null;
+    }
+    if (current.key === "para_quem") {
+      return form.para_quem.trim().length < 2 ? "Descreva para quem será a música." : null;
+    }
+    if (current.key === "ocasiao") {
+      return form.ocasiao.trim().length < 2 ? "Informe a ocasião para continuar." : null;
+    }
+    if (form.descricao.trim().length < 15) {
+      return "Conte um pouco mais da sua história para que a música fique personalizada.";
+    }
+    return null;
+  };
+
+  const next = () => {
+    const err = validateStep();
+    if (err) {
+      setErrorMsg(err);
+      return;
+    }
+    setErrorMsg("");
+    setWidgetStep((value) => Math.min(value + 1, widgetSteps.length - 1));
+  };
+
+  const prev = () => {
+    setErrorMsg("");
+    setWidgetStep((value) => Math.max(value - 1, 0));
+  };
+
+  const submit = async () => {
+    const err = validateStep();
+    if (err) {
+      setErrorMsg(err);
+      return;
+    }
+    setErrorMsg("");
+    setStatus("loading");
+
+    try {
+      const res = await send({ data: form });
+      setOpen(false);
+      reset();
+      navigate({ to: "/acompanhar", search: { id: res.id } });
+    } catch (error) {
+      setStatus("error");
+      setErrorMsg(error instanceof Error ? error.message : "Não foi possível criar a música agora. Tente novamente.");
+    }
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onOpenChange={(nextOpen) => {
+        setOpen(nextOpen);
+        if (!nextOpen) reset();
+      }}
+    >
+      <DialogTrigger asChild>
+        <button type="button" style={buttonStyle} className={buttonClassName}>
+          {icon}
+          {label}
+        </button>
+      </DialogTrigger>
+      <DialogContent className="max-w-[920px] overflow-hidden border border-[var(--sky-blue)]/25 bg-[#031926] p-0 text-white shadow-[0_30px_80px_rgba(1,10,22,0.75)] sm:rounded-[28px]">
+        <div className="bg-[radial-gradient(circle_at_top,rgba(103,176,245,0.18),transparent_40%),linear-gradient(180deg,rgba(3,25,38,0.96),rgba(3,20,32,0.98))] px-6 py-6 sm:px-8 sm:py-8">
+          <div className="mb-8">
+            <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-sky-100/75">
+              <span>{current.eyebrow}</span>
+              <span>{Math.round(progress)}%</span>
+            </div>
+            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+              <div
+                style={{ ...GRADIENT_GOLD, width: `${progress}%` }}
+                className="h-full rounded-full transition-all duration-500"
+              />
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100/15 bg-sky-100/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100/80">
+              <Sparkles className="h-3 w-3 text-[var(--gold)]" />
+              Criar minha música
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <h3 className="font-display text-4xl font-semibold leading-[0.95] tracking-[-0.04em] text-[#f5e7d0] sm:text-5xl">
+              {current.label}
+            </h3>
+          </div>
+
+          <div className="space-y-4">
+            {current.key === "telefone_cliente" ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-sky-100">WhatsApp obrigatório</span>
+                  <input
+                    autoFocus
+                    type="tel"
+                    value={form.telefone_cliente}
+                    onChange={(e) => setForm({ ...form, telefone_cliente: e.target.value })}
+                    className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                    placeholder={current.placeholder}
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-sm font-medium text-sky-100">E-mail (opcional)</span>
+                  <input
+                    type="email"
+                    value={form.email_cliente}
+                    onChange={(e) => setForm({ ...form, email_cliente: e.target.value })}
+                    className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                    placeholder="seuemail@email.com"
+                  />
+                </label>
+              </div>
+            ) : current.key === "descricao" ? (
+              <textarea
+                autoFocus
+                rows={6}
+                value={form.descricao}
+                onChange={(e) => setForm({ ...form, descricao: e.target.value })}
+                className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-4 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                placeholder={current.placeholder}
+              />
+            ) : (
+              <input
+                autoFocus
+                type="text"
+                value={form[current.key]}
+                onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
+                className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                placeholder={current.placeholder}
+              />
+            )}
+
+            <p className="text-sm leading-relaxed text-sky-100/75">
+              O e-mail e o WhatsApp serão solicitados no momento do pagamento para a entrega da música.
+            </p>
+
+            {errorMsg && (
+              <div className="rounded-2xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+                {errorMsg}
+              </div>
+            )}
+          </div>
+
+          <div className="mt-8 flex items-center justify-between gap-3">
+            <button
+              type="button"
+              onClick={prev}
+              disabled={widgetStep === 0 || status === "loading"}
+              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-sky-50 transition-colors hover:border-white/30 disabled:opacity-40"
+            >
+              Voltar
+            </button>
+
+            {widgetStep < widgetSteps.length - 1 ? (
+              <button
+                type="button"
+                onClick={next}
+                style={GRADIENT_GOLD}
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              >
+                Continuar <Sparkles className="h-4 w-4" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={submit}
+                disabled={status === "loading"}
+                style={GRADIENT_GOLD}
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+              >
+                {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                {status === "loading" ? "Enviando..." : "Enviar pedido"}
+              </button>
+            )}
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -229,13 +481,12 @@ function Hero() {
           className="mt-9 flex flex-col items-center gap-3 sm:flex-row animate-fade-up"
           style={{ animationDelay: "320ms" }}
         >
-          <a
-            href={CREATE_URL}
-            style={GRADIENT_GOLD}
-            className="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
-          >
-            <Sparkles className="h-4 w-4" /> Criar Minha Música
-          </a>
+          <StartMusicWidget
+            buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            buttonStyle={GRADIENT_GOLD}
+            label="Criar Minha Música"
+            icon={<Sparkles className="h-4 w-4" />}
+          />
           <a
             href="/acompanhar"
             className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
@@ -502,21 +753,30 @@ const OUTRO_GENEROS = [
   "K-Pop",
 ];
 
+const TIPOS_CANTOR = [
+  { value: "feminino", label: "Voz feminina" },
+  { value: "masculino", label: "Voz masculina" },
+] as const;
+
 type OrderFormState = {
   nome_cliente: string;
+  telefone_cliente: string;
+  email_cliente: string;
   para_quem: string;
   ocasiao: string;
   genero_musical: string;
   outro_genero: string;
+  tipo_cantor: "feminino" | "masculino";
   descricao: string;
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 5" },
-  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 2 de 5" },
-  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 3 de 5" },
-  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 4 de 5" },
-  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 5 de 5" },
+  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6" },
+  { key: "telefone_cliente", label: "Qual é o seu WhatsApp? (obrigatório)", eyebrow: "Passo 2 de 6" },
+  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 3 de 6" },
+  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 4 de 6" },
+  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 5 de 6" },
+  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 6 de 6" },
 ];
 
 function OrderForm() {
@@ -528,10 +788,13 @@ function OrderForm() {
   const navigate = useNavigate();
   const [form, setForm] = useState<OrderFormState>({
     nome_cliente: "",
+    telefone_cliente: "",
+    email_cliente: "",
     para_quem: "",
     ocasiao: "",
     genero_musical: TIPOS_MUSICA[0],
     outro_genero: "",
+    tipo_cantor: "feminino",
     descricao: "",
   });
 
@@ -586,6 +849,19 @@ function OrderForm() {
   const progress = ((step + 1) / STEPS.length) * 100;
 
   const validateStep = (): string | null => {
+    if (current.key === "telefone_cliente") {
+      const digits = form.telefone_cliente.replace(/\D/g, "");
+      if (digits.length < 10) return "Informe um WhatsApp válido para a entrega da música.";
+      return null;
+    }
+
+    if (current.key === "email_cliente") {
+      const email = form.email_cliente.trim();
+      if (!email) return null;
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Digite um e-mail válido ou deixe em branco.";
+      return null;
+    }
+
     const value = form[current.key].trim();
     if (current.key === "descricao" && value.length < 15) return "Conte um pouco mais (mínimo 15 caracteres).";
     if ((current.key === "para_quem" || current.key === "ocasiao") && value.length < 2) return "Preencha este campo para continuar.";
@@ -630,7 +906,17 @@ function OrderForm() {
   }, [status, orderId, navigate]);
 
   const reset = () => {
-    setForm({ nome_cliente: "", para_quem: "", ocasiao: "", genero_musical: TIPOS_MUSICA[0], outro_genero: "", descricao: "" });
+    setForm({
+      nome_cliente: "",
+      telefone_cliente: "",
+      email_cliente: "",
+      para_quem: "",
+      ocasiao: "",
+      genero_musical: TIPOS_MUSICA[0],
+      outro_genero: "",
+      tipo_cantor: "feminino",
+      descricao: "",
+    });
     setStep(0);
     setStatus("idle");
     setErrorMsg("");
@@ -737,8 +1023,39 @@ function OrderForm() {
                       <p className="mt-3">Estas informações ajudam nosso sistema a gerar a letra e o roteiro da música com mais precisão.</p>
                     </div>
                   </>
+                ) : current.key === "telefone_cliente" ? (
+                  <div className="space-y-5">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-primary">WhatsApp para entrega</span>
+                      <input
+                        autoFocus
+                        type="tel"
+                        value={form.telefone_cliente}
+                        onChange={(e) => setForm({ ...form, telefone_cliente: e.target.value })}
+                        onKeyDown={onKeyDown}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                        placeholder="(99) 99999-9999"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-primary">E-mail para avisos (opcional)</span>
+                      <input
+                        type="email"
+                        value={form.email_cliente}
+                        onChange={(e) => setForm({ ...form, email_cliente: e.target.value })}
+                        onKeyDown={onKeyDown}
+                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                        placeholder="seuemail@email.com"
+                      />
+                    </label>
+
+                    <p className="text-sm text-muted-foreground">
+                      WhatsApp obrigatório para a entrega. E-mail opcional, apenas para avisos e confirmação.
+                    </p>
+                  </div>
                 ) : current.key === "genero_musical" ? (
-                  <div className="space-y-4">
+                  <div className="space-y-5">
                     <div className="grid gap-2 sm:grid-cols-2">
                       {TIPOS_MUSICA.map((t) => {
                         const active = form.genero_musical === t;
@@ -770,6 +1087,29 @@ function OrderForm() {
                         />
                       </label>
                     )}
+
+                    <div className="rounded-2xl border border-border bg-background p-4">
+                      <span className="mb-3 block text-sm font-medium text-primary">Qual voz mais combina com a música?</span>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {TIPOS_CANTOR.map(({ value, label }) => {
+                          const active = form.tipo_cantor === value;
+                          return (
+                            <button
+                              key={value}
+                              type="button"
+                              onClick={() => setForm({ ...form, tipo_cantor: value })}
+                              className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
+                                active
+                                  ? "border-[var(--sky-blue)] bg-[var(--sky-blue)]/10 text-primary"
+                                  : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
+                              }`}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   </div>
                 ) : current.key === "ocasiao" ? (
                   <div className="space-y-4">
@@ -811,10 +1151,6 @@ function OrderForm() {
                   />
                 )}
               </label>
-
-              <p className="mt-4 text-sm text-muted-foreground">
-                O e-mail e o WhatsApp serão solicitados no momento do pagamento para a entrega da música.
-              </p>
 
               {errorMsg && status !== "loading" && (
                 <p className="mt-4 rounded-xl bg-destructive/10 px-4 py-3 text-sm text-destructive">
@@ -935,13 +1271,12 @@ function FinalCTA() {
             <p className="mx-auto mt-5 max-w-xl text-balance text-white/80">
               Comece agora — basta contar o que vive no seu coração.
             </p>
-            <a
-              href={CREATE_URL}
-              style={GRADIENT_GOLD}
-              className="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
-            >
-              <Sparkles className="h-5 w-5" /> Criar Minha Música
-            </a>
+            <StartMusicWidget
+              buttonClassName="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              buttonStyle={GRADIENT_GOLD}
+              label="Criar Minha Música"
+              icon={<Sparkles className="h-5 w-5" />}
+            />
           </div>
         </div>
       </div>
