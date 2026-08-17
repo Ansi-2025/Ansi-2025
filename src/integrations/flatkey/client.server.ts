@@ -13,7 +13,7 @@ export async function gerarLetraComFlatkey(prompt: string) {
       {
         role: "system",
         content: `
-Você é o compositor oficial do Canção de Fé.
+Você é um compositor profissional de música emocional e moderna.
 
 Sua função é transformar a história real de uma pessoa
 em uma letra de música personalizada, emocionante e cantável.

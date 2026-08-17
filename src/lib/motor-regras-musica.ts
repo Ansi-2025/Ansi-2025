@@ -6,6 +6,7 @@ export type DadosPedidoParaRoteiro = {
   ocasiao: string;
   descricao: string;
   genero_musical: string;
+  tipo_cantor?: "feminino" | "masculino";
   duracao_segundos: number;
 };
 

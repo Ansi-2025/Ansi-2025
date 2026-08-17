@@ -40,6 +40,7 @@ export type Database = {
           valor_pix: string | null
           whatsapp: string
           telefone_cliente: string | null
+          tipo_cantor: string | null
           letra_gerada: string | null
           letra_aprovada: boolean
           musica_gerada_em: string | null
@@ -72,6 +73,7 @@ export type Database = {
           valor_pix?: string | null
           whatsapp: string
           telefone_cliente?: string | null
+          tipo_cantor?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
           musica_gerada_em?: string | null
@@ -104,6 +106,7 @@ export type Database = {
           valor_pix?: string | null
           whatsapp?: string
           telefone_cliente?: string | null
+          tipo_cantor?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
           musica_gerada_em?: string | null

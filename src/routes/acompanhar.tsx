@@ -226,8 +226,8 @@ function TrackingPage() {
     const phone = checkoutCustomer.phone.trim();
     const cpf = checkoutCustomer.cpf.replace(/\D/g, "");
 
-    if (!email || !phone || !cpf) {
-      setCheckoutError("Preencha WhatsApp, e-mail e CPF antes de concluir o pagamento.");
+    if (!phone || !cpf) {
+      setCheckoutError("Preencha WhatsApp e CPF antes de concluir o pagamento.");
       return false;
     }
 
@@ -243,7 +243,7 @@ function TrackingPage() {
       await updateCustomerInfo({
         data: {
           id: order.id,
-          email_cliente: email,
+          email_cliente: email || null,
           telefone_cliente: normalizedPhone,
           cpf_cliente: normalizedCpf,
         },
@@ -251,7 +251,7 @@ function TrackingPage() {
 
       setOrder((current) => current ? {
         ...current,
-        email_cliente: email,
+        email_cliente: email || null,
         telefone_cliente: normalizedPhone,
         cpf_cliente: normalizedCpf,
       } : current);
@@ -512,8 +512,18 @@ function Timeline({
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
   const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;
   const [showFullBrief, setShowFullBrief] = useState(false);
-  const [showFullLyric, setShowFullLyric] = useState(false);
+  const [showFullLyric, setShowFullLyric] = useState(true);
   const [revealed, setRevealed] = useState(0);
+  const [generationMessageIndex, setGenerationMessageIndex] = useState(0);
+  // texto + tempo (ms) que a frase permanece visível antes de avançar para a próxima
+  const musicGenerationMessages = [
+    { text: "✨ Estamos transformando sua história em uma música cheia de emoção...", duration: 20000 },
+    { text: "💛 A letra está tomando forma com cuidado e autenticidade...", duration: 20000 },
+    { text: "🎶 A melodia está sendo criada para refletir o que você sente...", duration: 20000 },
+    { text: "🎼 Estamos ajustando os detalhes para deixar a música mais bonita e memorável...", duration: 30000 },
+    { text: "❤️ Sua música está quase pronta, com o toque emocional que ela merece...", duration: 30000 },
+    { text: "🔥 Falta pouco! Estamos finalizando os últimos ajustes para te entregar a versão final...", duration: 60000 },
+  ];
 
   useEffect(() => {
     setRevealed(0);
@@ -537,6 +547,22 @@ function Timeline({
 
     return () => clearInterval(interval);
   }, [paymentProcessing, paymentMessages.length]);
+
+  useEffect(() => {
+    if (order.status !== "gerando_musica") {
+      setGenerationMessageIndex(0);
+      return;
+    }
+
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    let elapsed = 0;
+    for (let i = 1; i < musicGenerationMessages.length; i++) {
+      elapsed += musicGenerationMessages[i - 1].duration;
+      timers.push(setTimeout(() => setGenerationMessageIndex(i), elapsed));
+    }
+
+    return () => timers.forEach(clearTimeout);
+  }, [musicGenerationMessages, order.status]);
 
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
 
@@ -737,36 +763,120 @@ function Timeline({
                   {approvalError && <p className="mt-3 text-sm text-destructive">{approvalError}</p>}
                 </div>
               )}
+              {isCurrent && step === "gerando_musica" && (
+                <div className="mt-3 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+                  <div className="flex items-center gap-4">
+                    <div className="relative grid h-14 w-14 place-items-center rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 text-[#f3d59d]">
+                      <Clock className="h-7 w-7 animate-spin" />
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3d59d]">Produzindo sua música</p>
+                      <h3 className="font-display text-[1.7rem] leading-none font-semibold text-[#f8f5f2]">Aguarde um momento</h3>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                    <p
+                      key={generationMessageIndex}
+                      className="animate-in fade-in-0 slide-in-from-bottom-1 text-base font-medium leading-relaxed text-[#f8f5f2] duration-700"
+                    >
+                      {musicGenerationMessages[generationMessageIndex].text}
+                    </p>
+                    <p className="mt-3 text-zinc-300">
+                      Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar o download.
+                    </p>
+                    <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+                      <div
+                        className="h-full rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] transition-all duration-700 ease-out"
+                        style={{ width: `${((generationMessageIndex + 1) / musicGenerationMessages.length) * 100}%` }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
               {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
                 <div className="mt-3 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
                   <div className="mb-5 flex items-center gap-3">
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] to-[#8b5cf6] text-sm font-black text-white">1</span>
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff99a8]">Checkout</p>
-                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Pagar no Stripe</h3>
+                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Escolha sua forma de pagamento</h3>
                     </div>
                   </div>
 
-                  <div className="mb-4 rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                    <div className="flex items-start gap-3">
-                      <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#ff5d73] bg-[#ff5d73]/15 text-sm font-black text-[#ffd5dc]">✓</span>
-                      <div>
-                        <p className="text-[1.05rem] font-bold text-[#f8f5f2]">Pagamento seguro</p>
-                        <p className="mt-1 text-[0.98rem] leading-relaxed text-zinc-300">
-                          Você será redirecionado para o ambiente seguro do Stripe, onde o valor final será calculado corretamente e a confirmação acontece oficialmente.
+                  <div className="mb-4 grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("pix")}
+                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "pix" ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69]/30 bg-[#1b1b23] text-[#f3d59d] hover:bg-[#d4af69]/10"}`}
+                    >
+                      PIX
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPaymentMethod("card")}
+                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "card" ? "border-[#d4af69] bg-[#d4af69] text-[#1a1400] shadow-[0_10px_20px_rgba(212,175,105,0.28)]" : "border-[#d4af69]/30 bg-[#1b1b23] text-[#f3d59d] hover:bg-[#d4af69]/10"}`}
+                    >
+                      CARTÃO
+                    </button>
+                  </div>
+
+                  {paymentMethod === "pix" ? (
+                    <div className="space-y-4">
+                      <div className="rounded-[26px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="mb-4 flex justify-center">
+                          <QRCodeImage value={PIX_PAYMENT_CODE} />
+                        </div>
+                        <div className="rounded-[18px] border border-border/60 bg-[#0d1117] p-3 text-center">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Chave PIX</p>
+                          <p className="mt-2 break-all text-xs font-medium text-zinc-200">{PIX_PAYMENT_CODE}</p>
+                        </div>
+                      </div>
+
+                      <div className="rounded-[20px] border border-border bg-[#0d1117] p-4">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Sobre o QR Code</p>
+                        <div className="mt-3 space-y-3 text-sm text-zinc-300">
+                          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-[#111821] px-3 py-2">
+                            <span className="text-zinc-400">Chave PIX</span>
+                            <span className="text-right font-medium text-white break-all">{PIX_PAYMENT_CODE}</span>
+                          </div>
+                        </div>
+                        <div className="mt-4">
+                          <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                        </div>
+                      </div>
+
+                      <div className="rounded-[18px] border border-[#d4af69]/25 bg-[#d4af69]/10 p-3 text-sm text-zinc-200">
+                        <p className="font-semibold text-[#f3d59d]">Pagamento por PIX</p>
+                        <p className="mt-1 leading-relaxed text-zinc-300">
+                          Após o pagamento, você pode enviar o comprovante por WhatsApp para confirmar o processamento. Em seguida, sua música será gerada em poucos minutos.
                         </p>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <div className="flex items-start gap-3">
+                          <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#ff5d73] bg-[#ff5d73]/15 text-sm font-black text-[#ffd5dc]">✓</span>
+                          <div>
+                            <p className="text-[1.05rem] font-bold text-[#f8f5f2]">Pagamento seguro</p>
+                            <p className="mt-1 text-[0.98rem] leading-relaxed text-zinc-300">
+                              Você será redirecionado para o ambiente seguro do Stripe, onde o valor final será calculado corretamente e a confirmação acontece oficialmente.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
 
-                  <button
-                    type="button"
-                    onClick={() => void openStripeCheckout(secondVersionSelected)}
-                    disabled={checkoutLoading}
-                    className="w-full rounded-[18px] bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-[1.05rem] font-black text-white shadow-[0_12px_30px_rgba(217,70,239,0.28)] disabled:opacity-50"
-                  >
-                    {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `Ir para o Stripe · R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => void openStripeCheckout(secondVersionSelected)}
+                        disabled={checkoutLoading}
+                        className="w-full rounded-[18px] bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-[1.05rem] font-black text-white shadow-[0_12px_30px_rgba(217,70,239,0.28)] disabled:opacity-50"
+                      >
+                        {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `Ir para o Stripe · R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
+                      </button>
+                    </div>
+                  )}
 
                   <div className="mt-4 rounded-[18px] border border-[#d4af69]/25 bg-[#1b1b23] p-3 text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                     <button

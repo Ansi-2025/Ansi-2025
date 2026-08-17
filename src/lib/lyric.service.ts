@@ -3,6 +3,7 @@ import { gerarLetraComFlatkey } from "@/integrations/flatkey/client.server";
 
 export async function gerarLetraDoPedido(pedido: DadosPedidoParaRoteiro) {
   const roteiro = gerarRoteiroMusical(pedido);
+  const tipoCantor = pedido.tipo_cantor === "masculino" ? "voz masculina" : "voz feminina";
 
   const prompt = `
 Você é um compositor profissional de música emocional e moderna.
@@ -12,6 +13,7 @@ Contexto do pedido:
 - Destinatário: ${pedido.para_quem}
 - Ocasião: ${pedido.ocasiao}
 - Estilo musical: ${pedido.genero_musical}
+- Voz preferida: ${tipoCantor}
 - Sensação principal: ${pedido.descricao}
 
 Diretiva do roteiro para a letra:
@@ -22,6 +24,7 @@ Crie uma letra final, pronta para ser usada como prompt de música gerada por Su
 Regras obrigatórias:
 - Escreva somente a letra final, sem explicações, sem comentários técnicos, sem texto fora da letra.
 - Estruture em blocos como [Intro], [Verse 1], [Pre-Chorus], [Chorus], [Verse 2], [Bridge], [Final Chorus], [Outro].
+- A letra deve soar natural para uma ${tipoCantor}, com emoção, cadência e fraseado adequados à sonoridade escolhida.
 - A letra deve ser emocional, memorável, com boa cadência, fácil de cantar e com refrão forte.
 - Use o nome do cliente e da pessoa destinatária de forma natural dentro da própria letra.
 - A linguagem pode ser poética, mas clara e funcional para música.

@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import type { SunoCallbackData } from "../integrations/suno/client";
+import { enviarMusicaPorWhatsapp } from "@/lib/whatsapp.service";
 
 const supabase = createClient(
   process.env.SUPABASE_URL!,
@@ -42,7 +43,7 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
     // Buscar o pedido associado a este task_id
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
-      .select("id, status")
+      .select("id, status, nome_cliente, telefone_cliente, email_cliente")
       .eq("suno_task_id", task_id)
       .single();
 
@@ -97,6 +98,28 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
           : "Música pronta e disponível para download.",
         criado_em: new Date().toISOString(),
       });
+
+      const deliveryUrl = hasSecondVersion && secondaryTrack?.audio_url ? secondaryTrack.audio_url : primaryTrack?.audio_url ?? null;
+      const deliveryMessage = hasSecondVersion
+        ? `Olá ${pedido.nome_cliente ?? "cliente"}! Sua música já está pronta com duas versões disponíveis para download. ${deliveryUrl}`
+        : `Olá ${pedido.nome_cliente ?? "cliente"}! Sua música já está pronta e disponível para download: ${deliveryUrl}`;
+
+      if (pedido.telefone_cliente) {
+        const result = await enviarMusicaPorWhatsapp({
+          nomeCliente: pedido.nome_cliente ?? "cliente",
+          whatsapp: pedido.telefone_cliente,
+          musicaUrl: deliveryUrl,
+          mensagem: deliveryMessage,
+        });
+
+        console.log("Entrega via WhatsApp do arquivo final:", {
+          pedidoId: pedido.id,
+          provider: result.provider,
+          ok: result.ok,
+          reason: result.reason,
+          fallbackUrl: result.fallbackUrl,
+        });
+      }
 
       console.log("Música final disponível:", {
         pedidoId: pedido.id,

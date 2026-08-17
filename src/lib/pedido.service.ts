@@ -15,6 +15,7 @@ export type PedidoEntrada = {
   ocasiao: string;
   descricao: string;
   genero_musical: string;
+  tipo_cantor?: "feminino" | "masculino";
   duracao_segundos: number;
 };
 
@@ -31,6 +32,7 @@ export async function criarPedido(data: PedidoEntrada) {
     whatsapp: data.telefone_cliente ?? null,
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
+    tipo_cantor: data.tipo_cantor ?? "feminino",
     letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,
@@ -129,7 +131,7 @@ async function obterPedidoParaRoteiro(pedidoId: string) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, duracao_segundos, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, roteiro_ia, status"
+      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, tipo_cantor, duracao_segundos, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status"
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -169,6 +171,7 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
     telefone_cliente: pedido.telefone_cliente ?? "",
     descricao: pedido.descricao,
     genero_musical: pedido.genero_musical ?? "Gospel",
+    tipo_cantor: pedido.tipo_cantor ?? "feminino",
     duracao_segundos: pedido.duracao_segundos ?? 45,
     para_quem: pedido.para_quem,
     ocasiao: pedido.ocasiao ?? "",
@@ -226,28 +229,29 @@ export async function gerarMusicaFinal(pedidoId: string) {
   const agora = new Date().toISOString();
   const pedido = await obterPedidoParaRoteiro(pedidoId);
 
-  if (!["pagamento", "letra_aprovada"].includes(pedido.status)) {
+  if (!["pagamento", "letra_aprovada", "pago"].includes(pedido.status)) {
     throw new Error("A música final só pode ser gerada após a confirmação de pagamento.");
   }
 
-  const roteiro = pedido.roteiro_ia || gerarRoteiroMusical({
-    nome_cliente: pedido.nome_cliente ?? "Cliente",
-    email_cliente: pedido.email_cliente ?? "",
-    telefone_cliente: pedido.telefone_cliente ?? "",
-    descricao: pedido.descricao,
-    genero_musical: pedido.genero_musical ?? "Gospel",
-    duracao_segundos: pedido.duracao_segundos ?? 45,
-    para_quem: pedido.para_quem,
-    ocasiao: pedido.ocasiao ?? "",
-  });
+  const letraFinal = pedido.letra_gerada?.trim();
+
+  if (!letraFinal) {
+    throw new Error("Não foi possível gerar a música porque a letra final não foi salva para este pedido.");
+  }
 
   await supabaseAdmin
     .from("pedidos")
     .update({ status: "gerando_musica", status_atualizado_em: agora })
     .eq("id", pedidoId);
 
-  // Gerar música com Suno - agora retorna taskId
-  const { taskId } = await gerarMusicaComSuno(roteiro, pedidoId, pedido.duracao_segundos ?? 90);
+  const { taskId } = await gerarMusicaComSuno(
+    letraFinal,
+    pedidoId,
+    pedido.duracao_segundos ?? 90,
+    pedido.genero_musical ?? "Pop brasileiro moderno",
+    undefined,
+    pedido.tipo_cantor ?? "feminino",
+  );
 
   // Salvar taskId e manter status como "gerando_musica" até o webhook retornar
   const { data: pedidoAtualizado, error } = await supabaseAdmin
