@@ -3,6 +3,7 @@ import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
+import { isValidPersonName } from "@/lib/utils";
 
 const orderIdSchema = z
   .string()
@@ -10,63 +11,100 @@ const orderIdSchema = z
   .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "Código do pedido inválido.")
   .transform((value) => value.trim());
 
-const OrderSchema = z.object({
-  nome_cliente: z.string().trim().min(2).max(120),
-  email_cliente: z.preprocess(
-    (value) => {
-      if (typeof value === "string") {
-        const trimmed = value.trim();
-        return trimmed === "" ? undefined : trimmed;
-      }
-      return value;
-    },
-    z.string().email().optional().nullable(),
-  ),
-  telefone_cliente: z.preprocess(
-    (value) => {
-      if (typeof value === "string") {
-        const trimmed = value.trim();
-        return trimmed === "" ? undefined : trimmed;
-      }
-      return value;
-    },
-    z.string().trim().min(10, "Informe um WhatsApp válido.").max(30),
-  ),
-  cpf_cliente: z.preprocess(
-    (value) => {
-      if (typeof value === "string") {
-        const digits = value.replace(/\D/g, "");
-        return digits === "" ? undefined : digits;
-      }
-      return value;
-    },
-    z.string().trim().min(11).max(14).optional().nullable(),
-  ),
-  para_quem: z.string().trim().min(2).max(120),
-  ocasiao: z.string().trim().min(2).max(120),
-  descricao: z.string().trim().min(15).max(2000),
-  genero_musical: z.string().trim().min(2).max(80),
-  outro_genero: z.string().trim().max(120).optional(),
-  tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
-})
-.superRefine((data, ctx) => {
-  if (data.genero_musical === "Outro" && !data.outro_genero?.trim()) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Escolha um gênero quando selecionar 'Outro'.",
-      path: ["outro_genero"],
-    });
-  }
-})
-.transform((data) => ({
-  ...data,
-  genero_musical:
-    data.genero_musical === "Outro" && data.outro_genero?.trim()
-      ? data.outro_genero.trim()
-      : data.genero_musical,
-  tipo_cantor: data.tipo_cantor ?? "feminino",
-  duracao_segundos: 45,
-}));
+const OrderSchema = z
+  .object({
+    nome_cliente: z
+      .string()
+      .trim()
+      .refine((value) => isValidPersonName(value), {
+        message: "Informe um nome real para continuar.",
+      })
+      .max(120),
+    email_cliente: z.preprocess(
+      (value) => {
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          return trimmed === "" ? undefined : trimmed;
+        }
+        return value;
+      },
+      z.string().email().optional().nullable(),
+    ),
+    telefone_cliente: z.preprocess(
+      (value) => {
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          return trimmed === "" ? undefined : trimmed;
+        }
+        return value;
+      },
+      z.string().trim().min(10, "Informe um WhatsApp válido.").max(30),
+    ),
+    cpf_cliente: z.preprocess(
+      (value) => {
+        if (typeof value === "string") {
+          const digits = value.replace(/\D/g, "");
+          return digits === "" ? undefined : digits;
+        }
+        return value;
+      },
+      z.string().trim().min(11).max(14).optional().nullable(),
+    ),
+    para_quem: z.string().trim().min(2).max(120),
+    ocasiao: z.string().trim().min(2).max(120),
+    descricao: z.string().trim().min(15).max(2000),
+    genero_musical: z.string().trim().min(2).max(80),
+    outro_genero: z.string().trim().max(120).optional(),
+    tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
+    bot_field: z.string().trim().max(255).optional().default(""),
+    form_started_at: z.preprocess(
+      (value) => {
+        if (typeof value === "string") {
+          const parsed = Number(value);
+          return Number.isFinite(parsed) ? parsed : undefined;
+        }
+        return value;
+      },
+      z.number().int().optional().nullable(),
+    ),
+  })
+  .superRefine((data, ctx) => {
+    if (data.bot_field?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Pedido inválido.",
+        path: ["bot_field"],
+      });
+    }
+
+    if (typeof data.form_started_at === "number" && Date.now() - data.form_started_at < 7000) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Pedido inválido.",
+        path: ["form_started_at"],
+      });
+    }
+
+    if (data.genero_musical === "Outro" && !data.outro_genero?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Escolha um gênero quando selecionar 'Outro'.",
+        path: ["outro_genero"],
+      });
+    }
+  })
+  .transform((data) => {
+    const { bot_field: _botField, form_started_at: _formStartedAt, ...rest } = data;
+    return {
+      ...rest,
+      genero_musical:
+        data.genero_musical === "Outro" && data.outro_genero?.trim()
+          ? data.outro_genero.trim()
+          : data.genero_musical,
+      tipo_cantor: data.tipo_cantor ?? "feminino",
+      duracao_segundos: 45,
+    };
+  });
 
 export const STATUS_FLOW = [
   "recebido",
