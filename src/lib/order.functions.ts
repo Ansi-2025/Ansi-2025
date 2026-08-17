@@ -134,17 +134,32 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
 };
 
 export const sendOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => OrderSchema.parse(data))
+  .inputValidator((data: unknown) => {
+    try {
+      console.log("[sendOrder.validator] Validando dados:", { hasData: Boolean(data) });
+      const validated = OrderSchema.parse(data);
+      console.log("[sendOrder.validator] Dados validados com sucesso");
+      return validated;
+    } catch (error) {
+      const msg = error instanceof Error ? error.message : String(error);
+      console.error("[sendOrder.validator] Erro de validação:", msg, error);
+      throw error;
+    }
+  })
   .handler(async ({ data }) => {
     try {
-      console.log("[sendOrder] Iniciando criação de pedido...", { nome: data.nome_cliente, telefone: data.telefone_cliente });
+      console.log("[sendOrder.handler] Iniciando criação de pedido...", { 
+        nome: data.nome_cliente, 
+        telefone: data.telefone_cliente?.substring(0, 3) + "***" 
+      });
+      
       const pedidoData: PedidoEntrada = data;
       const pedido = await criarPedido(pedidoData);
-      console.log("[sendOrder] Pedido criado com ID:", pedido.id);
+      console.log("[sendOrder.handler] Pedido criado com ID:", pedido.id);
       
-      console.log("[sendOrder] Gerando letra...");
+      console.log("[sendOrder.handler] Gerando letra...");
       const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);
-      console.log("[sendOrder] Letra gerada com sucesso");
+      console.log("[sendOrder.handler] Letra gerada com sucesso");
       
       return {
         ok: true,
@@ -154,7 +169,7 @@ export const sendOrder = createServerFn({ method: "POST" })
       };
     } catch (error) {
       const mensagem = error instanceof Error ? error.message : String(error);
-      console.error("[sendOrder] Erro ao criar pedido:", mensagem, error);
+      console.error("[sendOrder.handler] ERRO FATAL:", mensagem, error);
       throw new Error(`Erro ao criar sua música: ${mensagem}`);
     }
   });

@@ -296,13 +296,20 @@ function StartMusicWidget({
     setStatus("loading");
 
     try {
+      console.log("[submit] Enviando pedido...", { 
+        nome: form.nome_cliente,
+        telefone: form.telefone_cliente?.substring(0, 3) + "***",
+      });
       const res = await send({ data: { ...form, form_started_at: formStartedAt } });
+      console.log("[submit] Pedido enviado com sucesso, ID:", res.id);
       setOpen(false);
       reset();
       navigate({ to: "/acompanhar", search: { id: res.id } });
     } catch (error) {
+      const mensagem = error instanceof Error ? error.message : "Não foi possível criar a música agora. Tente novamente.";
+      console.error("[submit] Erro ao enviar pedido:", mensagem, error);
       setStatus("error");
-      setErrorMsg(error instanceof Error ? error.message : "Não foi possível criar a música agora. Tente novamente.");
+      setErrorMsg(mensagem);
     }
   };
 
