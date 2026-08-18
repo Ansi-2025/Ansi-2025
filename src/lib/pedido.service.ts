@@ -2,6 +2,7 @@ import { DadosPedidoParaRoteiro, gerarRoteiroMusical } from "@/lib/motor-regras-
 import { gerarLetraDoPedido } from "@/lib/lyric.service";
 import { gerarMusicaComSuno } from "@/integrations/suno/client";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { notifyPedidoTelegram } from "@/lib/telegram.service";
 
 const hasSunoApiKey = Boolean(process.env.SUNO_API_KEY);
 const SUNO_GENERATION_ENABLED = (process.env.ENABLE_SUNO_GENERATION ?? (hasSunoApiKey ? "true" : "false")).toLowerCase() === "true";
@@ -62,6 +63,21 @@ export async function criarPedido(data: PedidoEntrada) {
     mensagem_whatsapp: "Pedido recebido automaticamente",
     criado_em: agora,
   });
+
+  await notifyPedidoTelegram(
+    {
+      id: pedidoId,
+      nome_cliente: inserted.nome_cliente,
+      telefone_cliente: inserted.telefone_cliente,
+      email_cliente: inserted.email_cliente,
+      para_quem: inserted.para_quem,
+      ocasiao: inserted.ocasiao,
+      descricao: inserted.descricao,
+      status: "recebido",
+    },
+    "Recebido",
+    "Novo pedido criado no sistema.",
+  );
 
   return inserted;
 }
@@ -133,6 +149,21 @@ export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
     mensagem_whatsapp: "Letra gerada e aguardando aprovação",
     criado_em: agora,
   });
+
+  await notifyPedidoTelegram(
+    {
+      id: pedido.id,
+      nome_cliente: pedido.nome_cliente,
+      telefone_cliente: pedido.telefone_cliente,
+      email_cliente: pedido.email_cliente,
+      para_quem: pedido.para_quem,
+      ocasiao: pedido.ocasiao,
+      descricao: pedido.descricao,
+      status: "aguardando_aprovacao_letra",
+    },
+    "Aguardando aprovação da letra",
+    "A letra foi gerada e está pronta para aprovação do cliente.",
+  );
 
   return pedido;
 }
@@ -288,6 +319,21 @@ export async function gerarMusicaFinal(pedidoId: string) {
     criado_em: agora,
   });
 
+  await notifyPedidoTelegram(
+    {
+      id: pedidoId,
+      nome_cliente: pedidoAtualizado.nome_cliente,
+      telefone_cliente: pedidoAtualizado.telefone_cliente,
+      email_cliente: pedidoAtualizado.email_cliente,
+      para_quem: pedidoAtualizado.para_quem,
+      ocasiao: pedidoAtualizado.ocasao,
+      descricao: pedidoAtualizado.descricao,
+      status: "gerando_musica",
+    },
+    "Música em produção",
+    "O pagamento foi confirmado e a música está sendo gerada.",
+  );
+
   return pedidoAtualizado;
 }
 
@@ -325,6 +371,21 @@ export async function marcarLetraAprovada(pedidoId: string) {
     mensagem_whatsapp: "Letra aprovada pelo cliente",
     criado_em: agora,
   });
+
+  await notifyPedidoTelegram(
+    {
+      id: pedidoAtualizado.id,
+      nome_cliente: pedidoAtualizado.nome_cliente,
+      telefone_cliente: pedidoAtualizado.telefone_cliente,
+      email_cliente: pedidoAtualizado.email_cliente,
+      para_quem: pedidoAtualizado.para_quem,
+      ocasiao: pedidoAtualizado.ocasiao,
+      descricao: pedidoAtualizado.descricao,
+      status: "letra_aprovada",
+    },
+    "Letra aprovada",
+    "A letra foi aprovada e o pedido foi encaminhado para pagamento.",
+  );
 
   return pedidoAtualizado;
 }
