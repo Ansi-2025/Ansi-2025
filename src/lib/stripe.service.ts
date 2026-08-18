@@ -16,17 +16,9 @@ const parseMoneyValue = (value: string | undefined, fallback: number) => {
 };
 const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 19.9);
 const STRIPE_TEST_PRICE = parseMoneyValue(process.env.STRIPE_TEST_PRICE, 1);
-const STRIPE_TEST_MODE = ["1", "true", "yes", "on"].includes(
-  (process.env.STRIPE_USE_TEST_PRICE ?? process.env.STRIPE_FORCE_TEST_PRICE ?? (process.env.STRIPE_TEST_PRICE ? "true" : "false")).toLowerCase(),
-);
 
-if (STRIPE_TEST_MODE) {
-  console.warn("[stripe] Usando preço de teste configurado em STRIPE_TEST_PRICE.");
-}
-
-export function getStripePriceForCheckout({ secondVersion, forceTestPrice }: { secondVersion?: boolean; forceTestPrice?: boolean } = {}) {
-  const shouldUseTestPrice = forceTestPrice ?? STRIPE_TEST_MODE;
-  const basePrice = shouldUseTestPrice ? STRIPE_TEST_PRICE : STRIPE_ITEM_PRICE;
+export function getStripePriceForCheckout({ secondVersion, forceTestPrice = false }: { secondVersion?: boolean; forceTestPrice?: boolean } = {}) {
+  const basePrice = forceTestPrice ? STRIPE_TEST_PRICE : STRIPE_ITEM_PRICE;
   return Number((basePrice + (secondVersion ? 9.9 : 0)).toFixed(2));
 }
 
