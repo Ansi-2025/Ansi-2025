@@ -71,6 +71,110 @@ type Order = {
   cpf_cliente: string | null;
 };
 
+function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    const onLoadedMetadata = () => {
+      setDuration(audio.duration || 0);
+      setCurrentTime(audio.currentTime || 0);
+    };
+
+    const onTimeUpdate = () => {
+      setCurrentTime(audio.currentTime || 0);
+      setDuration(audio.duration || 0);
+    };
+
+    const onEnded = () => setIsPlaying(false);
+
+    audio.addEventListener("loadedmetadata", onLoadedMetadata);
+    audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("ended", onEnded);
+
+    return () => {
+      audio.removeEventListener("loadedmetadata", onLoadedMetadata);
+      audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("ended", onEnded);
+    };
+  }, [src]);
+
+  const formatTime = (value: number) => {
+    if (!Number.isFinite(value) || value <= 0) return "0:00";
+    const minutes = Math.floor(value / 60);
+    const seconds = Math.floor(value % 60);
+    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+  };
+
+  const handleToggle = async () => {
+    const audio = audioRef.current;
+    if (!audio) return;
+
+    if (audio.paused) {
+      try {
+        await audio.play();
+        setIsPlaying(true);
+      } catch {
+        setIsPlaying(false);
+      }
+      return;
+    }
+
+    audio.pause();
+    setIsPlaying(false);
+  };
+
+  const progressValue = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+
+  return (
+    <div className="rounded-full border border-white/10 bg-white/95 p-3 shadow-[0_18px_30px_rgba(0,0,0,0.25)]">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          aria-label={isPlaying ? "Pausar música" : "Tocar música"}
+          onClick={() => void handleToggle()}
+          className="grid h-10 w-10 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+        >
+          {isPlaying ? <span className="flex gap-1">
+            <span className="h-4 w-1 rounded-full bg-white" />
+            <span className="h-4 w-1 rounded-full bg-white" />
+          </span> : <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />}
+        </button>
+
+        <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
+          <span className="w-12 text-sm font-semibold">{formatTime(currentTime)}</span>
+          <div className="flex-1">
+            <div className="h-2 overflow-hidden rounded-full bg-[#d8d8d8]">
+              <div
+                className="h-full rounded-full bg-[#1a1a1a] transition-all duration-150"
+                style={{ width: `${progressValue}%` }}
+              />
+            </div>
+          </div>
+          <span className="w-12 text-right text-sm font-semibold">{formatTime(duration)}</span>
+        </div>
+
+        <a
+          href={src}
+          download
+          className="grid h-10 w-10 place-items-center rounded-full border border-[#111821]/10 bg-[#f3f4f6] text-[#111821] transition-colors hover:bg-[#e8eaee]"
+          aria-label={`Baixar ${title}`}
+          title={`Baixar ${title}`}
+        >
+          <Download className="h-4 w-4" />
+        </a>
+      </div>
+
+      <audio ref={audioRef} src={src} preload="auto" />
+    </div>
+  );
+}
+
 function TrackingPage() {
   const { id: initialId } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
@@ -601,9 +705,20 @@ function Timeline({
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
           <div className="mt-4 rounded-2xl border border-[#ff5d73]/20 bg-[#ff5d73]/10 p-4 text-sm text-[#ffc9d1]">
             <p className="font-semibold text-[#ffb4c0]">Atenção:</p>
-            <p className="mt-2 text-zinc-200">Sua música está disponível para download aqui no site em menos de 1 hora — essa é a melhor opção para receber o arquivo rapidamente.</p>
+            <p className="mt-2 text-zinc-200">Sua música está disponível para ouvir aqui no site e também para download direto.</p>
             <p className="mt-2 text-zinc-200">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
             <p className="mt-2 font-medium text-[#ffd7dd]">Aviso: a música será apagada dentro de 24 horas após a liberação.</p>
+
+            <div className="mt-4 space-y-3">
+              {order.url_musica && (
+                <OrderAudioPlayer src={order.url_musica} title={order.url_musica_segunda_versao ? "Versão 1" : "Sua música"} />
+              )}
+
+              {order.url_musica_segunda_versao && (
+                <OrderAudioPlayer src={order.url_musica_segunda_versao} title="Versão 2" />
+              )}
+            </div>
+
             <div className="mt-4 flex flex-col gap-3 sm:flex-row">
               {order.url_musica && (
                 <a
