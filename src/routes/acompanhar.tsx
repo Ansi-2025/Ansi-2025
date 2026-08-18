@@ -155,45 +155,45 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
 
   return (
     <>
-      <div className="mx-auto mt-4 w-[92%] max-w-[760px]">
-        <div className="relative overflow-hidden rounded-[28px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_18px_40px_rgba(255,118,173,0.28)]">
+      <div className="mx-auto mt-4 w-[88%] max-w-[700px]">
+        <div className="relative overflow-hidden rounded-[24px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_16px_30px_rgba(255,118,173,0.22)]">
           <a
             href={src}
             download
             aria-label={downloadLabel ?? `Baixar ${title}`}
             title={downloadLabel ?? `Baixar ${title}`}
-            className="relative flex w-full items-center justify-center gap-3 py-4 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:py-5 sm:text-2xl"
+            className="relative flex w-full items-center justify-center gap-3 py-3 text-base font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:py-4 sm:text-xl"
           >
-            <Download className="h-5 w-5 sm:h-6 sm:w-6" />
+            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
             <span>{downloadLabel ?? `Baixar ${title}`}</span>
           </a>
 
-          <span className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-[16px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:h-12 sm:w-12">
-            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+          <span className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-[14px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:h-10 sm:w-10">
+            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
           </span>
         </div>
       </div>
 
-      <div className="mx-auto mt-3 w-[92%] max-w-[760px]">
-        <div className="flex items-center gap-3 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:px-4 sm:py-3.5">
+      <div className="mx-auto mt-3 w-[88%] max-w-[700px]">
+        <div className="flex items-center gap-3 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-2.5 py-2.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:px-3.5 sm:py-3">
           <button
             type="button"
             aria-label={isPlaying ? "Pausar música" : "Tocar música"}
             onClick={() => void handleToggle()}
-            className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-14 sm:w-14"
+            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
           >
             {isPlaying ? (
-              <span className="flex items-center justify-center gap-1.5">
-                <span className="h-4 w-1.5 rounded-full bg-white sm:h-5" />
-                <span className="h-4 w-1.5 rounded-full bg-white sm:h-5" />
+              <span className="flex items-center justify-center gap-1.25">
+                <span className="h-3.5 w-1.5 rounded-full bg-white sm:h-4" />
+                <span className="h-3.5 w-1.5 rounded-full bg-white sm:h-4" />
               </span>
             ) : (
-              <span className="ml-1 h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-[#f8f5f2] sm:border-y-[8px] sm:border-l-[12px]" />
+              <span className="ml-1 h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#f8f5f2] sm:border-y-[7px] sm:border-l-[10px]" />
             )}
           </button>
 
-          <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
-            <span className="min-w-[42px] text-sm font-medium text-[#f8f5f2] sm:text-base">{formatTime(currentTime)}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
+            <span className="min-w-[38px] text-xs font-medium text-[#f8f5f2] sm:text-sm">{formatTime(currentTime)}</span>
             <div className="relative flex-1">
               <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3]/30 sm:h-3">
                 <div
@@ -202,11 +202,11 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
                 />
               </div>
               <span
-                className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-[#ffe7f2] bg-[#ff7ca8] shadow-[0_0_0_4px_rgba(255,123,167,0.18)] sm:h-4 sm:w-4"
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-[#ffe7f2] bg-[#ff7ca8] shadow-[0_0_0_4px_rgba(255,123,167,0.18)] sm:h-4 sm:w-4"
                 style={{ left: thumbLeft }}
               />
             </div>
-            <span className="min-w-[42px] text-right text-sm font-medium text-[#f8f5f2] sm:text-base">{formatTime(duration)}</span>
+            <span className="min-w-[38px] text-right text-xs font-medium text-[#f8f5f2] sm:text-sm">{formatTime(duration)}</span>
           </div>
         </div>
       </div>
@@ -811,26 +811,26 @@ function Timeline({
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
           <div className="mt-4 space-y-5">
-            <div className="mx-auto w-[92%] max-w-[760px]">
-              <div className="relative overflow-hidden rounded-[28px] border border-[#ff7ae5]/25 bg-[linear-gradient(90deg,rgba(255,118,178,0.18),rgba(111,87,255,0.10),rgba(18,22,33,0.85))] px-4 py-3 shadow-[0_18px_40px_rgba(18,14,31,0.52)]">
+            <div className="mx-auto w-[88%] max-w-[700px]">
+              <div className="relative overflow-hidden rounded-[24px] border border-[#ff7ae5]/25 bg-[linear-gradient(90deg,rgba(255,118,178,0.18),rgba(111,87,255,0.10),rgba(18,22,33,0.85))] px-3 py-2.5 shadow-[0_18px_35px_rgba(18,14,31,0.48)]">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%)]" />
-                <div className="relative flex items-center justify-between gap-4">
-                  <div className="flex items-center gap-4 overflow-hidden">
-                    <div className="grid h-16 w-16 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7ea6,#c55ae7)] text-white shadow-[0_0_0_3px_rgba(255,255,255,0.06),0_12px_30px_rgba(255,112,173,0.4)]">
-                      <Music className="h-7 w-7" />
+                <div className="relative flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-3 overflow-hidden">
+                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7ea6,#c55ae7)] text-white shadow-[0_0_0_3px_rgba(255,255,255,0.06),0_12px_30px_rgba(255,112,173,0.4)]">
+                      <Music className="h-6 w-6" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-display text-[2rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2]">Música disponível</h3>
-                      <p className="mt-2 text-sm text-zinc-200">Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}</p>
+                      <h3 className="font-display text-[1.6rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2]">Música disponível</h3>
+                      <p className="mt-1.5 text-xs text-zinc-200">Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-end gap-1.5 pr-2">
-                    {[36, 52, 42, 65, 48, 58, 38, 46, 60, 32, 55, 41, 63, 44, 57, 35].map((height, index) => (
+                  <div className="flex items-end gap-1.25 pr-1">
+                    {[28, 42, 34, 54, 38, 47, 31, 39, 50, 27, 44, 33, 52, 36, 46, 29].map((height, index) => (
                       <span
                         key={`header-eq-${index}`}
-                        className="block rounded-full bg-[linear-gradient(180deg,#ffddf3,#ff8ec7,#c45aff)] shadow-[0_0_16px_rgba(255,141,202,0.45)]"
-                        style={{ height: `${height}px`, width: "6px", opacity: 0.72 + (index % 5) * 0.06 }}
+                        className="block rounded-full bg-[linear-gradient(180deg,#ffddf3,#ff8ec7,#c45aff)] shadow-[0_0_12px_rgba(255,141,202,0.38)]"
+                        style={{ height: `${height}px`, width: "5px", opacity: 0.72 + (index % 5) * 0.06 }}
                       />
                     ))}
                   </div>
