@@ -1,7 +1,7 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock, Download, ShieldCheck, Headphones } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock, Download, ShieldCheck, Headphones, MessageCircle } from "lucide-react";
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
@@ -14,7 +14,13 @@ const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
 const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
+const COMPANY_WHATSAPP_NUMBER = "5541997232395";
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
+
+const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar o link de download${order.segunda_versao ? " da versão disponível" : " da música"}?`;
+  return `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+};
 
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -210,6 +216,8 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
           </div>
         </div>
       </div>
+
+      <audio ref={audioRef} src={src} preload="auto" />
 
       <Dialog open={visualPopupOpen} onOpenChange={(open) => {
         setVisualPopupOpen(open);
@@ -836,6 +844,32 @@ function Timeline({
                   </div>
                 </div>
               </div>
+            </div>
+
+            <div className="mx-auto mt-2 w-[88%] max-w-[700px]">
+              <a
+                href={buildOrderDownloadWhatsAppLink(order)}
+                target="_blank"
+                rel="noreferrer"
+                className="group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-[26px] border border-[#1bdc6a]/70 bg-[linear-gradient(135deg,#2de77d_0%,#1acb6a_30%,#18b75d_100%)] px-4 py-3.5 text-[#062914] shadow-[0_18px_34px_rgba(25,196,101,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_38px_rgba(25,196,101,0.4),inset_0_1px_0_rgba(255,255,255,0.4)]"
+              >
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.28),transparent_28%)]" />
+
+                <div className="relative flex items-center gap-3 overflow-hidden">
+                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#052d16]/10 ring-1 ring-[#052d16]/10 backdrop-blur-sm">
+                    <MessageCircle className="h-5 w-5" />
+                  </span>
+
+                  <div className="min-w-0 text-left">
+                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0a371f]/75">Atendimento</div>
+                    <div className="truncate text-base font-extrabold sm:text-lg">Solicitar download por WhatsApp</div>
+                  </div>
+                </div>
+
+                <span className="relative shrink-0 rounded-full bg-[#062914]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#062914] shadow-[inset_0_0_0_1px_rgba(6,41,20,0.08)]">
+                  Clique
+                </span>
+              </a>
             </div>
 
             <div className="mt-5 space-y-4">
