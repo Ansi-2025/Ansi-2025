@@ -264,13 +264,12 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
         id: orderIdSchema,
         token: z.string().optional(),
         secondVersion: z.boolean().optional(),
-        forceTestPrice: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     validateOrderAccess(data.id, data.token);
-    return criarCheckoutStripe(data.id, data.secondVersion ?? false, data.forceTestPrice ?? false);
+    return criarCheckoutStripe(data.id, data.secondVersion ?? false);
   });
 
 export const createStripePaymentIntent = createServerFn({ method: "POST" })
@@ -280,13 +279,12 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
         id: orderIdSchema,
         token: z.string().optional(),
         secondVersion: z.boolean().optional(),
-        forceTestPrice: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
     validateOrderAccess(data.id, data.token);
-    return criarPaymentIntentStripe(data.id, data.secondVersion ?? false, data.forceTestPrice ?? false);
+    return criarPaymentIntentStripe(data.id, data.secondVersion ?? false);
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })

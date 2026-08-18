@@ -706,7 +706,7 @@ function Timeline({
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
-  const totalPedido = Number((1 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
+  const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
   const paymentMessages = [
     "Validando o pagamento no Stripe...",
     "Estamos preparando sua música...",
