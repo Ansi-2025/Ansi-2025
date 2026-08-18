@@ -36,16 +36,15 @@ export function buildPedidoTelegramMessage(
   const safeDescricao = escapeHtml(order.descricao ?? "—");
   const safeStatus = escapeHtml(statusLabel);
   const safeExtra = extraMessage ? `\n${escapeHtml(extraMessage)}` : "";
+  const headerLabel = statusLabel.toLowerCase().includes("recebido") ? "Pedido recebido ✅" : "Pedido atualizado ✅";
 
   return [
-    `<b>Pedido atualizado</b>`,
-    `<b>ID:</b> ${safeId}`,
-    `<b>Cliente:</b> ${safeCliente}`,
+    `${headerLabel} ${safeCliente}, ID ${safeId}`,
+    `<b>Status:</b> ${safeStatus}`,
     `<b>Telefone:</b> ${safeTelefone}`,
     `<b>E-mail:</b> ${safeEmail}`,
     `<b>Para:</b> ${safeParaQuem}`,
     `<b>Ocasião:</b> ${safeOcasião}`,
-    `<b>Status:</b> ${safeStatus}`,
     `<b>Resumo:</b> ${safeDescricao}`,
     safeExtra,
   ].join("\n");
