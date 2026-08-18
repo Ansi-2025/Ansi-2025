@@ -7,6 +7,12 @@
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
+  // Force the production build to target Vercel. Without this, the Lovable default can
+  // generate a Cloudflare bundle, which causes the static asset/chunk mismatch seen in 
+  // production (`assets/...js` returning 404 and the app falling into the generic error page).
+  nitro: {
+    preset: "vercel",
+  },
   tanstackStart: {
     // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
     // nitro/vite builds from this
