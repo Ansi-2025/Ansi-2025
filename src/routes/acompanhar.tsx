@@ -1,7 +1,7 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Download, Copy, Check, Clock } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock } from "lucide-react";
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
@@ -155,18 +155,6 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
   return (
     <>
       <div className="mx-auto w-[92%] max-w-[760px]">
-        <div className="mb-3 flex justify-center">
-          <a
-            href={src}
-            download
-            className="inline-flex w-[88%] max-w-[420px] items-center justify-center rounded-[18px] border border-[#111821]/10 bg-[#f2f1f1] p-3 text-[#111821] shadow-[0_8px_16px_rgba(17,24,33,0.08)] transition-transform hover:-translate-y-0.5 hover:bg-[#eceaea]"
-            aria-label={`Baixar ${title}`}
-            title={`Baixar ${title}`}
-          >
-            <Download className="h-5 w-5" />
-          </a>
-        </div>
-
         <div className="overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
           <div className="px-3 py-3 sm:px-4 sm:py-3.5">
             <div className="flex items-center gap-3 sm:gap-4">
@@ -797,7 +785,7 @@ function Timeline({
             <p className="mt-1 text-zinc-200">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
             {!order.url_musica && !order.url_musica_segunda_versao && (
               <>
-                <p className="mt-2 text-zinc-200">Aguarde alguns minutos enquanto finalizamos a liberação da versão final e os links de download.</p>
+                <p className="mt-2 text-zinc-200">Aguarde alguns minutos enquanto finalizamos a liberação da sua música final.</p>
                 <p className="mt-2 font-medium text-[#ffd7dd]">Se você deixou e-mail, também enviaremos a música por lá em alguns minutos.</p>
               </>
             )}
@@ -827,28 +815,6 @@ function Timeline({
               )}
             </div>
 
-            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-              {order.url_musica && (
-                <a
-                  href={order.url_musica}
-                  download
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ff5d73]/70 bg-gradient-to-r from-[#ff6e9a] via-[#f9639d] to-[#d55ae6] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(255,104,157,0.35)] transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:px-5"
-                >
-                  <Download className="h-4 w-4" />
-                  <span className="whitespace-nowrap">{order.url_musica_segunda_versao ? "Baixar versão 1" : "Baixar música"}</span>
-                </a>
-              )}
-              {order.url_musica_segunda_versao && (
-                <a
-                  href={order.url_musica_segunda_versao}
-                  download
-                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#d4af69]/70 bg-[#f3d59d]/10 px-4 py-3 text-sm font-semibold text-[#f3d59d] shadow-[inset_0_0_0_1px_rgba(244,213,157,0.15)] transition-transform hover:-translate-y-0.5 hover:bg-[#d4af69]/15 sm:px-5"
-                >
-                  <Download className="h-4 w-4" />
-                  <span className="whitespace-nowrap">Baixar versão 2</span>
-                </a>
-              )}
-            </div>
           </div>
         )}
       </div>
@@ -1013,7 +979,7 @@ function Timeline({
                       {musicGenerationMessages[generationMessageIndex].text}
                     </p>
                     <p className="mt-3 text-zinc-300">
-                      Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar o download.
+                      Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar sua música final.
                     </p>
                     <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
                       <div
