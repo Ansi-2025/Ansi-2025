@@ -15,6 +15,12 @@ const parseMoneyValue = (value: string | undefined, fallback: number) => {
   return Number.isFinite(parsed) ? parsed : fallback;
 };
 const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 19.9);
+const STRIPE_TEST_PRICE = parseMoneyValue(process.env.STRIPE_TEST_PRICE, 1);
+
+export function getStripePriceForCheckout({ secondVersion, forceTestPrice = false }: { secondVersion?: boolean; forceTestPrice?: boolean } = {}) {
+  const basePrice = forceTestPrice ? STRIPE_TEST_PRICE : STRIPE_ITEM_PRICE;
+  return Number((basePrice + (secondVersion ? 9.9 : 0)).toFixed(2));
+}
 
 if (!STRIPE_SECRET_KEY) {
   console.error("STRIPE_SECRET_KEY is not configured.");
@@ -42,7 +48,7 @@ function getCancelUrl(orderId: string) {
   return `${STRIPE_APP_URL}/acompanhar?id=${orderId}`;
 }
 
-export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
+export async function criarCheckoutStripe(pedidoId: string, secondVersion = false, forceTestPrice = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
@@ -79,7 +85,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalItemPrice = STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0);
+  const totalItemPrice = getStripePriceForCheckout({ secondVersion, forceTestPrice });
 
   const session = await stripe.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -151,7 +157,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   };
 }
 
-export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false) {
+export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false, forceTestPrice = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_payment_intent_id, stripe_payment_status, segunda_versao")
@@ -178,7 +184,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalAmount = Math.round((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0)) * 100);
+  const totalAmount = Math.round(getStripePriceForCheckout({ secondVersion, forceTestPrice }) * 100);
   const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
 
   const paymentIntent = await stripe.paymentIntents.create({
