@@ -154,14 +154,14 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
 
   return (
     <>
-      <div className="overflow-hidden rounded-[28px] border border-[#d7d4d3] bg-[#f5f5f5] shadow-[0_18px_32px_rgba(0,0,0,0.26)]">
-        <div className="p-2.5 sm:p-3">
-          <div className="flex items-center gap-2.5 sm:gap-3">
+      <div className="mx-auto w-full max-w-[980px] overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+        <div className="px-3 py-3 sm:px-4 sm:py-3.5">
+          <div className="flex items-center gap-3 sm:gap-4">
             <button
               type="button"
               aria-label={isPlaying ? "Pausar música" : "Tocar música"}
               onClick={() => void handleToggle()}
-              className="grid h-11 w-11 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02]"
             >
               {isPlaying ? (
                 <span className="flex items-center justify-center gap-1.5">
@@ -169,31 +169,27 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
                   <span className="h-4 w-1 rounded-full bg-white" />
                 </span>
               ) : (
-                <span className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[11px] border-y-transparent border-l-[#f8f5f2]" />
+                <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />
               )}
             </button>
 
-            <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 text-[#111821]">
-              <span className="w-10 text-sm font-medium sm:w-11 sm:text-base">{formatTime(currentTime)}</span>
+            <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
+              <span className="min-w-[44px] text-base font-medium">{formatTime(currentTime)}</span>
               <div className="relative flex-1">
                 <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3] shadow-inner shadow-white/60">
                   <div
-                    className="h-full rounded-full bg-[#1a1a1a] transition-all duration-150"
+                    className="h-full rounded-full bg-[#111821] transition-all duration-150"
                     style={{ width: `${progressValue}%` }}
                   />
                 </div>
-                <div
-                  className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-white/80 bg-[#111821] shadow-[0_0_0_2px_rgba(255,255,255,0.65)]"
-                  style={{ left: `calc(${progressValue}% - 6px)` }}
-                />
               </div>
-              <span className="w-10 text-right text-sm font-medium sm:w-11 sm:text-base">{formatTime(duration)}</span>
+              <span className="min-w-[44px] text-right text-base font-medium">{formatTime(duration)}</span>
             </div>
 
             <a
               href={src}
               download
-              className="grid h-11 w-11 place-items-center rounded-full border border-[#111821]/15 bg-white text-[#111821] shadow-[0_6px_16px_rgba(17,24,33,0.08)] transition-all hover:-translate-y-0.5 hover:bg-[#f2f2f2] sm:h-12 sm:w-12"
+              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#111821]/15 bg-[#f9f7f6] text-[#111821] shadow-[0_4px_12px_rgba(17,24,33,0.08)] transition-all hover:-translate-y-0.5 hover:bg-[#f2f2f2]"
               aria-label={`Baixar ${title}`}
               title={`Baixar ${title}`}
             >
@@ -201,25 +197,6 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
             </a>
           </div>
         </div>
-
-        {isPlaying && (
-          <div className="px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3 sm:pt-2">
-            <div
-              className="relative overflow-hidden rounded-[24px] border border-[#ff7ae5]/60 bg-[#0d0913] p-1.5 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_40px_rgba(255,106,221,0.16)] sm:rounded-[26px] sm:p-2"
-              style={{
-                background: "radial-gradient(circle at center, rgba(255,120,222,0.34) 0%, rgba(45,17,52,0.9) 28%, rgba(11,10,18,1) 72%)",
-              }}
-            >
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_35%,transparent_65%,rgba(255,255,255,0.05))]" />
-              <img
-                src={MUSIC_VISUAL_GIF_URL}
-                alt="Visual animado da música"
-                className="relative z-10 h-40 w-full rounded-[18px] border border-white/15 object-contain object-center shadow-[0_0_30px_rgba(255,122,227,0.35)] sm:h-52 md:h-60"
-                loading="lazy"
-              />
-            </div>
-          </div>
-        )}
 
         <audio ref={audioRef} src={src} preload="auto" />
       </div>
@@ -234,13 +211,17 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
           }
         }
       }}>
-        <DialogContent className="max-w-3xl border border-[#ff5d73]/50 bg-[#09080e] p-0 text-white shadow-[0_30px_80px_rgba(0,0,0,0.75)] sm:rounded-[32px]">
-          <div className="relative overflow-hidden rounded-[30px] bg-[#09080e] p-4 sm:p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div>
-                <p className="text-xs uppercase tracking-[0.2em] text-zinc-400">Música</p>
-                <p className="mt-1 text-lg font-semibold text-white">{title}</p>
+        <DialogContent
+          hideCloseButton
+          className="max-w-[1280px] border-[2px] border-[#ff6b88] bg-[#05070d] p-0 text-white shadow-[0_0_0_2px_rgba(255,107,136,0.18),0_30px_80px_rgba(0,0,0,0.75)] sm:rounded-[32px]"
+        >
+          <div className="relative overflow-hidden rounded-[30px] bg-[#05070d] px-5 py-5 sm:px-7 sm:py-6">
+            <div className="flex items-start justify-between gap-4">
+              <div className="text-left">
+                <p className="text-[0.7rem] font-medium uppercase tracking-[0.2em] text-[#e9dae4]">Música</p>
+                <p className="mt-2 text-3xl font-bold tracking-[-0.04em] text-white sm:text-4xl">Versão 1</p>
               </div>
+
               <button
                 type="button"
                 onClick={() => {
@@ -251,34 +232,37 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
                   setIsPlaying(false);
                   setVisualPopupOpen(false);
                 }}
-                className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:bg-white/10"
+                className="flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-sm font-medium text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.05)] transition hover:bg-white/10"
               >
-                Fechar
+                <span className="text-lg leading-none">×</span>
+                <span>Fechar</span>
               </button>
             </div>
 
-            <div
-              className="relative overflow-hidden rounded-[24px] border border-[#ff7ae5]/60 bg-[#0d0913] p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_40px_rgba(255,106,221,0.16)]"
-              style={{
-                background: "radial-gradient(circle at center, rgba(255,120,222,0.34) 0%, rgba(45,17,52,0.9) 28%, rgba(11,10,18,1) 72%)",
-              }}
-            >
-              <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_35%,transparent_65%,rgba(255,255,255,0.05))]" />
-              <img
-                src={MUSIC_VISUAL_GIF_URL}
-                alt="Visual animado da música"
-                className="relative z-10 h-[320px] w-full rounded-[20px] border border-white/15 object-contain object-center shadow-[0_0_30px_rgba(255,122,227,0.35)] sm:h-[420px]"
-                loading="lazy"
-              />
+            <div className="mt-5 rounded-[26px] border-[2px] border-[#ff7ae5]/80 bg-[#090b16] p-2 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_40px_rgba(255,106,221,0.18)]">
+              <div
+                className="relative overflow-hidden rounded-[20px] border border-[#ff7ae5]/60"
+                style={{
+                  background: "radial-gradient(circle at center, rgba(255,120,222,0.30) 0%, rgba(45,17,52,0.90) 28%, rgba(11,10,18,1) 72%)",
+                }}
+              >
+                <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_35%,transparent_65%,rgba(255,255,255,0.05))]" />
+                <img
+                  src={MUSIC_VISUAL_GIF_URL}
+                  alt="Visual animado da música"
+                  className="relative z-10 h-[420px] w-full rounded-[20px] object-contain object-center sm:h-[520px]"
+                  loading="lazy"
+                />
+              </div>
             </div>
 
-            <div className="mt-4 flex items-center justify-center">
+            <div className="mt-5 flex items-center justify-center">
               <button
                 type="button"
                 onClick={() => void handleToggle()}
-                className="rounded-full bg-[#111821] px-5 py-2.5 text-sm font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition hover:brightness-110"
+                className="rounded-full border border-[#ff7ae5]/80 bg-[#f0edf4] px-9 py-3 text-xl font-semibold text-[#10131a] shadow-[0_0_18px_rgba(255,122,229,0.25)] transition hover:brightness-105"
               >
-                {isPlaying ? "Pausar" : "Tocar"}
+                {isPlaying ? "Pausar" : "Pausar"}
               </button>
             </div>
           </div>
