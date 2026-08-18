@@ -16,10 +16,10 @@ const OrderSchema = z
     nome_cliente: z
       .string()
       .trim()
+      .max(120)
       .refine((value) => isValidPersonName(value), {
         message: "Informe um nome real para continuar.",
-      })
-      .max(120),
+      }),
     email_cliente: z.preprocess(
       (value) => {
         if (typeof value === "string") {
