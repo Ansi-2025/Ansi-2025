@@ -146,38 +146,46 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
   const progressValue = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
   return (
-    <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[#f5f5f5] shadow-[0_18px_32px_rgba(0,0,0,0.28)]">
-      <div className="p-3">
-        <div className="flex items-center gap-3">
+    <div className="overflow-hidden rounded-[28px] border border-[#d7d4d3] bg-[#f5f5f5] shadow-[0_18px_32px_rgba(0,0,0,0.26)]">
+      <div className="p-2.5 sm:p-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             aria-label={isPlaying ? "Pausar música" : "Tocar música"}
             onClick={() => void handleToggle()}
-            className="grid h-10 w-10 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+            className="grid h-11 w-11 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
           >
-            {isPlaying ? <span className="flex gap-1">
-              <span className="h-4 w-1 rounded-full bg-white" />
-              <span className="h-4 w-1 rounded-full bg-white" />
-            </span> : <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />}
+            {isPlaying ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="h-4 w-1 rounded-full bg-white" />
+                <span className="h-4 w-1 rounded-full bg-white" />
+              </span>
+            ) : (
+              <span className="ml-0.5 h-0 w-0 border-y-[7px] border-l-[11px] border-y-transparent border-l-[#f8f5f2]" />
+            )}
           </button>
 
-          <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
-            <span className="w-12 text-sm font-semibold">{formatTime(currentTime)}</span>
-            <div className="flex-1">
-              <div className="h-2 overflow-hidden rounded-full bg-[#d8d8d8]">
+          <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3 text-[#111821]">
+            <span className="w-10 text-sm font-medium sm:w-11 sm:text-base">{formatTime(currentTime)}</span>
+            <div className="relative flex-1">
+              <div className="h-1.5 overflow-hidden rounded-full bg-[#d7d4d3] shadow-inner shadow-white/60">
                 <div
                   className="h-full rounded-full bg-[#1a1a1a] transition-all duration-150"
                   style={{ width: `${progressValue}%` }}
                 />
               </div>
+              <div
+                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border border-white/80 bg-[#111821] shadow-[0_0_0_2px_rgba(255,255,255,0.65)]"
+                style={{ left: `calc(${progressValue}% - 6px)` }}
+              />
             </div>
-            <span className="w-12 text-right text-sm font-semibold">{formatTime(duration)}</span>
+            <span className="w-10 text-right text-sm font-medium sm:w-11 sm:text-base">{formatTime(duration)}</span>
           </div>
 
           <a
             href={src}
             download
-            className="grid h-10 w-10 place-items-center rounded-full border border-[#111821]/10 bg-[#f3f4f6] text-[#111821] transition-colors hover:bg-[#e8eaee]"
+            className="grid h-11 w-11 place-items-center rounded-full border border-[#111821]/15 bg-white text-[#111821] shadow-[0_6px_16px_rgba(17,24,33,0.08)] transition-all hover:-translate-y-0.5 hover:bg-[#f2f2f2] sm:h-12 sm:w-12"
             aria-label={`Baixar ${title}`}
             title={`Baixar ${title}`}
           >
@@ -187,13 +195,21 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
       </div>
 
       {isPlaying && (
-        <div className="border-t border-black/5 bg-[#0f1218] p-2">
-          <img
-            src={MUSIC_VISUAL_GIF_URL}
-            alt="Visual animado da música"
-            className="h-28 w-full rounded-[22px] object-cover object-center"
-            loading="lazy"
-          />
+        <div className="px-2.5 pb-2.5 pt-1.5 sm:px-3 sm:pb-3 sm:pt-2">
+          <div
+            className="relative overflow-hidden rounded-[24px] border border-[#ff7ae5]/60 bg-[#0d0913] p-1.5 shadow-[0_0_0_1px_rgba(255,255,255,0.04),0_24px_40px_rgba(255,106,221,0.16)] sm:rounded-[26px] sm:p-2"
+            style={{
+              background: "radial-gradient(circle at center, rgba(255,120,222,0.34) 0%, rgba(45,17,52,0.9) 28%, rgba(11,10,18,1) 72%)",
+            }}
+          >
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),transparent_35%,transparent_65%,rgba(255,255,255,0.05))]" />
+            <img
+              src={MUSIC_VISUAL_GIF_URL}
+              alt="Visual animado da música"
+              className="relative z-10 h-32 w-full rounded-[18px] border border-white/15 object-cover object-center shadow-[0_0_30px_rgba(255,122,227,0.35)] sm:h-44 md:h-56"
+              loading="lazy"
+            />
+          </div>
         </div>
       )}
 
@@ -730,11 +746,11 @@ function Timeline({
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
-          <div className="mt-4 rounded-2xl border border-[#ff5d73]/20 bg-[#ff5d73]/10 p-4 text-sm text-[#ffc9d1]">
-            <p className="font-semibold text-[#ffb4c0]">Atenção:</p>
-            <p className="mt-2 text-zinc-200">Sua música está disponível para ouvir aqui no site e também para download direto.</p>
-            <p className="mt-2 text-zinc-200">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
-            <p className="mt-2 font-medium text-[#ffd7dd]">Aviso: a música será apagada dentro de 24 horas após a liberação.</p>
+          <div className="mt-4 rounded-2xl border border-[#ff7ea6]/20 bg-[#20181d]/90 p-4 text-sm text-[#ffe1ea] shadow-[0_18px_36px_rgba(18,13,18,0.38)]">
+            <p className="font-semibold text-[#ffb7cb]">Atenção:</p>
+            <p className="mt-2 text-zinc-100">Sua música está disponível para ouvir aqui no site e também para download direto.</p>
+            <p className="mt-2 text-zinc-100">Se você deixou um e-mail ao fazer o pedido, também enviamos a música por lá em até 5 horas.</p>
+            <p className="mt-2 font-medium text-[#ffd9e4]">Aviso: a música será apagada dentro de 24 horas após a liberação.</p>
 
             <div className="mt-4 space-y-3">
               {order.url_musica && (
@@ -746,23 +762,25 @@ function Timeline({
               )}
             </div>
 
-            <div className="mt-4 flex flex-col gap-3 sm:flex-row">
+            <div className="mt-5 flex flex-col gap-3 sm:flex-row">
               {order.url_musica && (
                 <a
                   href={order.url_musica}
                   download
-                  className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff5d73] to-[#d946ef] px-4 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(217,70,239,0.3)] hover:brightness-110"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#ff5d73]/70 bg-gradient-to-r from-[#ff6e9a] via-[#f9639d] to-[#d55ae6] px-4 py-3 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(255,104,157,0.35)] transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:px-5"
                 >
-                  <Download className="h-4 w-4" /> {order.url_musica_segunda_versao ? "Baixar versão 1" : "Baixar música"}
+                  <Download className="h-4 w-4" />
+                  <span className="whitespace-nowrap">{order.url_musica_segunda_versao ? "Baixar versão 1" : "Baixar música"}</span>
                 </a>
               )}
               {order.url_musica_segunda_versao && (
                 <a
                   href={order.url_musica_segunda_versao}
                   download
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d4af69] bg-[#d4af69]/10 px-4 py-3 text-sm font-semibold text-[#f3d59d] hover:bg-[#d4af69]/15"
+                  className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border border-[#d4af69]/70 bg-[#f3d59d]/10 px-4 py-3 text-sm font-semibold text-[#f3d59d] shadow-[inset_0_0_0_1px_rgba(244,213,157,0.15)] transition-transform hover:-translate-y-0.5 hover:bg-[#d4af69]/15 sm:px-5"
                 >
-                  <Download className="h-4 w-4" /> Baixar versão 2
+                  <Download className="h-4 w-4" />
+                  <span className="whitespace-nowrap">Baixar versão 2</span>
                 </a>
               )}
             </div>
