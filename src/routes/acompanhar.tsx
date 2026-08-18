@@ -1,7 +1,7 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock, Download } from "lucide-react";
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
@@ -72,7 +72,7 @@ type Order = {
   cpf_cliente: string | null;
 };
 
-function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
+function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: string; downloadLabel?: string }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [visualPopupOpen, setVisualPopupOpen] = useState(false);
@@ -154,6 +154,18 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
 
   return (
     <>
+      <div className="mx-auto w-[92%] max-w-[760px]">
+        <a
+          href={src}
+          download
+          aria-label={downloadLabel ?? `Baixar ${title}`}
+          title={downloadLabel ?? `Baixar ${title}`}
+          className="mb-3 flex h-[72px] w-full items-center justify-center rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)] transition-transform hover:-translate-y-0.5"
+        >
+          <Download className="h-7 w-7 text-[#111821]" />
+        </a>
+      </div>
+
       <div className="mx-auto w-[92%] max-w-[760px]">
         <div className="overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
           <div className="px-3 py-3 sm:px-4 sm:py-3.5">
@@ -807,11 +819,19 @@ function Timeline({
 
             <div className="mt-5 space-y-3">
               {order.url_musica && (
-                <OrderAudioPlayer src={order.url_musica} title={order.url_musica_segunda_versao ? "Versão 1" : "Sua música"} />
+                <OrderAudioPlayer
+                  src={order.url_musica}
+                  title={order.url_musica_segunda_versao ? "Versão 1" : "Sua música"}
+                  downloadLabel="Baixar versão 1"
+                />
               )}
 
               {order.url_musica_segunda_versao && (
-                <OrderAudioPlayer src={order.url_musica_segunda_versao} title="Versão 2" />
+                <OrderAudioPlayer
+                  src={order.url_musica_segunda_versao}
+                  title="Versão 2"
+                  downloadLabel="Baixar versão 2"
+                />
               )}
             </div>
 
