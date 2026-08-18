@@ -269,9 +269,6 @@ function TrackingPage() {
     setApprovalLoading(true);
     try {
       await approveLyricFn({ data: { id: order.id } });
-      if (paymentMethod === "card") {
-        await openStripeCheckout(false);
-      }
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao aprovar a letra.");
