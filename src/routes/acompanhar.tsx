@@ -14,6 +14,7 @@ const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
 const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
+const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 11);
@@ -81,9 +82,14 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
     const audio = audioRef.current;
     if (!audio) return;
 
+    const syncPlaybackState = () => {
+      setIsPlaying(!audio.paused && !audio.ended);
+    };
+
     const onLoadedMetadata = () => {
       setDuration(audio.duration || 0);
       setCurrentTime(audio.currentTime || 0);
+      syncPlaybackState();
     };
 
     const onTimeUpdate = () => {
@@ -91,15 +97,23 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
       setDuration(audio.duration || 0);
     };
 
+    const onPlay = () => setIsPlaying(true);
+    const onPause = () => setIsPlaying(false);
     const onEnded = () => setIsPlaying(false);
 
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
     audio.addEventListener("timeupdate", onTimeUpdate);
+    audio.addEventListener("play", onPlay);
+    audio.addEventListener("pause", onPause);
     audio.addEventListener("ended", onEnded);
+
+    syncPlaybackState();
 
     return () => {
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("play", onPlay);
+      audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
   }, [src]);
@@ -132,43 +146,56 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
   const progressValue = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
 
   return (
-    <div className="rounded-full border border-white/10 bg-white/95 p-3 shadow-[0_18px_30px_rgba(0,0,0,0.25)]">
-      <div className="flex items-center gap-3">
-        <button
-          type="button"
-          aria-label={isPlaying ? "Pausar música" : "Tocar música"}
-          onClick={() => void handleToggle()}
-          className="grid h-10 w-10 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
-        >
-          {isPlaying ? <span className="flex gap-1">
-            <span className="h-4 w-1 rounded-full bg-white" />
-            <span className="h-4 w-1 rounded-full bg-white" />
-          </span> : <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />}
-        </button>
+    <div className="overflow-hidden rounded-[30px] border border-white/10 bg-[#f5f5f5] shadow-[0_18px_32px_rgba(0,0,0,0.28)]">
+      <div className="p-3">
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            aria-label={isPlaying ? "Pausar música" : "Tocar música"}
+            onClick={() => void handleToggle()}
+            className="grid h-10 w-10 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]"
+          >
+            {isPlaying ? <span className="flex gap-1">
+              <span className="h-4 w-1 rounded-full bg-white" />
+              <span className="h-4 w-1 rounded-full bg-white" />
+            </span> : <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />}
+          </button>
 
-        <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
-          <span className="w-12 text-sm font-semibold">{formatTime(currentTime)}</span>
-          <div className="flex-1">
-            <div className="h-2 overflow-hidden rounded-full bg-[#d8d8d8]">
-              <div
-                className="h-full rounded-full bg-[#1a1a1a] transition-all duration-150"
-                style={{ width: `${progressValue}%` }}
-              />
+          <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
+            <span className="w-12 text-sm font-semibold">{formatTime(currentTime)}</span>
+            <div className="flex-1">
+              <div className="h-2 overflow-hidden rounded-full bg-[#d8d8d8]">
+                <div
+                  className="h-full rounded-full bg-[#1a1a1a] transition-all duration-150"
+                  style={{ width: `${progressValue}%` }}
+                />
+              </div>
             </div>
+            <span className="w-12 text-right text-sm font-semibold">{formatTime(duration)}</span>
           </div>
-          <span className="w-12 text-right text-sm font-semibold">{formatTime(duration)}</span>
-        </div>
 
-        <a
-          href={src}
-          download
-          className="grid h-10 w-10 place-items-center rounded-full border border-[#111821]/10 bg-[#f3f4f6] text-[#111821] transition-colors hover:bg-[#e8eaee]"
-          aria-label={`Baixar ${title}`}
-          title={`Baixar ${title}`}
-        >
-          <Download className="h-4 w-4" />
-        </a>
+          <a
+            href={src}
+            download
+            className="grid h-10 w-10 place-items-center rounded-full border border-[#111821]/10 bg-[#f3f4f6] text-[#111821] transition-colors hover:bg-[#e8eaee]"
+            aria-label={`Baixar ${title}`}
+            title={`Baixar ${title}`}
+          >
+            <Download className="h-4 w-4" />
+          </a>
+        </div>
       </div>
+
+      {isPlaying && (
+        <div className="border-t border-black/5 bg-[#0f1218] p-2">
+          <img
+            src={MUSIC_VISUAL_GIF_URL}
+            alt="Visual animado da música"
+            className="h-28 w-full rounded-[22px] object-cover object-center"
+            loading="lazy"
+          />
+        </div>
+      )}
 
       <audio ref={audioRef} src={src} preload="auto" />
     </div>
