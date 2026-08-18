@@ -43,7 +43,7 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
     // Buscar o pedido associado a este task_id
     const { data: pedido, error: pedidoError } = await supabase
       .from("pedidos")
-      .select("id, status, nome_cliente, telefone_cliente, email_cliente")
+      .select("id, status, nome_cliente, telefone_cliente, email_cliente, segunda_versao")
       .eq("suno_task_id", task_id)
       .single();
 
@@ -65,14 +65,15 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
     if (callbackType === "complete") {
       const primaryTrack = tracks[0];
       const secondaryTrack = tracks[1] ?? null;
-      const hasSecondVersion = Boolean(secondaryTrack?.audio_url);
+      const customerPaidForSecondVersion = Boolean(pedido.segunda_versao);
+      const shouldExposeSecondVersion = customerPaidForSecondVersion && Boolean(secondaryTrack?.audio_url);
 
       const { error: updateError } = await supabase
         .from("pedidos")
         .update({
           url_musica: primaryTrack?.audio_url ?? null,
-          url_musica_segunda_versao: hasSecondVersion ? secondaryTrack?.audio_url ?? null : null,
-          segunda_versao: hasSecondVersion,
+          url_musica_segunda_versao: shouldExposeSecondVersion ? secondaryTrack?.audio_url ?? null : null,
+          segunda_versao: shouldExposeSecondVersion,
           status: "musica_pronta",
           status_atualizado_em: new Date().toISOString(),
         })
@@ -93,14 +94,14 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
         pedido_id: pedido.id,
         status_anterior: pedido.status,
         status_novo: "musica_pronta",
-        mensagem_whatsapp: hasSecondVersion
+        mensagem_whatsapp: shouldExposeSecondVersion
           ? "Músicas prontas e disponíveis para download. O pedido inclui duas versões."
           : "Música pronta e disponível para download.",
         criado_em: new Date().toISOString(),
       });
 
-      const deliveryUrl = hasSecondVersion && secondaryTrack?.audio_url ? secondaryTrack.audio_url : primaryTrack?.audio_url ?? null;
-      const deliveryMessage = hasSecondVersion
+      const deliveryUrl = shouldExposeSecondVersion && secondaryTrack?.audio_url ? secondaryTrack.audio_url : primaryTrack?.audio_url ?? null;
+      const deliveryMessage = shouldExposeSecondVersion
         ? `Olá ${pedido.nome_cliente ?? "cliente"}! Sua música já está pronta com duas versões disponíveis para download. ${deliveryUrl}`
         : `Olá ${pedido.nome_cliente ?? "cliente"}! Sua música já está pronta e disponível para download: ${deliveryUrl}`;
 
@@ -124,7 +125,8 @@ export async function handleSunoWebhook(request: Request): Promise<Response> {
       console.log("Música final disponível:", {
         pedidoId: pedido.id,
         taskId: task_id,
-        hasSecondVersion,
+        customerPaidForSecondVersion,
+        shouldExposeSecondVersion,
         primaryDuration: primaryTrack?.duration,
         secondaryDuration: secondaryTrack?.duration,
       });
