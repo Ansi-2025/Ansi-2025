@@ -410,6 +410,8 @@ function TrackingPage() {
           id: order.id,
           token: orderToken || initialToken || undefined,
           secondVersion: withSecondVersion,
+          // Temporário: teste de produção com valor de R$ 1,00.
+          forceTestPrice: true,
         },
       });
 
