@@ -562,6 +562,8 @@ function Timeline({
   }, [musicGenerationMessages, order.status]);
 
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
+  const paymentReceived = order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta" ||
+    (order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
 
   return (
     <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] md:p-8">
@@ -584,13 +586,19 @@ function Timeline({
             <p className="mt-1 text-zinc-300">Aguarde por gentileza. Estamos confirmando o pagamento com a Stripe e em seguida liberamos sua música.</p>
           </div>
         )}
-        {order.status === "pago" && (
+        {paymentReceived && (
           <div className="mt-4 rounded-2xl border border-[#34d399]/30 bg-[#34d399]/10 p-4 text-sm text-[#bbf7d0]">
             <p className="font-semibold">Pagamento recebido - liberando seu produto</p>
             <p className="mt-1 text-zinc-200">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
+            {!order.url_musica && !order.url_musica_segunda_versao && (
+              <>
+                <p className="mt-2 text-zinc-200">Aguarde alguns minutos enquanto finalizamos a liberação da versão final e os links de download.</p>
+                <p className="mt-2 font-medium text-[#ffd7dd]">Se você deixou e-mail, também enviaremos a música por lá em alguns minutos.</p>
+              </>
+            )}
           </div>
         )}
-        {(order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta") && (order.url_musica || order.url_musica_segunda_versao) && (
+        {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
           <div className="mt-4 rounded-2xl border border-[#ff5d73]/20 bg-[#ff5d73]/10 p-4 text-sm text-[#ffc9d1]">
             <p className="font-semibold text-[#ffb4c0]">Atenção:</p>
             <p className="mt-2 text-zinc-200">Sua música está disponível para download aqui no site em menos de 1 hora — essa é a melhor opção para receber o arquivo rapidamente.</p>
