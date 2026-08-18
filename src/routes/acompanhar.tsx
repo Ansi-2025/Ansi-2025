@@ -185,15 +185,18 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
               </div>
               <span className="min-w-[44px] text-right text-base font-medium">{formatTime(duration)}</span>
             </div>
+          </div>
 
+          <div className="mt-3">
             <a
               href={src}
               download
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-full border border-[#111821]/15 bg-[#f9f7f6] text-[#111821] shadow-[0_4px_12px_rgba(17,24,33,0.08)] transition-all hover:-translate-y-0.5 hover:bg-[#f2f2f2]"
+              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#ff5d73]/70 bg-gradient-to-r from-[#ff7ea4] via-[#f9639d] to-[#d55ae6] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_28px_rgba(255,104,157,0.35)] transition-transform hover:-translate-y-0.5 hover:brightness-110"
               aria-label={`Baixar ${title}`}
               title={`Baixar ${title}`}
             >
               <Download className="h-4 w-4" />
+              <span>Baixar música</span>
             </a>
           </div>
         </div>
