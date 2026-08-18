@@ -1,7 +1,7 @@
 import { createFileRoute, useSearch } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction, type FormEvent } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock, Download } from "lucide-react";
+import { CheckCircle2, Loader2, Search, Music, Sparkles, ArrowRight, Copy, Check, Clock, Download, ShieldCheck, Headphones } from "lucide-react";
 import { Elements, CardNumberElement, CardExpiryElement, CardCvcElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
@@ -151,58 +151,63 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
   };
 
   const progressValue = duration > 0 ? Math.min((currentTime / duration) * 100, 100) : 0;
+  const thumbLeft = progressValue > 0 ? `calc(${progressValue}% - 9px)` : "0px";
 
   return (
     <>
-      <div className="mx-auto w-[92%] max-w-[760px]">
-        <a
-          href={src}
-          download
-          aria-label={downloadLabel ?? `Baixar ${title}`}
-          title={downloadLabel ?? `Baixar ${title}`}
-          className="mb-3 inline-flex w-[88%] max-w-[420px] items-center justify-center gap-2 rounded-[18px] border border-[#111821]/10 bg-gradient-to-r from-[#ff7ea4] via-[#f9639d] to-[#d55ae6] px-5 py-3 text-base font-semibold text-white shadow-[0_8px_16px_rgba(17,24,33,0.08),0_14px_28px_rgba(255,104,157,0.35)] transition-transform hover:-translate-y-0.5 hover:brightness-110"
-        >
-          <Download className="h-4 w-4" />
-          <span>{downloadLabel ?? `Baixar ${title}`}</span>
-        </a>
+      <div className="mx-auto mt-4 w-[92%] max-w-[760px]">
+        <div className="relative overflow-hidden rounded-[28px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_18px_40px_rgba(255,118,173,0.28)]">
+          <a
+            href={src}
+            download
+            aria-label={downloadLabel ?? `Baixar ${title}`}
+            title={downloadLabel ?? `Baixar ${title}`}
+            className="relative flex w-full items-center justify-center gap-3 py-4 text-lg font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:py-5 sm:text-2xl"
+          >
+            <Download className="h-5 w-5 sm:h-6 sm:w-6" />
+            <span>{downloadLabel ?? `Baixar ${title}`}</span>
+          </a>
+
+          <span className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-[16px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:h-12 sm:w-12">
+            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+          </span>
+        </div>
       </div>
 
-      <div className="mx-auto w-[92%] max-w-[760px]">
-        <div className="overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
-          <div className="px-3 py-3 sm:px-4 sm:py-3.5">
-            <div className="flex items-center gap-3 sm:gap-4">
-              <button
-                type="button"
-                aria-label={isPlaying ? "Pausar música" : "Tocar música"}
-                onClick={() => void handleToggle()}
-                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02]"
-              >
-                {isPlaying ? (
-                  <span className="flex items-center justify-center gap-1.5">
-                    <span className="h-4 w-1 rounded-full bg-white" />
-                    <span className="h-4 w-1 rounded-full bg-white" />
-                  </span>
-                ) : (
-                  <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />
-                )}
-              </button>
+      <div className="mx-auto mt-3 w-[92%] max-w-[760px]">
+        <div className="flex items-center gap-3 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-3 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:px-4 sm:py-3.5">
+          <button
+            type="button"
+            aria-label={isPlaying ? "Pausar música" : "Tocar música"}
+            onClick={() => void handleToggle()}
+            className="grid h-12 w-12 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-14 sm:w-14"
+          >
+            {isPlaying ? (
+              <span className="flex items-center justify-center gap-1.5">
+                <span className="h-4 w-1.5 rounded-full bg-white sm:h-5" />
+                <span className="h-4 w-1.5 rounded-full bg-white sm:h-5" />
+              </span>
+            ) : (
+              <span className="ml-1 h-0 w-0 border-y-[7px] border-l-[10px] border-y-transparent border-l-[#f8f5f2] sm:border-y-[8px] sm:border-l-[12px]" />
+            )}
+          </button>
 
-              <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
-                <span className="min-w-[44px] text-base font-medium">{formatTime(currentTime)}</span>
-                <div className="relative flex-1">
-                  <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3] shadow-inner shadow-white/60">
-                    <div
-                      className="h-full rounded-full bg-[#111821] transition-all duration-150"
-                      style={{ width: `${progressValue}%` }}
-                    />
-                  </div>
-                </div>
-                <span className="min-w-[44px] text-right text-base font-medium">{formatTime(duration)}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-3 text-[#111821]">
+            <span className="min-w-[42px] text-sm font-medium text-[#f8f5f2] sm:text-base">{formatTime(currentTime)}</span>
+            <div className="relative flex-1">
+              <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3]/30 sm:h-3">
+                <div
+                  className="h-full rounded-full bg-[linear-gradient(90deg,#ff8db8,#ff5d73,#d55ae6)] transition-all duration-150"
+                  style={{ width: `${progressValue}%` }}
+                />
               </div>
+              <span
+                className="absolute top-1/2 h-4 w-4 -translate-y-1/2 rounded-full border-2 border-[#ffe7f2] bg-[#ff7ca8] shadow-[0_0_0_4px_rgba(255,123,167,0.18)] sm:h-4 sm:w-4"
+                style={{ left: thumbLeft }}
+              />
             </div>
+            <span className="min-w-[42px] text-right text-sm font-medium text-[#f8f5f2] sm:text-base">{formatTime(duration)}</span>
           </div>
-
-          <audio ref={audioRef} src={src} preload="auto" />
         </div>
       </div>
 
@@ -805,20 +810,35 @@ function Timeline({
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
-          <div className="mt-4">
-            <div className="flex items-center gap-3 rounded-[28px] border border-[#ff5d73]/70 bg-[#1c1017]/80 px-4 py-3 text-sm text-[#ffe1ea] shadow-[0_18px_36px_rgba(18,13,18,0.38)]">
-              <div className="grid h-9 w-9 place-items-center rounded-full bg-[#f3d59d] text-[#1b1b1b] shadow-[0_0_0_2px_rgba(255,255,255,0.28)]">
-                <Music className="h-4 w-4" />
-              </div>
-              <div>
-                <p className="text-lg font-semibold text-[#f7e9ee]">Música disponível</p>
-                <p className="text-xs text-zinc-300">
-                  Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}
-                </p>
+          <div className="mt-4 space-y-5">
+            <div className="mx-auto w-[92%] max-w-[760px]">
+              <div className="relative overflow-hidden rounded-[28px] border border-[#ff7ae5]/25 bg-[linear-gradient(90deg,rgba(255,118,178,0.18),rgba(111,87,255,0.10),rgba(18,22,33,0.85))] px-4 py-3 shadow-[0_18px_40px_rgba(18,14,31,0.52)]">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%)]" />
+                <div className="relative flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 overflow-hidden">
+                    <div className="grid h-16 w-16 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7ea6,#c55ae7)] text-white shadow-[0_0_0_3px_rgba(255,255,255,0.06),0_12px_30px_rgba(255,112,173,0.4)]">
+                      <Music className="h-7 w-7" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="font-display text-[2rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2]">Música disponível</h3>
+                      <p className="mt-2 text-sm text-zinc-200">Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-end gap-1.5 pr-2">
+                    {[36, 52, 42, 65, 48, 58, 38, 46, 60, 32, 55, 41, 63, 44, 57, 35].map((height, index) => (
+                      <span
+                        key={`header-eq-${index}`}
+                        className="block rounded-full bg-[linear-gradient(180deg,#ffddf3,#ff8ec7,#c45aff)] shadow-[0_0_16px_rgba(255,141,202,0.45)]"
+                        style={{ height: `${height}px`, width: "6px", opacity: 0.72 + (index % 5) * 0.06 }}
+                      />
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="mt-5 space-y-3">
+            <div className="mt-5 space-y-4">
               {order.url_musica && (
                 <OrderAudioPlayer
                   src={order.url_musica}
@@ -836,6 +856,23 @@ function Timeline({
               )}
             </div>
 
+            <div className="mx-auto w-[92%] max-w-[760px] rounded-[28px] border border-[#ff7ae5]/30 bg-[#111821]/80 p-4 shadow-[0_18px_35px_rgba(13,12,20,0.42)]">
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex min-w-0 items-center gap-4">
+                  <div className="grid h-14 w-14 shrink-0 place-items-center rounded-full border border-[#ff7ae5]/50 bg-[#201426] text-[#ff8ac7] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+                    <ShieldCheck className="h-7 w-7" />
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="font-display text-[2rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2]">Arquivos seguros e de alta qualidade</h3>
+                    <p className="mt-2 text-sm text-zinc-300">Baixe e ouça quando quiser. Suas músicas estão protegidas e disponíveis para você.</p>
+                  </div>
+                </div>
+
+                <div className="grid h-16 w-16 shrink-0 place-items-center rounded-full border border-[#ff7ae5]/50 bg-[#201426] text-[#ff8ac7] shadow-[0_0_0_1px_rgba(255,255,255,0.04)]">
+                  <Headphones className="h-8 w-8" />
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
