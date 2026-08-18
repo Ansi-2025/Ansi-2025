@@ -154,54 +154,56 @@ function OrderAudioPlayer({ src, title }: { src: string; title: string }) {
 
   return (
     <>
-      <div className="mx-auto w-full max-w-[980px] overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
-        <div className="px-3 py-3 sm:px-4 sm:py-3.5">
-          <div className="flex items-center gap-3 sm:gap-4">
-            <button
-              type="button"
-              aria-label={isPlaying ? "Pausar música" : "Tocar música"}
-              onClick={() => void handleToggle()}
-              className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02]"
-            >
-              {isPlaying ? (
-                <span className="flex items-center justify-center gap-1.5">
-                  <span className="h-4 w-1 rounded-full bg-white" />
-                  <span className="h-4 w-1 rounded-full bg-white" />
-                </span>
-              ) : (
-                <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />
-              )}
-            </button>
+      <div className="mx-auto w-[92%] max-w-[760px]">
+        <div className="mb-3 flex justify-center">
+          <a
+            href={src}
+            download
+            className="inline-flex w-[88%] max-w-[420px] items-center justify-center gap-2 rounded-[18px] border border-[#111821]/10 bg-[#f2f1f1] px-5 py-3 text-base font-semibold text-[#111821] shadow-[0_8px_16px_rgba(17,24,33,0.08)] transition-transform hover:-translate-y-0.5 hover:bg-[#eceaea]"
+            aria-label={`Baixar ${title}`}
+            title={`Baixar ${title}`}
+          >
+            <Download className="h-4 w-4" />
+            <span>Baixar</span>
+          </a>
+        </div>
 
-            <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
-              <span className="min-w-[44px] text-base font-medium">{formatTime(currentTime)}</span>
-              <div className="relative flex-1">
-                <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3] shadow-inner shadow-white/60">
-                  <div
-                    className="h-full rounded-full bg-[#111821] transition-all duration-150"
-                    style={{ width: `${progressValue}%` }}
-                  />
+        <div className="overflow-hidden rounded-[999px] border border-[#111821]/90 bg-[#f3f1f0] shadow-[0_8px_18px_rgba(0,0,0,0.12)]">
+          <div className="px-3 py-3 sm:px-4 sm:py-3.5">
+            <div className="flex items-center gap-3 sm:gap-4">
+              <button
+                type="button"
+                aria-label={isPlaying ? "Pausar música" : "Tocar música"}
+                onClick={() => void handleToggle()}
+                className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[#111821] text-[#f8f5f2] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)] transition-transform hover:scale-[1.02]"
+              >
+                {isPlaying ? (
+                  <span className="flex items-center justify-center gap-1.5">
+                    <span className="h-4 w-1 rounded-full bg-white" />
+                    <span className="h-4 w-1 rounded-full bg-white" />
+                  </span>
+                ) : (
+                  <span className="ml-0.5 h-0 w-0 border-y-[6px] border-l-[10px] border-y-transparent border-l-[#f8f5f2]" />
+                )}
+              </button>
+
+              <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
+                <span className="min-w-[44px] text-base font-medium">{formatTime(currentTime)}</span>
+                <div className="relative flex-1">
+                  <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3] shadow-inner shadow-white/60">
+                    <div
+                      className="h-full rounded-full bg-[#111821] transition-all duration-150"
+                      style={{ width: `${progressValue}%` }}
+                    />
+                  </div>
                 </div>
+                <span className="min-w-[44px] text-right text-base font-medium">{formatTime(duration)}</span>
               </div>
-              <span className="min-w-[44px] text-right text-base font-medium">{formatTime(duration)}</span>
             </div>
           </div>
 
-          <div className="mt-3">
-            <a
-              href={src}
-              download
-              className="inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#ff5d73]/70 bg-gradient-to-r from-[#ff7ea4] via-[#f9639d] to-[#d55ae6] px-5 py-3 text-sm font-bold text-white shadow-[0_14px_28px_rgba(255,104,157,0.35)] transition-transform hover:-translate-y-0.5 hover:brightness-110"
-              aria-label={`Baixar ${title}`}
-              title={`Baixar ${title}`}
-            >
-              <Download className="h-4 w-4" />
-              <span>Baixar música</span>
-            </a>
-          </div>
+          <audio ref={audioRef} src={src} preload="auto" />
         </div>
-
-        <audio ref={audioRef} src={src} preload="auto" />
       </div>
 
       <Dialog open={visualPopupOpen} onOpenChange={(open) => {
