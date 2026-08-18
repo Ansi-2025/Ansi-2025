@@ -9,6 +9,22 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
+const buildCustomerOrderUrl = (orderId: string) => {
+  if (typeof window === "undefined") return `/acompanhar?id=${encodeURIComponent(orderId)}`;
+  return new URL(`/acompanhar?id=${encodeURIComponent(orderId)}`, window.location.origin).toString();
+};
+
+const buildClientWhatsAppUrl = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null }) => {
+  const rawPhone = (order.telefone_cliente ?? "").replace(/\D/g, "");
+  if (!rawPhone) return null;
+
+  const normalizedPhone = rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`;
+  const orderUrl = buildCustomerOrderUrl(order.id);
+  const message = `Olá ${order.nome_cliente}! Seu pedido ${order.id} está pronto. Acesse o atendimento para receber a música: ${orderUrl}`;
+
+  return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
+};
+
 function AdminPage() {
   const checkAdminAccess = useServerFn(adminCheckAccess);
   const listOrders = useServerFn(adminListOrders);
@@ -27,6 +43,16 @@ function AdminPage() {
   const [orders, setOrders] = useState<Array<any>>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+
+  const openCustomerOrder = (orderId: string) => {
+    window.open(buildCustomerOrderUrl(orderId), "_blank", "noopener,noreferrer");
+  };
+
+  const openClientWhatsApp = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null }) => {
+    const url = buildClientWhatsAppUrl(order);
+    if (!url) return;
+    window.open(url, "_blank", "noopener,noreferrer");
+  };
 
   const loadOrders = async (currentSession: Session | null) => {
     if (!currentSession?.access_token) return;
@@ -331,6 +357,23 @@ function AdminPage() {
                       </td>
                       <td className="px-5 py-4">
                         <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => openCustomerOrder(order.id)}
+                            className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground"
+                          >
+                            Abrir pedido
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => openClientWhatsApp(order)}
+                            disabled={!order.telefone_cliente}
+                            className="inline-flex items-center justify-center rounded-full border border-[#25d366] bg-[#25d366]/10 px-3 py-2 text-xs font-semibold text-[#baf7cf] disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            WhatsApp cliente
+                          </button>
+
                           <button
                             type="button"
                             disabled={actionLoading === order.id}

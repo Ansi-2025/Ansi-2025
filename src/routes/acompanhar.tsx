@@ -9,7 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { z } from "zod";
 import QRCode from "qrcode";
 
-const searchSchema = z.object({ id: z.string().optional() });
+const searchSchema = z.object({ id: z.string().optional(), token: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
@@ -291,7 +291,7 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
 }
 
 function TrackingPage() {
-  const { id: initialId } = useSearch({ from: "/acompanhar" });
+  const { id: initialId, token: initialToken } = useSearch({ from: "/acompanhar" });
   const fetchStatus = useServerFn(getOrderStatus);
   const fetchHistory = useServerFn(getOrderStatusHistory);
   const createCheckout = useServerFn(createStripeCheckout);
@@ -299,6 +299,7 @@ function TrackingPage() {
   const approveLyricFn = useServerFn(approveLyric);
   const requestRevisionFn = useServerFn(requestLyricRevision);
   const [id, setId] = useState(initialId ?? "");
+  const [orderToken, setOrderToken] = useState(initialToken ?? "");
   const [order, setOrder] = useState<Order | null>(null);
   const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
@@ -358,10 +359,11 @@ function TrackingPage() {
     }
 
     try {
-      const row = (await fetchStatus({ data: { id: trimmedId } })) as unknown as Order;
+      const row = (await fetchStatus({ data: { id: trimmedId, token: orderToken || initialToken || undefined } })) as unknown as Order & { access_token?: string };
       setOrder(row);
+      setOrderToken(row.access_token ?? (orderToken || initialToken || ""));
       setCheckoutUrl(row.stripe_checkout_url ?? null);
-      const hist = await fetchHistory({ data: { id: trimmedId } });
+      const hist = await fetchHistory({ data: { id: trimmedId, token: row.access_token ?? (orderToken || initialToken || undefined) } });
       setHistory(hist);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao buscar o pedido.");
@@ -406,6 +408,7 @@ function TrackingPage() {
       const result = await createCheckout({
         data: {
           id: order.id,
+          token: orderToken || initialToken || undefined,
           secondVersion: withSecondVersion,
         },
       });
@@ -462,6 +465,7 @@ function TrackingPage() {
       await updateCustomerInfo({
         data: {
           id: order.id,
+          token: orderToken || initialToken || undefined,
           email_cliente: email || null,
           telefone_cliente: normalizedPhone,
           cpf_cliente: normalizedCpf,
@@ -487,7 +491,7 @@ function TrackingPage() {
     setApprovalError("");
     setApprovalLoading(true);
     try {
-      await approveLyricFn({ data: { id: order.id } });
+      await approveLyricFn({ data: { id: order.id, token: orderToken || initialToken || undefined } });
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao aprovar a letra.");
@@ -501,7 +505,7 @@ function TrackingPage() {
     setApprovalError("");
     setApprovalLoading(true);
     try {
-      await requestRevisionFn({ data: { id: order.id, feedback: feedback ?? "" } });
+      await requestRevisionFn({ data: { id: order.id, token: orderToken || initialToken || undefined, feedback: feedback ?? "" } });
       await search(order.id);
     } catch (error) {
       setApprovalError(error instanceof Error ? error.message : "Erro ao solicitar revisão da letra.");
@@ -733,12 +737,7 @@ function Timeline({
   const [generationMessageIndex, setGenerationMessageIndex] = useState(0);
   // texto + tempo (ms) que a frase permanece visível antes de avançar para a próxima
   const musicGenerationMessages = [
-    { text: "✨ Estamos transformando sua história em uma música cheia de emoção...", duration: 20000 },
-    { text: "💛 A letra está tomando forma com cuidado e autenticidade...", duration: 20000 },
-    { text: "🎶 A melodia está sendo criada para refletir o que você sente...", duration: 20000 },
-    { text: "🎼 Estamos ajustando os detalhes para deixar a música mais bonita e memorável...", duration: 30000 },
-    { text: "❤️ Sua música está quase pronta, com o toque emocional que ela merece...", duration: 30000 },
-    { text: "🔥 Falta pouco! Estamos finalizando os últimos ajustes para te entregar a versão final...", duration: 60000 },
+    { text: "Aguarde no máximo 3 minutos que a música estará pronta.", duration: 60000 },
   ];
 
   useEffect(() => {
@@ -783,6 +782,7 @@ function Timeline({
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
   const paymentReceived = order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta" ||
     (order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
+  const musicBeingGenerated = order.status === "gerando_musica" || (paymentReceived && !order.url_musica && !order.url_musica_segunda_versao);
 
   return (
     <div className="mx-auto mt-4 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] sm:p-6 md:mt-8 md:p-8">
@@ -810,11 +810,39 @@ function Timeline({
             <p className="font-semibold">Pagamento recebido - liberando seu produto</p>
             <p className="mt-1 text-zinc-200">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
             {!order.url_musica && !order.url_musica_segunda_versao && (
-              <>
-                <p className="mt-2 text-zinc-200">Aguarde alguns minutos enquanto finalizamos a liberação da sua música final.</p>
-                <p className="mt-2 font-medium text-[#ffd7dd]">Se você deixou e-mail, também enviaremos a música por lá em alguns minutos.</p>
-              </>
+              <p className="mt-2 font-medium text-[#ffd7dd]">Aguarde no máximo 3 minutos que a música estará pronta.</p>
             )}
+          </div>
+        )}
+        {musicBeingGenerated && (
+          <div className="mt-4 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+            <div className="flex items-center gap-4">
+              <div className="relative grid h-14 w-14 place-items-center rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 text-[#f3d59d]">
+                <Clock className="h-7 w-7 animate-spin" />
+              </div>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3d59d]">Produzindo sua música</p>
+                <h3 className="font-display text-[1.5rem] leading-none font-semibold text-[#f8f5f2] sm:text-[1.7rem]">Aguarde um momento</h3>
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <p
+                key={`generation-message-${generationMessageIndex}`}
+                className="animate-in fade-in-0 slide-in-from-bottom-1 text-base font-medium leading-relaxed text-[#f8f5f2] duration-700"
+              >
+                {musicGenerationMessages[generationMessageIndex]?.text ?? "Estamos preparando sua música com todo o cuidado."}
+              </p>
+              <p className="mt-3 text-zinc-300">
+                Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar sua música final.
+              </p>
+              <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
+                <div
+                  className="h-full rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] transition-all duration-700 ease-out"
+                  style={{ width: `${((generationMessageIndex + 1) / musicGenerationMessages.length) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (

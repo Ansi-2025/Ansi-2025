@@ -55,7 +55,7 @@ function createSupabaseClient() {
       fetch: createSupabaseFetch(SUPABASE_ANON_KEY),
     },
     auth: {
-      storage: typeof window !== 'undefined' ? localStorage : undefined,
+      storage: typeof window !== 'undefined' ? window.sessionStorage : undefined,
       persistSession: true,
       autoRefreshToken: true,
     }

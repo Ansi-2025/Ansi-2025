@@ -303,7 +303,7 @@ function StartMusicWidget({
       console.log("[submit] Pedido enviado com sucesso, ID:", res.id);
       setOpen(false);
       reset();
-      navigate({ to: "/acompanhar", search: { id: res.id } });
+      navigate({ to: "/acompanhar", search: { id: res.id, token: res.token } });
     } catch (error) {
       const mensagem = error instanceof Error ? error.message : "Não foi possível criar a música agora. Tente novamente.";
       console.error("[submit] Erro ao enviar pedido:", mensagem, error);

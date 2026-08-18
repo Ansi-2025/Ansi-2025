@@ -1,9 +1,43 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 import { isValidPersonName } from "@/lib/utils";
+
+const ORDER_ACCESS_SECRET = process.env.ORDER_ACCESS_SECRET ?? process.env.APP_SECRET ?? process.env.SUPABASE_SERVICE_ROLE ?? process.env.STRIPE_SECRET_KEY ?? "dev-order-access-secret";
+
+if (
+  !process.env.ORDER_ACCESS_SECRET &&
+  !process.env.APP_SECRET &&
+  !process.env.SUPABASE_SERVICE_ROLE &&
+  !process.env.STRIPE_SECRET_KEY
+) {
+  console.warn("[order-security] ORDER_ACCESS_SECRET não configurada em produção. Defina ORDER_ACCESS_SECRET para reforçar o controle de acesso ao pedido.");
+}
+
+function generateOrderAccessToken(orderId: string) {
+  return createHmac("sha256", ORDER_ACCESS_SECRET).update(orderId).digest("hex");
+}
+
+function validateOrderAccess(orderId: string, token?: string | null) {
+  if (!token) {
+    throw new Error("Token de acesso do pedido inválido. Reabra o link do acompanhamento do pedido.");
+  }
+
+  const expected = generateOrderAccessToken(orderId);
+  if (token.length !== expected.length) {
+    throw new Error("Token de acesso do pedido inválido.");
+  }
+
+  const provided = Buffer.from(token);
+  const expectedBuffer = Buffer.from(expected);
+
+  if (!timingSafeEqual(provided, expectedBuffer)) {
+    throw new Error("Token de acesso do pedido inválido.");
+  }
+}
 
 const orderIdSchema = z
   .string()
@@ -164,6 +198,7 @@ export const sendOrder = createServerFn({ method: "POST" })
       return {
         ok: true,
         id: pedido.id,
+        token: generateOrderAccessToken(pedido.id),
         letra_gerada: pedidoComLetra.letra_gerada,
         status: pedidoComLetra.status,
       };
@@ -175,8 +210,9 @@ export const sendOrder = createServerFn({ method: "POST" })
   });
 
 export const approveLyric = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
+    validateOrderAccess(data.id, data.token);
     return marcarLetraAprovada(data.id);
   });
 
@@ -185,6 +221,7 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
     z
       .object({
         id: orderIdSchema,
+        token: z.string().optional(),
         feedback: z
           .string()
           .trim()
@@ -195,6 +232,7 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    validateOrderAccess(data.id, data.token);
     return refazerLetraPedido(data.id, data.feedback);
   });
 
@@ -203,6 +241,7 @@ export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
     z
       .object({
         id: orderIdSchema,
+        token: z.string().optional(),
         email_cliente: z.string().trim().email().optional().nullable(),
         telefone_cliente: z.string().trim().max(30).optional().nullable(),
         cpf_cliente: z.string().trim().max(14).optional().nullable(),
@@ -210,6 +249,7 @@ export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    validateOrderAccess(data.id, data.token);
     return atualizarDadosClientePedido(data.id, {
       email_cliente: data.email_cliente,
       telefone_cliente: data.telefone_cliente,
@@ -222,11 +262,13 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
     z
       .object({
         id: orderIdSchema,
+        token: z.string().optional(),
         secondVersion: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    validateOrderAccess(data.id, data.token);
     return criarCheckoutStripe(data.id, data.secondVersion ?? false);
   });
 
@@ -235,17 +277,23 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
     z
       .object({
         id: orderIdSchema,
+        token: z.string().optional(),
         secondVersion: z.boolean().optional(),
       })
       .parse(data),
   )
   .handler(async ({ data }) => {
+    validateOrderAccess(data.id, data.token);
     return criarPaymentIntentStripe(data.id, data.secondVersion ?? false);
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
+    if (data.token) {
+      validateOrderAccess(data.id, data.token);
+    }
+
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
@@ -256,7 +304,10 @@ export const getOrderStatus = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Pedido não encontrado.");
-    return row as {
+    return {
+      ...row,
+      access_token: generateOrderAccessToken(data.id),
+    } as {
       id: string;
       nome_cliente: string;
       email_cliente: string;
@@ -281,12 +332,17 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       stripe_payment_status: string | null;
       created_at: string;
       status_atualizado_em: string;
+      access_token: string;
     };
   });
 
 export const getOrderStatusHistory = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema }).parse(data))
+  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
+    if (data.token) {
+      validateOrderAccess(data.id, data.token);
+    }
+
     const { data: rows, error } = await supabaseAdmin
       .from("status_history")
       .select("*")
