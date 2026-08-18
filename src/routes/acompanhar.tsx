@@ -18,7 +18,7 @@ const COMPANY_WHATSAPP_NUMBER = "5541997232395";
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
-  const message = `Olá! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar o link de download${order.segunda_versao ? " da versão disponível" : " da música"}?`;
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar a música por aqui.${order.segunda_versao ? " da versão disponível" : " da música"}?`;
   return `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
@@ -161,58 +161,58 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
 
   return (
     <>
-      <div className="mx-auto mt-4 w-[88%] max-w-[700px]">
-        <div className="relative overflow-hidden rounded-[24px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_16px_30px_rgba(255,118,173,0.22)]">
+      <div className="mx-auto mt-3 w-[94%] max-w-[700px] sm:w-[88%]">
+        <div className="relative overflow-hidden rounded-[18px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_16px_30px_rgba(255,118,173,0.22)] sm:rounded-[24px]">
           <a
             href={src}
             download
             aria-label={downloadLabel ?? `Baixar ${title}`}
             title={downloadLabel ?? `Baixar ${title}`}
-            className="relative flex w-full items-center justify-center gap-3 py-3 text-base font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:py-4 sm:text-xl"
+            className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:gap-3 sm:py-4 sm:text-xl"
           >
-            <Download className="h-4 w-4 sm:h-5 sm:w-5" />
+            <Download className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
             <span>{downloadLabel ?? `Baixar ${title}`}</span>
           </a>
 
-          <span className="absolute right-3 top-1/2 grid h-9 w-9 -translate-y-1/2 place-items-center rounded-[14px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:h-10 sm:w-10">
-            <Download className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+          <span className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[10px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:right-3 sm:h-10 sm:w-10 sm:rounded-[14px]">
+            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
           </span>
         </div>
       </div>
 
-      <div className="mx-auto mt-3 w-[88%] max-w-[700px]">
-        <div className="flex items-center gap-3 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-2.5 py-2.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:px-3.5 sm:py-3">
+      <div className="mx-auto mt-2.5 w-[94%] max-w-[700px] sm:mt-3 sm:w-[88%]">
+        <div className="flex items-center gap-2 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-2 py-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:gap-3 sm:px-3.5 sm:py-3">
           <button
             type="button"
             aria-label={isPlaying ? "Pausar música" : "Tocar música"}
             onClick={() => void handleToggle()}
-            className="grid h-11 w-11 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
           >
             {isPlaying ? (
               <span className="flex items-center justify-center gap-1.25">
-                <span className="h-3.5 w-1.5 rounded-full bg-white sm:h-4" />
-                <span className="h-3.5 w-1.5 rounded-full bg-white sm:h-4" />
+                <span className="h-2.5 w-1 rounded-full bg-white sm:h-4" />
+                <span className="h-2.5 w-1 rounded-full bg-white sm:h-4" />
               </span>
             ) : (
-              <span className="ml-1 h-0 w-0 border-y-[6px] border-l-[9px] border-y-transparent border-l-[#f8f5f2] sm:border-y-[7px] sm:border-l-[10px]" />
+              <span className="ml-1 h-0 w-0 border-y-[4px] border-l-[6px] border-y-transparent border-l-[#f8f5f2] sm:border-y-[7px] sm:border-l-[10px]" />
             )}
           </button>
 
-          <div className="flex min-w-0 flex-1 items-center gap-2.5 text-[#111821]">
-            <span className="min-w-[38px] text-xs font-medium text-[#f8f5f2] sm:text-sm">{formatTime(currentTime)}</span>
+          <div className="flex min-w-0 flex-1 items-center gap-2 text-[#111821] sm:gap-2.5">
+            <span className="min-w-[30px] text-[9px] font-medium text-[#f8f5f2] sm:min-w-[38px] sm:text-xs">{formatTime(currentTime)}</span>
             <div className="relative flex-1">
-              <div className="h-2.5 overflow-hidden rounded-full bg-[#d7d4d3]/30 sm:h-3">
+              <div className="h-2 overflow-hidden rounded-full bg-[#d7d4d3]/30 sm:h-3">
                 <div
                   className="h-full rounded-full bg-[linear-gradient(90deg,#ff8db8,#ff5d73,#d55ae6)] transition-all duration-150"
                   style={{ width: `${progressValue}%` }}
                 />
               </div>
               <span
-                className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-[#ffe7f2] bg-[#ff7ca8] shadow-[0_0_0_4px_rgba(255,123,167,0.18)] sm:h-4 sm:w-4"
+                className="absolute top-1/2 h-2.5 w-2.5 -translate-y-1/2 rounded-full border-2 border-[#ffe7f2] bg-[#ff7ca8] shadow-[0_0_0_4px_rgba(255,123,167,0.18)] sm:h-4 sm:w-4"
                 style={{ left: thumbLeft }}
               />
             </div>
-            <span className="min-w-[38px] text-right text-xs font-medium text-[#f8f5f2] sm:text-sm">{formatTime(duration)}</span>
+            <span className="min-w-[30px] text-right text-[9px] font-medium text-[#f8f5f2] sm:min-w-[38px] sm:text-xs">{formatTime(duration)}</span>
           </div>
         </div>
       </div>
@@ -785,10 +785,10 @@ function Timeline({
     (order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
 
   return (
-    <div className="mx-auto mt-8 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] md:p-8">
-      <div className="mb-6">
-        <p className="text-xs uppercase tracking-[0.18em] text-zinc-400">Pedido de</p>
-        <h2 className="mt-1 font-display text-2xl font-semibold text-[#f8f5f2]">{order.nome_cliente}</h2>
+    <div className="mx-auto mt-4 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] sm:p-6 md:mt-8 md:p-8">
+      <div className="mb-4 sm:mb-6">
+        <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400 sm:text-xs">Pedido de</p>
+        <h2 className="mt-1 font-display text-xl font-semibold text-[#f8f5f2] sm:text-2xl">{order.nome_cliente}</h2>
         <p className="mt-1 text-sm text-zinc-400">
           {order.genero_musical ?? "Gênero não informado"}
           {shouldShowDuration ? ` · ${order.duracao_segundos}s` : ""}
@@ -818,27 +818,27 @@ function Timeline({
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
-          <div className="mt-4 space-y-5">
-            <div className="mx-auto w-[88%] max-w-[700px]">
-              <div className="relative overflow-hidden rounded-[24px] border border-[#ff7ae5]/25 bg-[linear-gradient(90deg,rgba(255,118,178,0.18),rgba(111,87,255,0.10),rgba(18,22,33,0.85))] px-3 py-2.5 shadow-[0_18px_35px_rgba(18,14,31,0.48)]">
+          <div className="mt-3 space-y-3 sm:mt-4 sm:space-y-5">
+            <div className="mx-auto w-[94%] max-w-[700px] sm:w-[88%]">
+              <div className="relative overflow-hidden rounded-[18px] border border-[#ff7ae5]/25 bg-[linear-gradient(90deg,rgba(255,118,178,0.18),rgba(111,87,255,0.10),rgba(18,22,33,0.85))] px-2 py-1.5 shadow-[0_18px_35px_rgba(18,14,31,0.48)] sm:rounded-[24px] sm:px-3 sm:py-2.5">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.08),transparent_34%)]" />
-                <div className="relative flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-3 overflow-hidden">
-                    <div className="grid h-14 w-14 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7ea6,#c55ae7)] text-white shadow-[0_0_0_3px_rgba(255,255,255,0.06),0_12px_30px_rgba(255,112,173,0.4)]">
-                      <Music className="h-6 w-6" />
+                <div className="relative flex items-center justify-between gap-2 sm:gap-3">
+                  <div className="flex items-center gap-2 overflow-hidden sm:gap-3">
+                    <div className="grid h-9 w-9 place-items-center rounded-full bg-[linear-gradient(135deg,#ff7ea6,#c55ae7)] text-white shadow-[0_0_0_3px_rgba(255,255,255,0.06),0_12px_30px_rgba(255,112,173,0.4)] sm:h-14 sm:w-14">
+                      <Music className="h-4 w-4 sm:h-6 sm:w-6" />
                     </div>
                     <div className="min-w-0">
-                      <h3 className="font-display text-[1.6rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2]">Música disponível</h3>
-                      <p className="mt-1.5 text-xs text-zinc-200">Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}</p>
+                      <h3 className="font-display text-[0.96rem] font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2] sm:text-[1.6rem]">Música disponível</h3>
+                      <p className="mt-1 text-[9px] text-zinc-200 sm:text-xs">Atualizado em {new Date(order.status_atualizado_em).toLocaleString("pt-BR")}</p>
                     </div>
                   </div>
 
-                  <div className="flex items-end gap-1.25 pr-1">
+                  <div className="flex items-end gap-1 pr-1 sm:gap-1.25">
                     {[28, 42, 34, 54, 38, 47, 31, 39, 50, 27, 44, 33, 52, 36, 46, 29].map((height, index) => (
                       <span
                         key={`header-eq-${index}`}
                         className="block rounded-full bg-[linear-gradient(180deg,#ffddf3,#ff8ec7,#c45aff)] shadow-[0_0_12px_rgba(255,141,202,0.38)]"
-                        style={{ height: `${height}px`, width: "5px", opacity: 0.72 + (index % 5) * 0.06 }}
+                        style={{ height: `${height * 0.65}px`, width: "4px", opacity: 0.72 + (index % 5) * 0.06 }}
                       />
                     ))}
                   </div>
@@ -846,33 +846,33 @@ function Timeline({
               </div>
             </div>
 
-            <div className="mx-auto mt-2 w-[88%] max-w-[700px]">
+            <div className="mx-auto mt-0 w-[94%] max-w-[700px] sm:w-[88%]">
               <a
                 href={buildOrderDownloadWhatsAppLink(order)}
                 target="_blank"
                 rel="noreferrer"
-                className="group relative flex w-full items-center justify-between gap-3 overflow-hidden rounded-[26px] border border-[#1bdc6a]/70 bg-[linear-gradient(135deg,#2de77d_0%,#1acb6a_30%,#18b75d_100%)] px-4 py-3.5 text-[#062914] shadow-[0_18px_34px_rgba(25,196,101,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_38px_rgba(25,196,101,0.4),inset_0_1px_0_rgba(255,255,255,0.4)]"
+                className="group relative flex w-full items-center justify-between gap-2 overflow-hidden rounded-[18px] border border-[#1bdc6a]/70 bg-[linear-gradient(135deg,#2de77d_0%,#1acb6a_30%,#18b75d_100%)] px-2.5 py-2 text-[#062914] shadow-[0_18px_34px_rgba(25,196,101,0.35),inset_0_1px_0_rgba(255,255,255,0.35)] transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_22px_38px_rgba(25,196,101,0.4),inset_0_1px_0_rgba(255,255,255,0.4)] sm:gap-3 sm:rounded-[26px] sm:px-4 sm:py-3.5"
               >
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.28),transparent_28%)]" />
 
-                <div className="relative flex items-center gap-3 overflow-hidden">
-                  <span className="grid h-12 w-12 shrink-0 place-items-center rounded-full bg-[#052d16]/10 ring-1 ring-[#052d16]/10 backdrop-blur-sm">
-                    <MessageCircle className="h-5 w-5" />
+                <div className="relative flex items-center gap-2 overflow-hidden sm:gap-3">
+                  <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#052d16]/10 ring-1 ring-[#052d16]/10 backdrop-blur-sm sm:h-12 sm:w-12">
+                    <MessageCircle className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
                   </span>
 
                   <div className="min-w-0 text-left">
-                    <div className="text-[10px] font-black uppercase tracking-[0.18em] text-[#0a371f]/75">Atendimento</div>
-                    <div className="truncate text-base font-extrabold sm:text-lg">Solicitar download por WhatsApp</div>
+                    <div className="text-[7px] font-black uppercase tracking-[0.16em] text-[#0a371f]/75 sm:text-[10px]">Atendimento</div>
+                    <div className="truncate text-[11px] font-extrabold sm:text-base">Solicitar download por WhatsApp</div>
                   </div>
                 </div>
 
-                <span className="relative shrink-0 rounded-full bg-[#062914]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.14em] text-[#062914] shadow-[inset_0_0_0_1px_rgba(6,41,20,0.08)]">
+                <span className="relative shrink-0 rounded-full bg-[#062914]/10 px-2 py-1 text-[7px] font-black uppercase tracking-[0.12em] text-[#062914] shadow-[inset_0_0_0_1px_rgba(6,41,20,0.08)] sm:px-2.5 sm:text-[9px]">
                   Clique
                 </span>
               </a>
             </div>
 
-            <div className="mt-5 space-y-4">
+            <div className="mt-3 space-y-3 sm:mt-5 sm:space-y-4">
               {order.url_musica && (
                 <OrderAudioPlayer
                   src={order.url_musica}
