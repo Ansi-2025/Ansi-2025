@@ -14,13 +14,21 @@ const buildCustomerOrderUrl = (orderId: string) => {
   return new URL(`/acompanhar?id=${encodeURIComponent(orderId)}`, window.location.origin).toString();
 };
 
+const PIX_PAYMENT_CODE = "11287911960";
+
 const buildClientWhatsAppUrl = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null }) => {
   const rawPhone = (order.telefone_cliente ?? "").replace(/\D/g, "");
   if (!rawPhone) return null;
 
   const normalizedPhone = rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`;
   const orderUrl = buildCustomerOrderUrl(order.id);
-  const message = `Olá ${order.nome_cliente}! Seu pedido ${order.id} está pronto. Acesse o atendimento para receber a música: ${orderUrl}`;
+  const message = [
+    `Olá ${order.nome_cliente}! Seu pedido ${order.id} foi registrado com sucesso.`,
+    `Código do pedido: ${order.id}`,
+    `Para confirmar, faça o PIX para o CPF ${PIX_PAYMENT_CODE}.`,
+    "Depois envie o comprovante pelo WhatsApp e mencione o código do pedido para que a gente identifique rapidamente.",
+    `Se preferir, você pode acompanhar o status no link: ${orderUrl}`,
+  ].join("\n");
 
   return `https://wa.me/${normalizedPhone}?text=${encodeURIComponent(message)}`;
 };

@@ -1,6 +1,7 @@
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
+import { notifyPedidoTelegram } from "@/lib/telegram.service";
 
 type PedidoStatus = Database["public"]["Enums"]["pedido_status"];
 
@@ -50,7 +51,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, segunda_versao",
+      "id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, para_quem, ocasiao, status, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, segunda_versao",
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -148,6 +149,28 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     criado_em: agora,
   });
 
+  const totalValue = getStripePriceForCheckout({ secondVersion: updatedPedido.segunda_versao ?? secondVersion });
+  await notifyPedidoTelegram(
+    {
+      id: updatedPedido.id,
+      nome_cliente: updatedPedido.nome_cliente,
+      telefone_cliente: updatedPedido.telefone_cliente,
+      email_cliente: updatedPedido.email_cliente,
+      para_quem: updatedPedido.para_quem,
+      ocasiao: updatedPedido.ocasiao,
+      descricao: updatedPedido.descricao,
+      status: "pagamento",
+    },
+    "Aguardando pagamento",
+    [
+      `Código do pedido: ${updatedPedido.id}`,
+      `Cliente: ${updatedPedido.nome_cliente}`,
+      `Valor: R$ ${totalValue.toFixed(2).replace(".", ",")}`,
+      `Método: Stripe`,
+      "Importante: o cliente precisa pagar e enviar o comprovante pelo WhatsApp, mencioando o código do pedido para facilitar a identificação do pedido.",
+    ].join("\n"),
+  );
+
   return {
     checkoutUrl,
     sessionId,
@@ -158,7 +181,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
 export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
-    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, status, stripe_payment_intent_id, stripe_payment_status, segunda_versao")
+    .select("id, nome_cliente, email_cliente, telefone_cliente, genero_musical, descricao, para_quem, ocasiao, status, stripe_payment_intent_id, stripe_payment_status, segunda_versao")
     .eq("id", pedidoId)
     .maybeSingle();
 
@@ -228,6 +251,28 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     mensagem_whatsapp: "Pagamento Stripe criado e aguardando confirmação",
     criado_em: agora,
   });
+
+  const totalValue = getStripePriceForCheckout({ secondVersion: updatedPedido.segunda_versao ?? secondVersion });
+  await notifyPedidoTelegram(
+    {
+      id: updatedPedido.id,
+      nome_cliente: updatedPedido.nome_cliente,
+      telefone_cliente: updatedPedido.telefone_cliente,
+      email_cliente: updatedPedido.email_cliente,
+      para_quem: updatedPedido.para_quem,
+      ocasiao: updatedPedido.ocasao,
+      descricao: updatedPedido.descricao,
+      status: "pagamento",
+    },
+    "Aguardando pagamento",
+    [
+      `Código do pedido: ${updatedPedido.id}`,
+      `Cliente: ${updatedPedido.nome_cliente}`,
+      `Valor: R$ ${totalValue.toFixed(2).replace(".", ",")}`,
+      `Método: Stripe`,
+      "Importante: o cliente precisa pagar e enviar o comprovante pelo WhatsApp, mencioando o código do pedido para facilitar a identificação do pedido.",
+    ].join("\n"),
+  );
 
   return {
     clientSecret: paymentIntent.client_secret,

@@ -27,6 +27,23 @@ const buildPaymentProofWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">
   return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
+const buildPaymentSupportWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
+  const message = `Olá, ${OWNER_NAME}! Quero confirmar o pagamento por PIX do meu pedido ${order.id}. Meu nome é ${order.nome_cliente}. Pode me orientar sobre a melhor forma de finalizar?`;
+  return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+};
+
+const buildOrderIdentificationMessage = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">, totalValue: number) => {
+  const versionText = order.segunda_versao ? "2 versões" : "1 versão";
+  return [
+    `Olá ${order.nome_cliente}! Seu pedido foi registrado com sucesso.`,
+    `Código do pedido: ${order.id}`,
+    `Seleção: ${versionText} · Total: R$ ${totalValue.toFixed(2).replace(".", ",")}`,
+    `Faça o pagamento por PIX para o CPF ${PIX_PAYMENT_CODE}.`,
+    "Depois envie o comprovante pelo WhatsApp para confirmarmos o pagamento e identificarmos seu pedido rapidamente.",
+    "Assim a gente consegue liberar sua música com mais rapidez e sem confusão.",
+  ].join("\n");
+};
+
 const formatPhone = (value: string) => {
   const digits = value.replace(/\D/g, "").slice(0, 11);
   if (digits.length <= 2) return digits;
@@ -1153,6 +1170,14 @@ function Timeline({
                         <div className="mt-4 flex flex-wrap gap-3">
                           <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
                           <a
+                            href={buildPaymentSupportWhatsAppLink(order)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2 text-xs font-semibold text-[#f3d59d] transition hover:bg-[#d4af69]/15"
+                          >
+                            <MessageCircle className="h-4 w-4" /> PIX falar com atendente
+                          </a>
+                          <a
                             href={buildPaymentProofWhatsAppLink(order)}
                             target="_blank"
                             rel="noreferrer"
@@ -1164,11 +1189,18 @@ function Timeline({
                       </div>
 
                       <div className="rounded-[18px] border border-[#d4af69]/25 bg-[#d4af69]/10 p-3 text-sm text-zinc-200">
-                        <p className="font-semibold text-[#f3d59d]">Pagamento por PIX</p>
-                        <p className="mt-1 leading-relaxed text-zinc-300">
+                        <p className="font-semibold text-[#f3d59d]">Seu pedido está salvo</p>
+                        <div className="mt-3 rounded-2xl border border-white/10 bg-[#0d1117] p-3">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Código do pedido</p>
+                          <div className="mt-2 flex items-center justify-between gap-3">
+                            <span className="font-mono text-sm font-bold text-white">{order.id}</span>
+                            <CopyOrderMessageButton order={order} totalValue={totalPedido} />
+                          </div>
+                        </div>
+                        <p className="mt-3 leading-relaxed text-zinc-300">
                           {secondVersionSelected
-                            ? "Você escolheu 2 versões. Confirme o pagamento de R$ 29,80 e envie o comprovante."
-                            : "Você escolheu 1 versão. Confirme o pagamento de R$ 19,90 e envie o comprovante."}
+                            ? "Você escolheu 2 versões. Faça o pagamento de R$ 29,80, depois envie o comprovante pelo WhatsApp e mencione o código do pedido para que a gente identifique seu pedido rapidamente."
+                            : "Você escolheu 1 versão. Faça o pagamento de R$ 19,90, depois envie o comprovante pelo WhatsApp e mencione o código do pedido para que a gente identifique seu pedido rapidamente."}
                         </p>
                       </div>
                     </div>
@@ -1355,6 +1387,34 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
       ) : (
         <>
           <Copy className="h-4 w-4" /> Copiar chave PIX
+        </>
+      )}
+    </button>
+  );
+}
+
+function CopyOrderMessageButton({ order, totalValue }: { order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">; totalValue: number }) {
+  const [copied, setCopied] = useState(false);
+  const handleCopy = async () => {
+    const message = buildOrderIdentificationMessage(order, totalValue);
+    await navigator.clipboard.writeText(message);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  return (
+    <button
+      type="button"
+      onClick={() => void handleCopy()}
+      className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-2 text-[10px] font-semibold text-white transition hover:bg-white/10"
+    >
+      {copied ? (
+        <>
+          <Check className="h-3.5 w-3.5" /> Copiado
+        </>
+      ) : (
+        <>
+          <Copy className="h-3.5 w-3.5" /> Copiar mensagem
         </>
       )}
     </button>
