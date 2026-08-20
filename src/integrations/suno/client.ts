@@ -43,6 +43,27 @@ function inferirTituloDaLetra(letra: string, fallback: string): string {
   return titulo.length > 60 ? `${titulo.slice(0, 57).trimEnd()}...` : titulo;
 }
 
+export function removerReferenciaArtista(texto: string): string {
+  if (!texto) return texto;
+
+  const padroes = [
+    /\b(?:cantor|cantora|artista|banda|grupo|voz)\b\s*(?:de|da|do|em|ao|a)?\s*[:;-]?\s*[A-ZÀ-ÖØ-Þ\wÀ-ÖØ-Þ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ\wÀ-ÖØ-Þ'’.-]+){0,4}/gi,
+    /\b(?:refer(?:ê|e)ncia|inspirado|inspirada|baseado|baseada|igual(?:\s+(?:ao|a|à))?|semelhante(?:\s+(?:ao|a|à))?)\b\s*(?:em|na|no|do|da|de|à|ao|a)?\s*[:;-]?\s*[A-ZÀ-ÖØ-Þ\wÀ-ÖØ-Þ'’.-]+(?:\s+[A-ZÀ-ÖØ-Þ\wÀ-ÖØ-Þ'’.-]+){0,4}/gi,
+  ];
+
+  let result = texto;
+  for (const padrao of padroes) {
+    result = result.replace(padrao, "");
+  }
+
+  return result
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s*,\s*[,.;]/g, ",")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*$/g, "")
+    .trim();
+}
+
 export function construirPromptSunoParaPedido(
   letra: string,
   generoMusical: string,
@@ -52,10 +73,12 @@ export function construirPromptSunoParaPedido(
   duracaoSegundos: number,
   tipoCantor: "feminino" | "masculino" = "feminino",
 ): { title: string; style: string; prompt: string } {
-  const title = inferirTituloDaLetra(letra, `${nomeCliente} e ${paraQuem}`);
-  const style = `${generoMusical || "Pop brasileiro"}, emocional, moderno, com melodia memorável, produção profissional, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, arranjo contemporâneo`.slice(0, 1000).trim();
+  const letraSanitizada = removerReferenciaArtista(letra);
+  const estiloSanitizado = removerReferenciaArtista(generoMusical || "Pop brasileiro");
+  const title = inferirTituloDaLetra(letraSanitizada, `${nomeCliente} e ${paraQuem}`);
+  const style = `${estiloSanitizado || "Pop brasileiro"}, emocional, moderno, com melodia memorável, produção profissional, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, arranjo contemporâneo`.slice(0, 1000).trim();
 
-  const promptBase = letra
+  const promptBase = letraSanitizada
     .replace(/\r/g, "")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
@@ -113,16 +136,17 @@ export async function gerarMusicaComSuno(
 
   const callbackUrl = `${appUrl}/api/webhooks/suno`;
   const model = "V5";
-  const prompt = letraFinal?.trim();
+  const prompt = removerReferenciaArtista(letraFinal?.trim() ?? "");
 
   if (!prompt) {
     throw new Error("A letra final não foi fornecida para a API da Suno. O payload precisa conter a letra gerada e aprovada.");
   }
 
-  const resolvedTitle = (title ?? inferirTituloDaLetra(prompt, `Música especial #${pedidoId}`)).trim() || `Música especial #${pedidoId}`;
+  const estiloSemReferencia = removerReferenciaArtista(generoMusical ?? "Pop brasileiro moderno");
+  const resolvedTitle = removerReferenciaArtista(title ?? inferirTituloDaLetra(prompt, `Música especial #${pedidoId}`)).trim() || `Música especial #${pedidoId}`;
   const vocalGender = tipoCantor === "masculino" ? "m" : "f";
 
-  const style = `${generoMusical.slice(0, 1000)}, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, emocional, moderno, com melodia memorável, produção profissional`;
+  const style = `${estiloSemReferencia || "Pop brasileiro moderno"}, ${tipoCantor === "masculino" ? "voz masculina" : "voz feminina"}, emocional, moderno, com melodia memorável, produção profissional`;
 
   const requestBody = {
     prompt: prompt.slice(0, 5000),

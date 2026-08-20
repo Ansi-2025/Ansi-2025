@@ -28,7 +28,8 @@ Regras obrigatórias:
 - A letra deve ser emocional, memorável, com boa cadência, fácil de cantar e com refrão forte.
 - Use o nome do cliente e da pessoa destinatária de forma natural dentro da própria letra.
 - A linguagem pode ser poética, mas clara e funcional para música.
-- A letra deve ser pronta para a Suno cantar exatamente essa letra com arranjo e batida.
+- Referências a artistas, cantores, bandas ou nomes de pessoas famosas podem ser usadas como inspiração de estilo no roteiro, mas o texto final da letra e o prompt enviado à Suno não devem conter esses nomes nem frases tipo “inspirado em”, “referência a”, “igual ao estilo de”.
+- A letra deve ser pronta para a Suno cantar exatamente essa letra com arranjo e batida, sem menções a artistas ou referências explícitas.
   `;
 
   const result = await gerarLetraComFlatkey(prompt);
