@@ -49,6 +49,54 @@ export default {
       url.pathname === "/api/webhooks/suno" ||
       url.pathname === "/api/webhooks/suno/";
 
+    const isSunoPollingPath =
+      url.pathname === "/api/cron/suno-polling" ||
+      url.pathname === "/api/cron/suno-polling/";
+
+    if (isSunoPollingPath) {
+      if (process.env.ENABLE_SUNO_POLLING !== "true") {
+        return new Response(JSON.stringify({ ok: false, message: "Suno polling fallback disabled" }), {
+          status: 404,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      if (request.method !== "GET" && request.method !== "POST") {
+        return new Response(JSON.stringify({ error: "Method not allowed" }), {
+          status: 405,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      const expectedSecret = process.env.CRON_SECRET ?? process.env.SUNO_POLLING_SECRET;
+      const providedSecret =
+        request.headers.get("x-cron-secret") ??
+        request.headers.get("x-api-key") ??
+        new URL(request.url).searchParams.get("secret");
+
+      if (expectedSecret && providedSecret !== expectedSecret) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { "content-type": "application/json" },
+        });
+      }
+
+      try {
+        const { pollingMusicasEmGeracao } = await import("./lib/suno-polling");
+        const updated = await pollingMusicasEmGeracao();
+        return new Response(JSON.stringify({ ok: true, updated }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        });
+      } catch (error) {
+        console.error("Error running Suno polling cron:", error);
+        return new Response(JSON.stringify({ error: "Polling failed" }), {
+          status: 500,
+          headers: { "content-type": "application/json" },
+        });
+      }
+    }
+
     if (isStripeWebhookPath) {
       if (request.method === "GET") {
         return new Response("ok", { status: 200 });
