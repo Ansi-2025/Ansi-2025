@@ -7,7 +7,6 @@ import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { z } from "zod";
-import QRCode from "qrcode";
 
 const searchSchema = z.object({ id: z.string().optional(), token: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -1145,24 +1144,12 @@ function Timeline({
 
                   {paymentMethod === "pix" ? (
                     <div className="space-y-4">
-                      <div className="rounded-[26px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="mb-4 flex justify-center">
-                          <QRCodeImage value={PIX_PAYMENT_CODE} />
-                        </div>
-                        <div className="rounded-[18px] border border-border/60 bg-[#0d1117] p-3 text-center">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Chave PIX</p>
-                          <p className="mt-2 break-all text-xs font-medium text-zinc-200">{PIX_PAYMENT_CODE}</p>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[20px] border border-border bg-[#0d1117] p-4">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Sobre o QR Code</p>
-                        <div className="mt-3 space-y-3 text-sm text-zinc-300">
-                          <div className="flex items-center justify-between gap-4 rounded-xl border border-border/60 bg-[#111821] px-3 py-2">
-                            <span className="text-zinc-400">Chave PIX</span>
-                            <span className="text-right font-medium text-white break-all">{PIX_PAYMENT_CODE}</span>
-                          </div>
-                        </div>
+                      <div className="rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3d59d]">PIX / CPF</p>
+                        <p className="mt-3 text-base font-black text-white">
+                          {secondVersionSelected ? "2 versões · R$ 29,80" : "1 versão · R$ 19,90"}
+                        </p>
+                        <p className="mt-2 text-sm text-zinc-300">PIX CPF: <span className="font-semibold text-[#f8f5f2]">{PIX_PAYMENT_CODE}</span></p>
                         <div className="mt-4 flex flex-wrap gap-3">
                           <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
                           <a
@@ -1171,7 +1158,7 @@ function Timeline({
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 rounded-full border border-[#25d366] bg-[#25d366]/10 px-4 py-2 text-xs font-semibold text-[#d9ffe9] transition hover:bg-[#25d366]/15"
                           >
-                            <MessageCircle className="h-4 w-4" /> Enviar comprovante no WhatsApp
+                            <MessageCircle className="h-4 w-4" /> Enviar comprovante
                           </a>
                         </div>
                       </div>
@@ -1179,7 +1166,9 @@ function Timeline({
                       <div className="rounded-[18px] border border-[#d4af69]/25 bg-[#d4af69]/10 p-3 text-sm text-zinc-200">
                         <p className="font-semibold text-[#f3d59d]">Pagamento por PIX</p>
                         <p className="mt-1 leading-relaxed text-zinc-300">
-                          Após o pagamento, envie o comprovante para o WhatsApp do {OWNER_NAME}. Em seguida, sua música será gerada em poucos minutos.
+                          {secondVersionSelected
+                            ? "Você escolheu 2 versões. Confirme o pagamento de R$ 29,80 e envie o comprovante."
+                            : "Você escolheu 1 versão. Confirme o pagamento de R$ 19,90 e envie o comprovante."}
                         </p>
                       </div>
                     </div>
@@ -1370,20 +1359,6 @@ function CopyPixButton({ pixCode }: { pixCode: string }) {
       )}
     </button>
   );
-}
-
-function QRCodeImage({ value }: { value: string }) {
-  const [qrCode, setQrCode] = useState<string>("");
-
-  useEffect(() => {
-    QRCode.toDataURL(value, { width: 200, margin: 1 })
-      .then((url: string) => setQrCode(url))
-      .catch(() => setQrCode(""));
-  }, [value]);
-
-  if (!qrCode) return <div className="h-[200px] w-[200px] animate-pulse bg-[var(--soft-gray)]" />;
-
-  return <img src={qrCode} alt="QR Code PIX" className="h-[200px] w-[200px]" />;
 }
 
 function StripeCardPaymentForm({
