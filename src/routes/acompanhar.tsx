@@ -1175,7 +1175,7 @@ function Timeline({
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2 text-xs font-semibold text-[#f3d59d] transition hover:bg-[#d4af69]/15"
                           >
-                            <MessageCircle className="h-4 w-4" /> PIX falar com atendente
+                            <MessageCircle className="h-4 w-4" /> Quero pagar no Pix, Falar com atendente
                           </a>
                           <a
                             href={buildPaymentProofWhatsAppLink(order)}
