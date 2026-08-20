@@ -12,14 +12,20 @@ import QRCode from "qrcode";
 const searchSchema = z.object({ id: z.string().optional(), token: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
-const PIX_PAYMENT_CODE = "00020101021126580014br.gov.bcb.pix0136d9100d0a-6aa3-4d26-b825-2060ddb655145204000053039865802BR5911CANCAO DE FE6008CURITIBA62070503***63042679";
-const PIX_PAYMENT_WA = "https://wa.me/5541997232395?text=Ol%C3%A1%2C%20enviei%20o%20comprovante%20do%20pagamento%20da%20minha%20m%C3%BAsica%20personalizada.";
-const COMPANY_WHATSAPP_NUMBER = "5541997232395";
+const PIX_PAYMENT_CODE = "11287911960";
+const OWNER_NAME = "Anderson";
+const OWNER_WHATSAPP_NUMBER = "5541997232395";
+const PIX_PAYMENT_WA = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá, ${OWNER_NAME}! Enviei o comprovante do pagamento da minha música personalizada.`)}`;
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
-  const message = `Olá! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar a música por aqui.${order.segunda_versao ? " da versão disponível" : " da música"}?`;
-  return `https://wa.me/${COMPANY_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  const message = `Olá, ${OWNER_NAME}! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar a música por aqui.${order.segunda_versao ? " da versão disponível" : " da música"}?`;
+  return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+};
+
+const buildPaymentProofWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
+  const message = `Olá, ${OWNER_NAME}! Enviei o comprovante do pagamento da música personalizada. Pedido: ${order.id}. Nome: ${order.nome_cliente}.`;
+  return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
 const formatPhone = (value: string) => {
@@ -310,7 +316,7 @@ function TrackingPage() {
   const [paymentError, setPaymentError] = useState("");
   const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'whatsapp'>('card');
-  const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "" });
+  const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "11287911960" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [approvalLoading, setApprovalLoading] = useState(false);
@@ -437,7 +443,7 @@ function TrackingPage() {
     setCheckoutCustomer({
       email: order.email_cliente ?? "",
       phone: order.telefone_cliente ?? "",
-      cpf: order.cpf_cliente ?? "",
+      cpf: order.cpf_cliente ?? "11287911960",
     });
   }, [order?.id, order?.email_cliente, order?.telefone_cliente, order?.cpf_cliente, order?.segunda_versao]);
 
@@ -1157,15 +1163,23 @@ function Timeline({
                             <span className="text-right font-medium text-white break-all">{PIX_PAYMENT_CODE}</span>
                           </div>
                         </div>
-                        <div className="mt-4">
+                        <div className="mt-4 flex flex-wrap gap-3">
                           <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                          <a
+                            href={buildPaymentProofWhatsAppLink(order)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full border border-[#25d366] bg-[#25d366]/10 px-4 py-2 text-xs font-semibold text-[#d9ffe9] transition hover:bg-[#25d366]/15"
+                          >
+                            <MessageCircle className="h-4 w-4" /> Enviar comprovante no WhatsApp
+                          </a>
                         </div>
                       </div>
 
                       <div className="rounded-[18px] border border-[#d4af69]/25 bg-[#d4af69]/10 p-3 text-sm text-zinc-200">
                         <p className="font-semibold text-[#f3d59d]">Pagamento por PIX</p>
                         <p className="mt-1 leading-relaxed text-zinc-300">
-                          Após o pagamento, você pode enviar o comprovante por WhatsApp para confirmar o processamento. Em seguida, sua música será gerada em poucos minutos.
+                          Após o pagamento, envie o comprovante para o WhatsApp do {OWNER_NAME}. Em seguida, sua música será gerada em poucos minutos.
                         </p>
                       </div>
                     </div>
