@@ -775,9 +775,19 @@ function Timeline({
   const [showFullLyric, setShowFullLyric] = useState(true);
   const [revealed, setRevealed] = useState(0);
   const [generationMessageIndex, setGenerationMessageIndex] = useState(0);
-  // texto + tempo (ms) que a frase permanece visível antes de avançar para a próxima
   const musicGenerationMessages = [
-    { text: "Aguarde no máximo 3 minutos que a música estará pronta.", duration: 60000 },
+    {
+      text: "Estamos criando sua música com atenção.",
+      duration: 15000,
+    },
+    {
+      text: "Ajustando os últimos detalhes com cuidado.",
+      duration: 15000,
+    },
+    {
+      text: "Quase pronta — em instantes ela será sua.",
+      duration: 15000,
+    },
   ];
 
   useEffect(() => {
@@ -865,7 +875,7 @@ function Timeline({
                 {musicGenerationMessages[generationMessageIndex]?.text ?? "Estamos preparando sua música com todo o cuidado."}
               </p>
               <p className="mt-3 text-zinc-300">
-                Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar sua música final.
+                Estamos cuidando dos últimos detalhes para entregar algo especial.
               </p>
               <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
                 <div
@@ -1161,7 +1171,7 @@ function Timeline({
                       {musicGenerationMessages[generationMessageIndex].text}
                     </p>
                     <p className="mt-3 text-zinc-300">
-                      Estamos finalizando sua música com carinho. Isso costuma levar alguns minutos até a plataforma Suno responder e liberar sua música final.
+                      Estamos cuidando dos últimos detalhes para entregar algo especial.
                     </p>
                     <div className="mt-4 h-2 w-full overflow-hidden rounded-full bg-white/5">
                       <div
