@@ -12,23 +12,22 @@ const searchSchema = z.object({ id: z.string().optional(), token: z.string().opt
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "11287911960";
-const OWNER_NAME = "Anderson";
 const OWNER_WHATSAPP_NUMBER = "5541997232395";
-const PIX_PAYMENT_WA = `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(`Olá, ${OWNER_NAME}! Enviei o comprovante do pagamento da minha música personalizada.`)}`;
+const PIX_PAYMENT_WA = "https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=" + encodeURIComponent("Olá! Enviei o comprovante do pagamento da minha música personalizada.");
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
-  const message = `Olá, ${OWNER_NAME}! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar a música por aqui.${order.segunda_versao ? " da versão disponível" : " da música"}?`;
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Estou com o pedido ${order.id} e não consegui baixar a música. Pode me enviar a música por aqui.${order.segunda_versao ? " da versão disponível" : " da música"}?`;
   return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
 const buildPaymentProofWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
-  const message = `Olá, ${OWNER_NAME}! Enviei o comprovante do pagamento da música personalizada. Pedido: ${order.id}. Nome: ${order.nome_cliente}.`;
+  const message = `Olá! Enviei o comprovante do pagamento da música personalizada. Pedido: ${order.id}. Nome: ${order.nome_cliente}.`;
   return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
 const buildPaymentSupportWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
-  const message = `Olá, ${OWNER_NAME}! Quero confirmar o pagamento por PIX do meu pedido ${order.id}. Meu nome é ${order.nome_cliente}. Pode me orientar sobre a melhor forma de finalizar?`;
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Meu pedido é ${order.id}. Gostei da minha música e quero fazer o pagamento via PIX. Pode me orientar sobre a melhor forma de confirmar o pagamento?`;
   return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
@@ -1163,7 +1162,7 @@ function Timeline({
                     <div className="space-y-4">
                       <div className="rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3d59d]">PIX / CPF</p>
-                        <p className="mt-3 text-base font-black text-white">
+                        <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.18)]">
                           {secondVersionSelected ? "2 versões · R$ 29,80" : "1 versão · R$ 19,90"}
                         </p>
                         <p className="mt-2 text-sm text-zinc-300">PIX CPF: <span className="font-semibold text-[#f8f5f2]">{PIX_PAYMENT_CODE}</span></p>
