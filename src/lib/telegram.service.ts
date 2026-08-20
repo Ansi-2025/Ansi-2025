@@ -22,6 +22,40 @@ const getTelegramConfig = () => {
   return { token, chatId };
 };
 
+function normalizeAllowedTelegramStatus(statusLabel: string): string | null {
+  const normalized = statusLabel
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+
+  if (!normalized) {
+    return null;
+  }
+
+  if (/aguardando pagamento|aguardando aprovacao|aprovacao da letra/.test(normalized)) {
+    return null;
+  }
+
+  if (/pedido recebido|recebido/.test(normalized)) {
+    return "Pedido recebido";
+  }
+
+  if (/letra aprovada|aprovada/.test(normalized)) {
+    return "Letra aprovada";
+  }
+
+  if (/pagamento recebido|pagamento aprovado|pagamento|pago/.test(normalized)) {
+    return "Pagamento recebido";
+  }
+
+  if (/musica em producao|musica em produção|musica em producao|producao|producao da musica|previa|gerando musica|gerando música/.test(normalized)) {
+    return "Música em produção";
+  }
+
+  return null;
+}
+
 export function buildPedidoTelegramMessage(
   order: TelegramOrderSnapshot,
   statusLabel: string,
@@ -29,24 +63,31 @@ export function buildPedidoTelegramMessage(
 ) {
   const safeId = escapeHtml(order.id ?? "—");
   const safeCliente = escapeHtml(order.nome_cliente ?? "—");
-  const safeTelefone = escapeHtml(order.telefone_cliente ?? "—");
-  const safeEmail = escapeHtml(order.email_cliente ?? "—");
-  const safeParaQuem = escapeHtml(order.para_quem ?? "—");
-  const safeOcasião = escapeHtml(order.ocasiao ?? "—");
-  const safeDescricao = escapeHtml(order.descricao ?? "—");
-  const safeStatus = escapeHtml(statusLabel);
-  const safeExtra = extraMessage ? `\n${escapeHtml(extraMessage)}` : "";
-  const headerLabel = statusLabel.toLowerCase().includes("recebido") ? "Pedido recebido ✅" : "Pedido atualizado ✅";
+  const finalStatus = normalizeAllowedTelegramStatus(statusLabel);
+
+  if (!finalStatus) {
+    return "";
+  }
+
+  const safeStatus = escapeHtml(finalStatus);
+
+  if (finalStatus === "Pedido recebido") {
+    return `Pedido recebido ✅ ${safeCliente}, ID ${safeId}`;
+  }
+
+  if (finalStatus === "Pagamento recebido") {
+    return [
+      `Pagamento recebido ✅`,
+      `${safeCliente}`,
+      `Pedido: ${safeId}`,
+      `Status: ${safeStatus}`,
+    ].join("\n");
+  }
 
   return [
-    `${headerLabel} ${safeCliente}, ID ${safeId}`,
-    `<b>Status:</b> ${safeStatus}`,
-    `<b>Telefone:</b> ${safeTelefone}`,
-    `<b>E-mail:</b> ${safeEmail}`,
-    `<b>Para:</b> ${safeParaQuem}`,
-    `<b>Ocasião:</b> ${safeOcasião}`,
-    `<b>Resumo:</b> ${safeDescricao}`,
-    safeExtra,
+    `${safeCliente}`,
+    `Pedido: ${safeId}`,
+    `Status: ${safeStatus}`,
   ].join("\n");
 }
 
@@ -95,5 +136,10 @@ export async function notifyPedidoTelegram(
   extraMessage?: string,
 ) {
   const text = buildPedidoTelegramMessage(order, statusLabel, extraMessage);
+
+  if (!text) {
+    return { ok: true, reason: "ignored_status" as const };
+  }
+
   return sendTelegramMessage(text);
 }

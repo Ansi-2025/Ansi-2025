@@ -21,6 +21,10 @@ export function getStripePriceForCheckout({ secondVersion }: { secondVersion?: b
   return Number((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0)).toFixed(2));
 }
 
+function isStripeMarkedAsPaid(status?: string | null) {
+  return ["paid", "succeeded", "complete"].includes(String(status ?? "").toLowerCase());
+}
+
 if (!STRIPE_SECRET_KEY) {
   console.error("STRIPE_SECRET_KEY is not configured.");
 }
@@ -72,8 +76,8 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     };
   }
 
-  if (!["letra_aprovada", "pagamento"].includes(pedido.status as string)) {
-    throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
+  if (!["previa", "pagamento"].includes(pedido.status as string)) {
+    throw new Error("O pedido precisa ter a prévia pronta antes de criar o checkout.");
   }
 
   if (!STRIPE_SECRET_KEY) {
@@ -193,8 +197,8 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     throw new Error("Pedido não encontrado.");
   }
 
-  if (!['letra_aprovada', 'pagamento'].includes(pedido.status as string)) {
-    throw new Error("O pedido precisa ter a letra aprovada antes de criar o checkout.");
+  if (!["previa", "pagamento"].includes(pedido.status as string)) {
+    throw new Error("O pedido precisa ter a prévia pronta antes de criar o checkout.");
   }
 
   if (!STRIPE_SECRET_KEY) {
@@ -324,6 +328,7 @@ export async function handleStripeWebhook(request: Request) {
       : "";
   const metadata = "metadata" in object ? object.metadata : undefined;
   const pedidoId = metadata?.pedido_id ? String(metadata.pedido_id) : "";
+  const requestedSecondVersion = String(metadata?.segunda_versao ?? "").toLowerCase() === "true";
   const sessionId = event.type === "checkout.session.completed" && "id" in object ? object.id : undefined;
   const paymentIntentId = "payment_intent" in object && typeof object.payment_intent === "string"
     ? object.payment_intent
@@ -382,7 +387,7 @@ export async function handleStripeWebhook(request: Request) {
   try {
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from("pedidos")
-      .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, suno_task_id, letra_gerada")
+      .select("id, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao")
       .eq("id", resolvedPedidoId)
       .maybeSingle();
 
@@ -405,22 +410,25 @@ export async function handleStripeWebhook(request: Request) {
       stripe_payment_intent_id: paymentIntentId ?? pedido.stripe_payment_intent_id,
     } as any;
 
-    if (isSuccessfulPayment && (paymentStatus === "paid" || event.type === "payment_intent.succeeded")) {
-      updates.status = "pago";
+    if (isSuccessfulPayment && (isStripeMarkedAsPaid(paymentStatus) || event.type === "payment_intent.succeeded")) {
+      const shouldReleaseSecondVersion = Boolean((requestedSecondVersion || pedido.segunda_versao) && pedido.url_previa_segunda_versao);
+      const releasedPrimaryTrack = pedido.url_previa ?? pedido.url_musica;
+
+      updates.status = releasedPrimaryTrack ? "musica_pronta" : "pago";
       updates.pago_em = new Date().toISOString();
       updates.status_atualizado_em = new Date().toISOString();
-      novoStatus = "pago";
+      updates.segunda_versao = shouldReleaseSecondVersion;
 
-      if (!pedido.suno_task_id && pedido.letra_gerada) {
-        try {
-          const { gerarMusicaFinal } = await import("./pedido.service");
-          await gerarMusicaFinal(pedido.id);
-        } catch (error) {
-          console.error("Erro ao disparar geração da música após pagamento:", error);
-        }
+      if (releasedPrimaryTrack) {
+        updates.url_musica = releasedPrimaryTrack;
+        updates.url_musica_segunda_versao = shouldReleaseSecondVersion
+          ? pedido.url_previa_segunda_versao ?? pedido.url_musica_segunda_versao
+          : null;
       }
+
+      novoStatus = updates.status as PedidoStatus;
     } else if (isFailedOrExpiredPayment) {
-      updates.status = (pedido.status === "entregue" ? pedido.status : "letra_aprovada") as any;
+      updates.status = (pedido.status === "entregue" ? pedido.status : "previa") as any;
       updates.status_atualizado_em = new Date().toISOString();
       novoStatus = updates.status as PedidoStatus;
     }
@@ -440,9 +448,11 @@ export async function handleStripeWebhook(request: Request) {
         status_anterior: pedido.status,
         status_novo: novoStatus,
         mensagem_whatsapp:
-          novoStatus === "pago"
-            ? "Pagamento confirmado via Stripe. Música em geração."
-            : "Status do pedido atualizado pelo webhook da Stripe.",
+          novoStatus === "musica_pronta"
+            ? "Pagamento confirmado via Stripe. Música completa liberada automaticamente."
+            : novoStatus === "pago"
+              ? "Pagamento confirmado via Stripe. Aguardando finalização da liberação da música."
+              : "Status do pedido atualizado pelo webhook da Stripe.",
         criado_em: new Date().toISOString(),
       });
     }

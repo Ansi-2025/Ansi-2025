@@ -2,7 +2,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
+import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 import { isValidPersonName } from "@/lib/utils";
 
@@ -136,7 +136,7 @@ const OrderSchema = z
           ? data.outro_genero.trim()
           : data.genero_musical,
       tipo_cantor: data.tipo_cantor ?? "feminino",
-      duracao_segundos: 45,
+      duracao_segundos: 90,
     };
   });
 
@@ -146,9 +146,10 @@ export const STATUS_FLOW = [
   "letra_pronta",
   "aguardando_aprovacao_letra",
   "letra_aprovada",
+  "gerando_musica",
+  "previa",
   "pagamento",
   "pago",
-  "gerando_musica",
   "musica_pronta",
   "entregue",
 ] as const;
@@ -160,10 +161,11 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   letra_pronta: "Letra pronta",
   aguardando_aprovacao_letra: "Aguardando aprovação da letra",
   letra_aprovada: "Letra aprovada",
+  gerando_musica: "Gerando prévia da música",
+  previa: "Prévia pronta",
   pagamento: "Aguardando pagamento",
   pago: "Pagamento aprovado",
-  gerando_musica: "Música em produção",
-  musica_pronta: "Música disponível",
+  musica_pronta: "Música completa liberada",
   entregue: "Entregue",
 };
 
@@ -213,7 +215,14 @@ export const approveLyric = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
   .handler(async ({ data }) => {
     validateOrderAccess(data.id, data.token);
-    return marcarLetraAprovada(data.id);
+    const approvedOrder = await marcarLetraAprovada(data.id);
+
+    try {
+      return await gerarMusicaPreview(data.id);
+    } catch (error) {
+      console.error("Falha ao iniciar geração de prévia após aprovação da letra:", error);
+      return approvedOrder;
+    }
   });
 
 export const requestLyricRevision = createServerFn({ method: "POST" })
@@ -297,7 +306,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, email_cliente, telefone_cliente, cpf_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_musica, url_musica_segunda_versao, segunda_versao, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
+        "id, nome_cliente, email_cliente, telefone_cliente, cpf_cliente, genero_musical, duracao_segundos, descricao, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao, pix_qr_code, pix_fixado, valor_pix, pago_em, stripe_checkout_url, stripe_session_id, stripe_payment_intent_id, stripe_payment_status, created_at, status_atualizado_em",
       )
       .eq("id", data.id)
       .maybeSingle();
@@ -319,6 +328,8 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       status: PedidoStatus;
       letra_gerada: string | null;
       roteiro_ia: string | null;
+      url_previa: string | null;
+      url_previa_segunda_versao: string | null;
       url_musica: string | null;
       url_musica_segunda_versao: string | null;
       segunda_versao: boolean;

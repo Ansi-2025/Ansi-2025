@@ -309,11 +309,11 @@ function AdminPage() {
           </div>
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Aguardando validação</p>
-            <p className="mt-3 text-3xl font-semibold text-primary">{orders.filter((order) => order.status === "letra_aprovada" || order.status === "pagamento").length}</p>
+            <p className="mt-3 text-3xl font-semibold text-primary">{orders.filter((order) => order.status === "previa" || order.status === "pagamento").length}</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-5">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Pagos</p>
-            <p className="mt-3 text-3xl font-semibold text-primary">{orders.filter((order) => order.status === "pago").length}</p>
+            <p className="mt-3 text-3xl font-semibold text-primary">{orders.filter((order) => order.status === "pago" || order.status === "musica_pronta" || order.status === "entregue").length}</p>
           </div>
         </div>
 

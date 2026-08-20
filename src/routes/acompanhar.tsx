@@ -13,7 +13,7 @@ const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "11287911960";
 const OWNER_WHATSAPP_NUMBER = "5541997232395";
-const PIX_PAYMENT_WA = "https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=" + encodeURIComponent("Olá! Enviei o comprovante do pagamento da minha música personalizada.");
+const PREVIEW_LIMIT_SECONDS = 40;
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
@@ -87,6 +87,7 @@ type Order = {
   letra_gerada: string | null;
   roteiro_ia: string | null;
   url_previa: string | null;
+  url_previa_segunda_versao: string | null;
   url_musica: string | null;
   url_musica_segunda_versao: string | null;
   segunda_versao: boolean;
@@ -99,7 +100,21 @@ type Order = {
   cpf_cliente: string | null;
 };
 
-function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: string; downloadLabel?: string }) {
+function OrderAudioPlayer({
+  src,
+  title,
+  downloadLabel,
+  hideDownload = false,
+  actionLabel,
+  previewLimitSeconds,
+}: {
+  src: string;
+  title: string;
+  downloadLabel?: string;
+  hideDownload?: boolean;
+  actionLabel?: string;
+  previewLimitSeconds?: number;
+}) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [visualPopupOpen, setVisualPopupOpen] = useState(false);
@@ -115,14 +130,27 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
     };
 
     const onLoadedMetadata = () => {
-      setDuration(audio.duration || 0);
+      const audioDuration = audio.duration || 0;
+      const clampedDuration = previewLimitSeconds ? Math.min(audioDuration, previewLimitSeconds) : audioDuration;
+      setDuration(clampedDuration);
       setCurrentTime(audio.currentTime || 0);
       syncPlaybackState();
     };
 
     const onTimeUpdate = () => {
+      if (previewLimitSeconds && audio.currentTime >= previewLimitSeconds) {
+        audio.pause();
+        audio.currentTime = 0;
+        setCurrentTime(0);
+        setIsPlaying(false);
+        setVisualPopupOpen(false);
+        return;
+      }
+
+      const audioDuration = audio.duration || 0;
+      const clampedDuration = previewLimitSeconds ? Math.min(audioDuration, previewLimitSeconds) : audioDuration;
       setCurrentTime(audio.currentTime || 0);
-      setDuration(audio.duration || 0);
+      setDuration(clampedDuration);
     };
 
     const onPlay = () => setIsPlaying(true);
@@ -147,7 +175,7 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("ended", onEnded);
     };
-  }, [src]);
+  }, [previewLimitSeconds, src]);
 
   const formatTime = (value: number) => {
     if (!Number.isFinite(value) || value <= 0) return "0:00";
@@ -161,6 +189,10 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
     if (!audio) return;
 
     if (audio.paused) {
+      if (previewLimitSeconds && audio.currentTime >= previewLimitSeconds) {
+        audio.currentTime = 0;
+      }
+
       try {
         await audio.play();
         setIsPlaying(true);
@@ -184,20 +216,29 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
     <>
       <div className="mx-auto mt-3 w-[94%] max-w-[700px] sm:w-[88%]">
         <div className="relative overflow-hidden rounded-[18px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_16px_30px_rgba(255,118,173,0.22)] sm:rounded-[24px]">
-          <a
-            href={src}
-            download
-            aria-label={downloadLabel ?? `Baixar ${title}`}
-            title={downloadLabel ?? `Baixar ${title}`}
-            className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:gap-3 sm:py-4 sm:text-xl"
-          >
-            <Download className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
-            <span>{downloadLabel ?? `Baixar ${title}`}</span>
-          </a>
+          {hideDownload ? (
+            <div className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white sm:gap-3 sm:py-4 sm:text-lg">
+              <Headphones className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+              <span>{actionLabel ?? `OUVIR ${title}`}</span>
+            </div>
+          ) : (
+            <>
+              <a
+                href={src}
+                download
+                aria-label={downloadLabel ?? `Baixar ${title}`}
+                title={downloadLabel ?? `Baixar ${title}`}
+                className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold text-white transition-transform hover:-translate-y-0.5 hover:brightness-110 sm:gap-3 sm:py-4 sm:text-xl"
+              >
+                <Download className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
+                <span>{downloadLabel ?? `Baixar ${title}`}</span>
+              </a>
 
-          <span className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[10px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:right-3 sm:h-10 sm:w-10 sm:rounded-[14px]">
-            <Download className="h-3 w-3 sm:h-4 sm:w-4" />
-          </span>
+              <span className="absolute right-2 top-1/2 grid h-7 w-7 -translate-y-1/2 place-items-center rounded-[10px] border border-white/20 bg-[#1d1c2d]/60 text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.06)] sm:right-3 sm:h-10 sm:w-10 sm:rounded-[14px]">
+                <Download className="h-3 w-3 sm:h-4 sm:w-4" />
+              </span>
+            </>
+          )}
         </div>
       </div>
 
@@ -301,7 +342,7 @@ function OrderAudioPlayer({ src, title, downloadLabel }: { src: string; title: s
                 onClick={() => void handleToggle()}
                 className="rounded-full border border-[#ff7ae5]/80 bg-[#f0edf4] px-9 py-3 text-xl font-semibold text-[#10131a] shadow-[0_0_18px_rgba(255,122,229,0.25)] transition hover:brightness-105"
               >
-                {isPlaying ? "Pausar" : "Pausar"}
+                {isPlaying ? "Pausar" : "Ouvir"}
               </button>
             </div>
           </div>
@@ -325,7 +366,6 @@ function TrackingPage() {
   const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
   const [checkoutLoading, setCheckoutLoading] = useState(false);
-  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [checkoutError, setCheckoutError] = useState("");
   const [paymentError, setPaymentError] = useState("");
@@ -346,14 +386,6 @@ function TrackingPage() {
     "Fique tranquilo, estamos mantendo tudo sincronizado...",
     "Aguarde, seu pedido está sendo atualizado em segundo plano...",
   ];
-  const paymentConfirmed = Boolean(
-    order &&
-      (order.status === "pago" ||
-        order.status === "musica_pronta" ||
-        order.status === "entregue" ||
-        ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())),
-  );
-
   const search = useCallback(async (orderId: string, options?: { preserveExisting?: boolean }) => {
     const trimmedId = orderId.trim();
     const preserveExisting = options?.preserveExisting ?? false;
@@ -383,7 +415,6 @@ function TrackingPage() {
       const row = (await fetchStatus({ data: { id: trimmedId, token: orderToken || initialToken || undefined } })) as unknown as Order & { access_token?: string };
       setOrder(row);
       setOrderToken(row.access_token ?? (orderToken || initialToken || ""));
-      setCheckoutUrl(row.stripe_checkout_url ?? null);
       const hist = await fetchHistory({ data: { id: trimmedId, token: row.access_token ?? (orderToken || initialToken || undefined) } });
       setHistory(hist);
     } catch (e) {
@@ -593,13 +624,11 @@ function TrackingPage() {
           <Timeline
             order={order}
             history={history}
-            checkoutUrl={checkoutUrl}
             checkoutError={checkoutError}
             checkoutLoading={checkoutLoading}
             paymentError={paymentError}
             paymentIntentClientSecret={paymentIntentClientSecret}
             paymentProcessing={paymentProcessing}
-            paymentConfirmed={paymentConfirmed}
             setPaymentProcessing={setPaymentProcessing}
             setPaymentError={setPaymentError}
             setPaymentIntentClientSecret={setPaymentIntentClientSecret}
@@ -665,7 +694,6 @@ function buildMusicBriefSections(roteiro: string | null) {
 function Timeline({
   order,
   history,
-  checkoutUrl,
   checkoutError,
   checkoutLoading,
   approvalLoading,
@@ -682,7 +710,6 @@ function Timeline({
   paymentError,
   paymentIntentClientSecret,
   paymentProcessing,
-  paymentConfirmed,
   setPaymentProcessing,
   setPaymentError,
   setPaymentIntentClientSecret,
@@ -696,7 +723,6 @@ function Timeline({
 }: {
   order: Order;
   history: Array<any>;
-  checkoutUrl: string | null;
   checkoutError: string;
   checkoutLoading: boolean;
   approvalLoading: boolean;
@@ -711,7 +737,6 @@ function Timeline({
   paymentError: string;
   paymentIntentClientSecret: string | null;
   paymentProcessing: boolean;
-  paymentConfirmed: boolean;
   setPaymentProcessing: Dispatch<SetStateAction<boolean>>;
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
@@ -726,18 +751,12 @@ function Timeline({
   setCheckoutCustomer: Dispatch<SetStateAction<{ email: string; phone: string; cpf: string }>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
-  const [checkoutMessageIndex, setCheckoutMessageIndex] = useState(0);
   const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
-  const paymentMessages = [
-    "Validando o pagamento no Stripe...",
-    "Estamos preparando sua música...",
-  ];
   const isStripeProcessing = order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase());
   const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
     ? "pago"
     : order.status;
   const currentIdx = STATUS_FLOW.indexOf(effectiveStatus);
-  const paymentBlockVisible = order.status === "letra_aprovada" || (order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
   const timelineLabel = (step: PedidoStatus) => {
     if (step === "pagamento" && isStripeProcessing) {
       return "Pagamento em análise";
@@ -772,19 +791,6 @@ function Timeline({
   }, [order.id, currentIdx]);
 
   useEffect(() => {
-    if (!paymentProcessing) {
-      setCheckoutMessageIndex(0);
-      return;
-    }
-
-    const interval = setInterval(() => {
-      setCheckoutMessageIndex((prev) => (prev + 1) % paymentMessages.length);
-    }, 4200);
-
-    return () => clearInterval(interval);
-  }, [paymentProcessing, paymentMessages.length]);
-
-  useEffect(() => {
     if (order.status !== "gerando_musica") {
       setGenerationMessageIndex(0);
       return;
@@ -803,7 +809,11 @@ function Timeline({
   const shouldShowDuration = Boolean(order.duracao_segundos && order.duracao_segundos !== 45 && order.duracao_segundos > 0);
   const paymentReceived = order.status === "pago" || order.status === "entregue" || order.status === "musica_pronta" ||
     (order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase()));
-  const musicBeingGenerated = order.status === "gerando_musica" || (paymentReceived && !order.url_musica && !order.url_musica_segunda_versao);
+  const musicBeingGenerated = order.status === "gerando_musica";
+  const primaryPreviewUrl = order.url_previa ?? order.url_musica;
+  const secondaryPreviewUrl = order.url_previa_segunda_versao ?? order.url_musica_segunda_versao;
+  const previewReady = Boolean(primaryPreviewUrl);
+  const showSecondPreview = Boolean(secondaryPreviewUrl && (secondVersionSelected || order.segunda_versao || paymentReceived));
 
   return (
     <div className="mx-auto mt-4 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] sm:p-6 md:mt-8 md:p-8">
@@ -828,10 +838,10 @@ function Timeline({
         )}
         {paymentReceived && (
           <div className="mt-4 rounded-2xl border border-[#34d399]/30 bg-[#34d399]/10 p-4 text-sm text-[#bbf7d0]">
-            <p className="font-semibold">Pagamento recebido - liberando seu produto</p>
-            <p className="mt-1 text-zinc-200">Seu pagamento foi confirmado com sucesso e estamos preparando sua música com carinho.</p>
+            <p className="font-semibold">Pagamento recebido com sucesso</p>
+            <p className="mt-1 text-zinc-200">Pagamento confirmado. Sua música completa será liberada automaticamente em instantes.</p>
             {!order.url_musica && !order.url_musica_segunda_versao && (
-              <p className="mt-2 font-medium text-[#ffd7dd]">Aguarde no máximo 3 minutos que a música estará pronta.</p>
+              <p className="mt-2 font-medium text-[#ffd7dd]">Estamos finalizando a liberação do arquivo completo para download.</p>
             )}
           </div>
         )}
@@ -864,6 +874,37 @@ function Timeline({
                 />
               </div>
             </div>
+          </div>
+        )}
+        {previewReady && !paymentReceived && primaryPreviewUrl && (
+          <div className="mt-4 rounded-[28px] border border-[#ff7ae5]/25 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
+            <p className="text-sm font-semibold text-[#ffd7e7]">Essa música foi feita especialmente para você.</p>
+            <h3 className="mt-2 font-display text-[1.8rem] leading-none font-semibold text-[#f8f5f2]">Sua prévia está pronta!</h3>
+            <p className="mt-2 text-sm text-zinc-300">Ouça agora uma prévia de até {PREVIEW_LIMIT_SECONDS} segundos da sua música.</p>
+
+            <OrderAudioPlayer
+              src={`${primaryPreviewUrl}#t=0,${PREVIEW_LIMIT_SECONDS}`}
+              title="Prévia da versão 1"
+              hideDownload
+              actionLabel="OUVIR PRÉVIA"
+              previewLimitSeconds={PREVIEW_LIMIT_SECONDS}
+            />
+
+            {showSecondPreview && secondaryPreviewUrl && (
+              <OrderAudioPlayer
+                src={`${secondaryPreviewUrl}#t=0,${PREVIEW_LIMIT_SECONDS}`}
+                title="Prévia da versão 2"
+                hideDownload
+                actionLabel="OUVIR PRÉVIA 2"
+                previewLimitSeconds={PREVIEW_LIMIT_SECONDS}
+              />
+            )}
+
+            {!showSecondPreview && secondaryPreviewUrl && (
+              <p className="mt-3 text-xs text-zinc-400">
+                Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">Quero mais uma versão da mesma história</strong>.
+              </p>
+            )}
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
@@ -1131,13 +1172,14 @@ function Timeline({
                   </div>
                 </div>
               )}
-              {isCurrent && (step === "letra_aprovada" || step === "pagamento") && (
+              {isCurrent && (step === "previa" || step === "pagamento") && (
                 <div className="mt-3 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
                   <div className="mb-5 flex items-center gap-3">
                     <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] to-[#8b5cf6] text-sm font-black text-white">1</span>
                     <div>
                       <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff99a8]">Checkout</p>
-                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Escolha sua forma de pagamento</h3>
+                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Gostou? Libere sua música completa</h3>
+                      <p className="mt-2 text-sm text-zinc-300">Pagamento seguro e liberação automática após confirmação.</p>
                     </div>
                   </div>
 
@@ -1234,7 +1276,7 @@ function Timeline({
                       onClick={() => setSecondVersionSelected((prev) => !prev)}
                       className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d] hover:bg-[#d4af69]/15"}`}
                     >
-                      <span>Quero a segunda versão</span>
+                      <span>Quero mais uma versão da mesma história</span>
                       <span>+R$ 9,90</span>
                     </button>
                   </div>
@@ -1273,7 +1315,7 @@ function Timeline({
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
                   className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
-                  <span>Quero a segunda versão</span>
+                  <span>Quero mais uma versão da mesma história</span>
                   <span>+R$ 9,90</span>
                 </button>
                 <p className="mt-4 text-[0.97rem] font-medium leading-relaxed text-[#1a1400]">
@@ -1301,7 +1343,7 @@ function Timeline({
                     <StripeCardPaymentForm
                       order={order}
                       clientSecret={paymentIntentClientSecret}
-                      amount={1 + (secondVersionSelected ? 9.9 : 0)}
+                      amount={19.9 + (secondVersionSelected ? 9.9 : 0)}
                       processing={paymentProcessing}
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}

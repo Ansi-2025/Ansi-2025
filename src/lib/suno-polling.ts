@@ -74,9 +74,9 @@ export async function pollingMusicasEmGeracao() {
 
   const { data: pedidosEmGeracao, error } = await supabase
     .from("pedidos")
-    .select("id, suno_task_id, status")
+    .select("id, suno_task_id, status, stripe_payment_status, segunda_versao")
     .eq("status", "gerando_musica")
-    .gte("musica_gerada_em", umHoraAtras.toISOString())
+    .gte("preview_gerada_em", umHoraAtras.toISOString())
     .not("suno_task_id", "is", null);
 
   if (error) {
@@ -114,13 +114,20 @@ export async function pollingMusicasEmGeracao() {
           audioUrl: statusMusica.audio_url,
         });
 
+        const paymentAlreadyConfirmed =
+          ["paid", "succeeded", "complete"].includes(String(pedido.stripe_payment_status ?? "").toLowerCase()) ||
+          ["pago", "musica_pronta", "entregue"].includes(String(pedido.status));
+        const nextStatus = paymentAlreadyConfirmed ? "musica_pronta" : "previa";
+
         const { error: updateError } = await supabase
           .from("pedidos")
           .update({
-            url_musica: statusMusica.audio_url,
+            url_previa: statusMusica.audio_url,
+            url_previa_segunda_versao: null,
+            url_musica: paymentAlreadyConfirmed ? statusMusica.audio_url : null,
             url_musica_segunda_versao: null,
-            segunda_versao: false,
-            status: "musica_pronta",
+            segunda_versao: paymentAlreadyConfirmed ? Boolean(pedido.segunda_versao) : false,
+            status: nextStatus,
             status_atualizado_em: new Date().toISOString(),
           })
           .eq("id", pedido.id);

@@ -34,6 +34,9 @@ export type Database = {
           status: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em: string
           suno_job_id: string | null
+          suno_task_id: string | null
+          url_previa: string | null
+          url_previa_segunda_versao: string | null
           url_musica: string | null
           url_musica_segunda_versao: string | null
           segunda_versao: boolean
@@ -43,6 +46,7 @@ export type Database = {
           tipo_cantor: string | null
           letra_gerada: string | null
           letra_aprovada: boolean
+          preview_gerada_em: string | null
           musica_gerada_em: string | null
           stripe_checkout_url: string | null
           stripe_session_id: string | null
@@ -67,6 +71,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
           suno_job_id?: string | null
+          suno_task_id?: string | null
+          url_previa?: string | null
+          url_previa_segunda_versao?: string | null
           url_musica?: string | null
           url_musica_segunda_versao?: string | null
           segunda_versao?: boolean
@@ -76,6 +83,7 @@ export type Database = {
           tipo_cantor?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
+          preview_gerada_em?: string | null
           musica_gerada_em?: string | null
           stripe_checkout_url?: string | null
           stripe_session_id?: string | null
@@ -100,6 +108,9 @@ export type Database = {
           status?: Database["public"]["Enums"]["pedido_status"]
           status_atualizado_em?: string
           suno_job_id?: string | null
+          suno_task_id?: string | null
+          url_previa?: string | null
+          url_previa_segunda_versao?: string | null
           url_musica?: string | null
           url_musica_segunda_versao?: string | null
           segunda_versao?: boolean
@@ -109,6 +120,7 @@ export type Database = {
           tipo_cantor?: string | null
           letra_gerada?: string | null
           letra_aprovada?: boolean
+          preview_gerada_em?: string | null
           musica_gerada_em?: string | null
           stripe_checkout_url?: string | null
           stripe_session_id?: string | null
@@ -168,9 +180,11 @@ export type Database = {
         | "letra_pronta"
         | "aguardando_aprovacao_letra"
         | "letra_aprovada"
+        | "previa"
         | "pagamento"
         | "gerando_musica"
         | "musica_pronta"
+        | "pago"
         | "entregue"
     }
     CompositeTypes: {

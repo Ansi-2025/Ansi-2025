@@ -115,8 +115,8 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
     throw new Error(fetchError?.message ?? "Pedido não encontrado.");
   }
 
-  if (!["letra_aprovada", "pagamento"].includes(pedidoAtual.status)) {
-    throw new Error("O pedido precisa estar com a letra aprovada ou aguardando pagamento para confirmar o pagamento.");
+  if (!["previa", "pagamento", "pago", "musica_pronta"].includes(pedidoAtual.status)) {
+    throw new Error("O pedido precisa estar com a prévia pronta ou aguardando pagamento para confirmar manualmente.");
   }
 
   const { data: pedido, error } = await supabaseAdmin
@@ -137,7 +137,7 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
 
   await supabaseAdmin.from("status_history").insert({
     pedido_id: pedido.id,
-    status_anterior: pedidoAtual.status ?? "letra_aprovada",
+    status_anterior: pedidoAtual.status ?? "previa",
     status_novo: "pago",
     admin_user: adminUser.email ?? "admin",
     mensagem_whatsapp: "Pagamento confirmado manualmente pelo painel administrativo.",
@@ -145,14 +145,22 @@ async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {
   });
 
   try {
-    if (!pedido.suno_task_id && pedido.letra_gerada) {
-      await gerarMusicaFinal(pedido.id);
-    }
+    await gerarMusicaFinal(pedido.id);
   } catch (error) {
-    console.error("Erro ao disparar geração da música após confirmação manual do pagamento:", error);
+    console.error("Erro ao liberar música completa após confirmação manual do pagamento:", error);
   }
 
-  return pedido;
+  const { data: pedidoAtualizadoFinal, error: fetchUpdatedError } = await supabaseAdmin
+    .from("pedidos")
+    .select("*")
+    .eq("id", pedido.id)
+    .single();
+
+  if (fetchUpdatedError || !pedidoAtualizadoFinal) {
+    throw new Error(fetchUpdatedError?.message ?? "Pedido não encontrado após confirmação manual.");
+  }
+
+  return pedidoAtualizadoFinal;
 }
 
 async function releaseMusicPedido(pedidoId: string, accessToken: string) {
@@ -169,8 +177,8 @@ async function releaseMusicPedido(pedidoId: string, accessToken: string) {
     throw new Error(fetchError?.message ?? "Pedido não encontrado.");
   }
 
-  if (pedidoAtual.status !== "pago") {
-    throw new Error("O pedido precisa estar pago antes de liberar a música.");
+  if (!["pago", "musica_pronta"].includes(pedidoAtual.status)) {
+    throw new Error("O pedido precisa estar pago ou com a música pronta antes de marcar como entregue.");
   }
 
   const { data: pedido, error } = await supabaseAdmin
