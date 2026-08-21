@@ -111,14 +111,6 @@ const OrderSchema = z
       });
     }
 
-    if (typeof data.form_started_at === "number" && Date.now() - data.form_started_at < 7000) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Pedido inválido.",
-        path: ["form_started_at"],
-      });
-    }
-
     if (data.genero_musical === "Outro" && !data.outro_genero?.trim()) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

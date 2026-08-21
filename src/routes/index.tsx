@@ -221,9 +221,6 @@ function StartMusicWidget({
     if (form.bot_field.trim()) {
       return "Pedido inválido.";
     }
-    if (Date.now() - formStartedAt < 7000) {
-      return "Pedido inválido.";
-    }
 
     if (current.key === "nome_cliente") {
       return isValidPersonName(form.nome_cliente)
@@ -276,11 +273,6 @@ function StartMusicWidget({
 
   const submit = async () => {
     if (form.bot_field.trim()) {
-      setStatus("error");
-      setErrorMsg("Pedido inválido.");
-      return;
-    }
-    if (Date.now() - formStartedAt < 7000) {
       setStatus("error");
       setErrorMsg("Pedido inválido.");
       return;
@@ -1032,9 +1024,6 @@ function OrderForm() {
     if (form.bot_field.trim()) {
       return "Pedido inválido.";
     }
-    if (Date.now() - formStartedAt < 7000) {
-      return "Pedido inválido.";
-    }
 
     if (current.key === "telefone_cliente") {
       const digits = form.telefone_cliente.replace(/\D/g, "");
@@ -1069,11 +1058,6 @@ function OrderForm() {
 
   const submit = async () => {
     if (form.bot_field.trim()) {
-      setStatus("error");
-      setErrorMsg("Pedido inválido.");
-      return;
-    }
-    if (Date.now() - formStartedAt < 7000) {
       setStatus("error");
       setErrorMsg("Pedido inválido.");
       return;
