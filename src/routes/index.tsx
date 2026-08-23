@@ -111,7 +111,6 @@ function Header() {
           <a href="#exemplos" className="transition-colors hover:text-white">Exemplos</a>
           <a href="#ocasioes" className="transition-colors hover:text-white">Ocasiões</a>
           <a href="#faq" className="transition-colors hover:text-white">Perguntas</a>
-          <a href="/acompanhar" className="transition-colors hover:text-white">Acompanhar Pedido</a>
         </nav>
         <div className="hidden items-center gap-3 md:flex">
           <a
@@ -123,7 +122,7 @@ function Header() {
           <StartMusicWidget
             buttonClassName="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
             buttonStyle={GRADIENT_GOLD}
-            label="Criar Minha Música"
+            label="Criar Minha Canção — R$19,90"
             icon={<Sparkles className="h-4 w-4" />}
           />
         </div>
@@ -565,17 +564,6 @@ function Hero() {
     audio.volume = 0.15;
     audio.loop = true;
     audio.muted = false;
-
-    const startPlayback = () => {
-      audio.play()
-        .then(() => setIsExamplePlaying(true))
-        .catch(() => {
-          // Browser may block autoplay until the user interacts with the page.
-          setIsExamplePlaying(false);
-        });
-    };
-
-    startPlayback();
   }, []);
 
   const handleExampleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
@@ -588,7 +576,6 @@ function Hero() {
     audio.play()
       .then(() => setIsExamplePlaying(true))
       .catch(() => {
-        // Browser may require user interaction before audio playback.
         setIsExamplePlaying(false);
       });
 
@@ -613,7 +600,7 @@ function Hero() {
 
   return (
     <>
-      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" autoPlay playsInline onPause={() => setIsExamplePlaying(false)} onPlay={() => setIsExamplePlaying(true)} />
+      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" playsInline onPause={() => setIsExamplePlaying(false)} onPlay={() => setIsExamplePlaying(true)} />
       <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
         <div className="absolute inset-0 -z-10">
           <img
@@ -630,65 +617,67 @@ function Hero() {
         </div>
 
         <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
-        <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
-          <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
-          Música Gospel Personalizada
-        </span>
-        <h1
-          className="text-balance font-display text-4xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl animate-fade-up"
-          style={{ animationDelay: "120ms" }}
-        >
-          Sua História <em className="not-italic bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">Merece</em> Ser Cantada
-        </h1>
-        <p
-          className="mt-6 max-w-2xl text-balance text-base text-sky-50/85 sm:text-lg animate-fade-up"
-          style={{ animationDelay: "220ms" }}
-        >
-          Transforme sua história de fé em uma música gospel exclusiva, criada especialmente para você e sua família.
-        </p>
-        <div
-          className="mt-9 flex flex-col items-center gap-3 sm:flex-row animate-fade-up"
-          style={{ animationDelay: "320ms" }}
-        >
-          <StartMusicWidget
-            buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
-            buttonStyle={GRADIENT_GOLD}
-            label="Criar Minha Música"
-            icon={<Sparkles className="h-4 w-4" />}
-          />
-          <a
-            href="/acompanhar"
-            className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
+          <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
+            Música Gospel Personalizada
+          </span>
+
+          <h1
+            className="text-balance font-display text-4xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl animate-fade-up"
+            style={{ animationDelay: "120ms" }}
           >
-            <Music className="h-4 w-4" /> Acompanhar Pedido
-          </a>
-          <div className="flex items-center gap-3">
+            Sua história pode virar uma <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">música gospel personalizada</span>
+          </h1>
+
+          <p
+            className="mt-6 max-w-2xl text-balance text-base text-sky-50/85 sm:text-lg animate-fade-up"
+            style={{ animationDelay: "220ms" }}
+          >
+            Conte sua história e receba uma canção criada especialmente para você ou para alguém especial.
+          </p>
+
+          <div
+            className="mt-4 text-balance text-xl font-semibold text-[var(--gold)] animate-fade-up"
+            style={{ animationDelay: "260ms" }}
+          >
+            Por apenas R$ 19,90
+          </div>
+
+          <p
+            className="mt-3 max-w-2xl text-balance text-sm text-sky-50/80 animate-fade-up"
+            style={{ animationDelay: "310ms" }}
+          >
+            Você conta sua história → aprova a letra → recebe sua música
+          </p>
+
+          <div
+            className="mt-9 flex flex-col items-center gap-3 sm:flex-row animate-fade-up"
+            style={{ animationDelay: "320ms" }}
+          >
+            <StartMusicWidget
+              buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              buttonStyle={GRADIENT_GOLD}
+              label="Criar Minha Canção — R$19,90"
+              icon={<Sparkles className="h-4 w-4" />}
+            />
             <a
               href="#exemplos"
               onClick={handleExampleClick}
               className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
             >
-              <Play className="h-4 w-4" /> Ouvir Exemplo
+              <Play className="h-4 w-4" /> Ouvir um exemplo
             </a>
-            <button
-              type="button"
-              onClick={handlePauseExample}
-              className="inline-flex items-center justify-center rounded-full border border-white/25 bg-white/5 px-4 py-3 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
-            >
-              {isExamplePlaying ? "Pausar exemplo" : "Continuar exemplo"}
-            </button>
+          </div>
+
+          <div
+            className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4 text-center animate-fade-up"
+            style={{ animationDelay: "420ms" }}
+          >
+            <Stat value="1.350+" label="Músicas criadas" />
+            <Stat value="4.9" label="Avaliação média" icon={<Star className="h-3 w-3 fill-current" />} />
+            <Stat value="Imediata" label="Entrega" />
           </div>
         </div>
-
-        <div
-          className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4 text-center animate-fade-up"
-          style={{ animationDelay: "420ms" }}
-        >
-          <Stat value="1.350+" label="Músicas criadas" />
-          <Stat value="4.9" label="Avaliação média" icon={<Star className="h-3 w-3 fill-current" />} />
-          <Stat value="Imediata" label="Entrega" />
-        </div>
-      </div>
       </section>
     </>
   );
@@ -732,18 +721,18 @@ function Badges() {
 /* ---------------- How it works ---------------- */
 function HowItWorks() {
   const steps = [
-    { n: "01", title: "Conte sua história", desc: "Escreva tudo o que deseja colocar na música." },
-    { n: "02", title: "Nossa IA cria sua canção", desc: "Produzimos uma música emocionante e totalmente personalizada." },
-    { n: "03", title: "Você aprova", desc: "Receba uma prévia para ouvir antes da entrega final." },
-    { n: "04", title: "Receba sua música", desc: "Baixe e compartilhe esse momento especial com quem você ama." },
+    { n: "01", title: "Você conta sua história", desc: "Compartilhe a emoção, o momento e a pessoa que você quer homenagear." },
+    { n: "02", title: "Nós criamos a letra", desc: "Transformamos sua história em uma mensagem emocional, envolvente e exclusiva." },
+    { n: "03", title: "Você aprova", desc: "Receba a prévia e confirme o resultado com tranquilidade antes da música final." },
+    { n: "04", title: "Você recebe sua música", desc: "Baixe a composição final e compartilhe esse momento especial com quem você ama." },
   ];
   return (
     <section id="como-funciona" className="bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_30%),#041827] px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
           eyebrow="Como funciona"
-          title="Quatro passos para sua canção"
-          subtitle="Um processo simples, acolhedor e feito com cuidado para que sua história ganhe melodia."
+          title="Seu testemunho merece virar uma canção"
+          subtitle="Transforme sua história de fé, amor e superação em uma música gospel exclusiva, criada especialmente para você ou para alguém especial."
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
@@ -845,46 +834,54 @@ function Differentials() {
 /* ---------------- Testimonials ---------------- */
 function Testimonials() {
   const items = [
-    { quote: "Nossa família chorou ouvindo a música. Foi como se cada palavra fosse nossa.", name: "Aline R." },
-    { quote: "Foi o presente mais emocionante que já demos. Inesquecível, de verdade.", name: "Marcos & Júlia" },
-    { quote: "Parecia que Deus havia escrito aquela letra junto com a nossa história.", name: "Pastor Rafael" },
+    {
+      quote: "Eu chorei ao ouvir a música. Eles conseguiram colocar toda a nossa história em uma canção com tanto carinho.",
+      name: "Maria, SP",
+    },
+    {
+      quote: "Foi o presente mais emocionante que já demos. A letra parecia ter sido escrita exatamente para a nossa família.",
+      name: "Marcos & Júlia",
+    },
+    {
+      quote: "A mensagem ficou tão forte e tão pessoal que até os meus pais ficaram emocionados. Valeu cada detalhe.",
+      name: "Rafael, RJ",
+    },
+    {
+      quote: "A música tocou no coração da minha esposa e ela disse que parecia uma parte da nossa história em forma de música.",
+      name: "Thiago, MG",
+    },
   ];
-  const [i, setI] = useState(0);
-  useEffect(() => {
-    const t = setInterval(() => setI((p) => (p + 1) % items.length), 6000);
-    return () => clearInterval(t);
-  }, [items.length]);
+
   return (
     <section className="bg-gradient-to-b from-[var(--soft-gray)] to-background px-5 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-4xl">
-        <SectionHeader eyebrow="Depoimentos" title="Histórias que viraram canção" />
-        <div className="reveal mt-12 overflow-hidden rounded-3xl border border-border bg-card p-8 shadow-[var(--shadow-soft)] md:p-12">
-          <div className="flex justify-center gap-1 text-[var(--gold)]">
-            {Array.from({ length: 5 }).map((_, k) => (
-              <Star key={k} className="h-5 w-5 fill-current" />
-            ))}
-          </div>
-          <blockquote
-            key={i}
-            className="mx-auto mt-6 max-w-2xl text-balance text-center font-display text-2xl font-medium leading-relaxed text-primary animate-fade-up sm:text-3xl"
-          >
-            “{items[i].quote}”
-          </blockquote>
-          <div className="mt-6 text-center text-sm uppercase tracking-[0.18em] text-muted-foreground">
-            {items[i].name}
-          </div>
-          <div className="mt-8 flex justify-center gap-2">
-            {items.map((_, k) => (
-              <button
-                key={k}
-                aria-label={`Depoimento ${k + 1}`}
-                onClick={() => setI(k)}
-                className={`h-1.5 rounded-full transition-all ${
-                  k === i ? "w-8 bg-[var(--gold)]" : "w-2 bg-border"
-                }`}
-              />
-            ))}
-          </div>
+      <div className="mx-auto max-w-6xl">
+        <SectionHeader
+          eyebrow="Depoimentos"
+          title="Histórias que viraram canção"
+          subtitle="Pessoas que confiaram na sua história para criar algo que vai ficar marcado para sempre."
+        />
+
+        <div className="reveal mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
+          {items.map((item) => (
+            <div
+              key={item.name}
+              className="flex h-full flex-col rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
+            >
+              <div className="flex gap-1 text-[var(--gold)]">
+                {Array.from({ length: 5 }).map((_, k) => (
+                  <Star key={k} className="h-4 w-4 fill-current" />
+                ))}
+              </div>
+
+              <blockquote className="mt-5 flex-1 text-base leading-relaxed text-primary">
+                “{item.quote}”
+              </blockquote>
+
+              <div className="mt-6 border-t border-border pt-4 text-sm font-medium uppercase tracking-[0.12em] text-muted-foreground">
+                {item.name}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -1481,7 +1478,7 @@ function FinalCTA() {
             <StartMusicWidget
               buttonClassName="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               buttonStyle={GRADIENT_GOLD}
-              label="Criar Minha Música"
+              label="Criar Minha Canção — R$19,90"
               icon={<Sparkles className="h-5 w-5" />}
             />
           </div>
