@@ -120,9 +120,9 @@ function Header() {
             <Music className="h-4 w-4" /> Acompanhar Pedido
           </a>
           <StartMusicWidget
-            buttonClassName="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            buttonClassName="inline-flex items-center gap-2 rounded-full px-5 py-2.5 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
             buttonStyle={GRADIENT_GOLD}
-            label="Criar Minha Canção — R$19,90"
+            label="Criar Minha Canção"
             icon={<Sparkles className="h-4 w-4" />}
           />
         </div>
@@ -472,19 +472,6 @@ function StartMusicWidget({
                   className="w-full rounded-2xl border border-[var(--sky-blue)]/60 bg-[#071a2d] px-4 py-4 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
                   placeholder={current.placeholder}
                 />
-                <div className="grid gap-3 md:grid-cols-2">
-                  {descriptionSuggestions.map((suggestion) => (
-                    <button
-                      key={suggestion.label}
-                      type="button"
-                      onClick={() => setForm((prev) => ({ ...prev, descricao: prev.descricao.trim() ? `${prev.descricao.trim()} ${suggestion.value}` : suggestion.value }))}
-                      className="rounded-2xl border border-[var(--sky-blue)]/50 bg-[#071a2d] p-4 text-left text-sm text-sky-50 transition-colors hover:border-[var(--gold)]/60 hover:text-[#f4e8d8]"
-                    >
-                      <span className="font-semibold text-[#f4e8d8]">{suggestion.label}</span>
-                      <p className="mt-1 text-sky-100/80">{suggestion.value}</p>
-                    </button>
-                  ))}
-                </div>
                 <div className="rounded-2xl border border-[var(--sky-blue)]/40 bg-[rgba(19,60,82,0.35)] p-4 text-sm leading-relaxed text-sky-100/80">
                   <h5 className="mb-2 font-semibold text-[#f4e8d8]">Dicas para deixar a música perfeita</h5>
                   <ul className="list-disc space-y-2 pl-5">
@@ -529,7 +516,7 @@ function StartMusicWidget({
                 type="button"
                 onClick={next}
                 style={GRADIENT_GOLD}
-                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               >
                 Continuar <Sparkles className="h-4 w-4" />
               </button>
@@ -539,7 +526,7 @@ function StartMusicWidget({
                 onClick={submit}
                 disabled={status === "loading"}
                 style={GRADIENT_GOLD}
-                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
               >
                 {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 {status === "loading" ? "Enviando..." : "Enviar pedido"}
@@ -636,18 +623,11 @@ function Hero() {
             Conte sua história e receba uma canção criada especialmente para você ou para alguém especial.
           </p>
 
-          <div
-            className="mt-4 text-balance text-xl font-semibold text-[var(--gold)] animate-fade-up"
-            style={{ animationDelay: "260ms" }}
-          >
-            Por apenas R$ 19,90
-          </div>
-
           <p
-            className="mt-3 max-w-2xl text-balance text-sm text-sky-50/80 animate-fade-up"
+            className="mt-6 max-w-2xl text-balance text-sm text-sky-50/80 animate-fade-up"
             style={{ animationDelay: "310ms" }}
           >
-            Você conta sua história → aprova a letra → recebe sua música
+            Você conta sua história → aprova a letra → ouve a prévia → recebe sua música
           </p>
 
           <div
@@ -655,9 +635,9 @@ function Hero() {
             style={{ animationDelay: "320ms" }}
           >
             <StartMusicWidget
-              buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               buttonStyle={GRADIENT_GOLD}
-              label="Criar Minha Canção — R$19,90"
+              label="Criar Minha Canção"
               icon={<Sparkles className="h-4 w-4" />}
             />
             <a
@@ -1376,7 +1356,7 @@ function OrderForm() {
                     type="button"
                     onClick={next}
                     style={GRADIENT_GOLD}
-                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
                   >
                     Continuar <Sparkles className="h-4 w-4" />
                   </button>
@@ -1386,7 +1366,7 @@ function OrderForm() {
                     onClick={submit}
                     disabled={status === "loading"}
                     style={GRADIENT_GOLD}
-                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
                   >
                     {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     {status === "loading" ? "Enviando…" : "Enviar meu pedido"}
@@ -1476,9 +1456,9 @@ function FinalCTA() {
               Comece agora — basta contar o que vive no seu coração.
             </p>
             <StartMusicWidget
-              buttonClassName="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-primary shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              buttonClassName="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               buttonStyle={GRADIENT_GOLD}
-              label="Criar Minha Canção — R$19,90"
+              label="Criar Minha Canção"
               icon={<Sparkles className="h-5 w-5" />}
             />
           </div>
