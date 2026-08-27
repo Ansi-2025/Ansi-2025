@@ -606,14 +606,14 @@ function Hero() {
         <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
             <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
-            Música Gospel Personalizada
+            Música Personalizada
           </span>
 
           <h1
             className="text-balance font-display text-4xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl animate-fade-up"
             style={{ animationDelay: "120ms" }}
           >
-            Sua história pode virar uma <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">música gospel personalizada</span>
+            Sua história pode virar uma <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">canção personalizada</span>
           </h1>
 
           <p
@@ -712,7 +712,7 @@ function HowItWorks() {
         <SectionHeader
           eyebrow="Como funciona"
           title="Seu testemunho merece virar uma canção"
-          subtitle="Transforme sua história de fé, amor e superação em uma música gospel exclusiva, criada especialmente para você ou para alguém especial."
+          subtitle="Transforme sua história em uma música exclusiva, criada especialmente para você ou para alguém especial."
         />
         <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((s, i) => (
@@ -870,13 +870,12 @@ function Testimonials() {
 
 /* ---------------- Order Form (multi-step) ---------------- */
 const TIPOS_MUSICA = [
-  "Adoração",
-  "Congregacional",
-  "Intimista / Acústica",
-  "Romântica Gospel",
+  "Romântica",
+  "Acústica",
+  "Pop",
+  "Sertanejo",
+  "Forró",
   "Infantil",
-  "Sertanejo Gospel",
-  "Pop Gospel",
   "Outro",
 ];
 
@@ -886,7 +885,6 @@ const OUTRO_GENEROS = [
   "Anos 80",
   "Forró",
   "Funk carioca / Funk brasileiro",
-  "Gospel / Música cristã",
   "Jazz / Instrumental",
   "MPB",
   "Pagode",
@@ -897,6 +895,8 @@ const OUTRO_GENEROS = [
   "Reggae",
   "Cantiga infantil",
   "K-Pop",
+  "Acústica",
+  "Clássica",
 ];
 
 const TIPOS_CANTOR = [
@@ -1385,7 +1385,7 @@ function OrderForm() {
 function FAQ() {
   const items = [
     { q: "Quanto tempo demora?", a: "Em média, sua música fica pronta em até 12 horas após o envio da sua história." },
-    { q: "Posso escolher o estilo?", a: "Sim! Você pode indicar o estilo gospel preferido — adoração, congregacional, intimista, entre outros." },
+    { q: "Posso escolher o estilo?", a: "Sim! Você pode indicar o estilo que prefere — romântico, pop, acústico, sertanejo, forró, entre outros." },
     { q: "Posso pedir alterações?", a: "Claro. Enviamos uma prévia para você ouvir e ajustar antes da entrega final." },
     { q: "Como recebo a música?", a: "A entrega é 100% digital, em alta qualidade, direto no seu e-mail ou WhatsApp." },
     { q: "É realmente exclusiva?", a: "Sim. Cada canção é criada do zero, inspirada apenas na sua história. Nada de modelos prontos." },
@@ -1450,7 +1450,7 @@ function FinalCTA() {
               <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" /> Sua canção exclusiva
             </span>
             <h2 className="mx-auto mt-6 max-w-3xl text-balance font-display text-4xl font-semibold leading-[1.1] text-white sm:text-5xl md:text-6xl">
-              Transforme sua história em uma canção inesquecível.
+              Transforme sua história em uma música inesquecível.
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-balance text-white/80">
               Comece agora — basta contar o que vive no seu coração.
@@ -1486,7 +1486,7 @@ function Footer() {
             </div>
           </div>
           <p className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-            Músicas gospel personalizadas, feitas com cuidado para eternizar histórias de fé, amor e gratidão.
+            Músicas personalizadas, feitas com cuidado para eternizar histórias de amor, emoção e lembranças.
           </p>
         </div>
         <div>
