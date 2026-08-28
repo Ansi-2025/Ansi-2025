@@ -13,7 +13,7 @@ const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const PIX_PAYMENT_CODE = "11287911960";
 const OWNER_WHATSAPP_NUMBER = "5541997232395";
-const PREVIEW_LIMIT_SECONDS = 40;
+const PREVIEW_LIMIT_SECONDS = 60;
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
