@@ -12,7 +12,7 @@ const searchSchema = z.object({ id: z.string().optional(), token: z.string().opt
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
 const OWNER_WHATSAPP_NUMBER = "5541997232395";
-const PREVIEW_LIMIT_SECONDS = 60;
+const PREVIEW_LIMIT_SECONDS = 45;
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
 
 const buildOrderDownloadWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente" | "segunda_versao">) => {
@@ -763,11 +763,11 @@ function Timeline({
   const currentIdx = STATUS_FLOW.indexOf(effectiveStatus);
   const timelineLabel = (step: PedidoStatus) => {
     if (step === "pagamento" && isStripeProcessing) {
-      return "Pagamento em análise";
+      return "Confirmando seu pagamento";
     }
 
     if (step === "pago" && order.status === "pago") {
-      return "Pagamento recebido - liberando seu produto";
+      return "Pagamento confirmado!";
     }
 
     return STATUS_LABELS[step];
@@ -831,29 +831,52 @@ function Timeline({
 
   return (
     <div className="mx-auto mt-4 w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-4 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] sm:p-6 md:mt-8 md:p-8">
-      <div className="mb-4 sm:mb-6">
-        <p className="text-[10px] uppercase tracking-[0.18em] text-zinc-400 sm:text-xs">Pedido de</p>
-        <h2 className="mt-1 font-display text-xl font-semibold text-[#f8f5f2] sm:text-2xl">{order.nome_cliente}</h2>
-        <p className="mt-1 text-sm text-zinc-400">
-          {order.genero_musical ?? "Gênero não informado"}
-          {shouldShowDuration ? ` · ${order.duracao_segundos}s` : ""}
-        </p>
-        <div className="mt-3 flex flex-wrap gap-2">
-          <span className={`inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d]" : "border border-white/10 bg-[#0d1117] text-zinc-400"}`}>
-            {order.segunda_versao ? "2 versões incluídas" : "1 versão"}
+      <div className="mb-5 rounded-[28px] border border-[#ff84b6]/20 bg-[linear-gradient(180deg,rgba(18,21,29,0.96),rgba(10,16,24,0.96))] p-4 shadow-[0_20px_45px_rgba(0,0,0,0.34)] sm:p-5">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] uppercase tracking-[0.22em] text-[#ffb2c9]">SUA MÚSICA ESTÁ PRONTA</p>
+            <h2 className="mt-2 font-display text-2xl font-semibold leading-none tracking-[-0.05em] text-[#f8f5f2] sm:text-3xl">{order.nome_cliente}</h2>
+          </div>
+          <span className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.12em] ${order.segunda_versao ? "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d]" : "border-white/10 bg-[#0d1117] text-zinc-400"}`}>
+            {order.segunda_versao ? "2 versões" : "1 versão"}
           </span>
+        </div>
+
+        <div className="mt-4 grid gap-2 rounded-2xl border border-white/10 bg-[#121922] p-3 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
+          <div className="flex items-center justify-between gap-4">
+            <span>Estilo</span>
+            <span className="text-right font-medium text-zinc-200">{order.genero_musical ?? "Estilo personalizado"}</span>
+          </div>
+          {shouldShowDuration && (
+            <div className="flex items-center justify-between gap-4">
+              <span>Duração</span>
+              <span className="text-right font-medium text-zinc-200">{order.duracao_segundos}s</span>
+            </div>
+          )}
+          {order.ocasiao && (
+            <div className="flex items-center justify-between gap-4">
+              <span>Ocasião</span>
+              <span className="max-w-[60%] truncate text-right font-medium text-zinc-200">{order.ocasiao}</span>
+            </div>
+          )}
+          {order.para_quem && (
+            <div className="flex items-center justify-between gap-4">
+              <span>Para</span>
+              <span className="max-w-[60%] truncate text-right font-medium text-zinc-200">{order.para_quem}</span>
+            </div>
+          )}
         </div>
 
         {isStripeProcessing && (
           <div className="mt-4 rounded-2xl border border-[#d4af69]/30 bg-[#d4af69]/10 p-4 text-sm text-[#f3d59d]">
-            <p className="font-semibold">Pagamento em análise</p>
-            <p className="mt-1 text-zinc-300">Aguarde por gentileza. Estamos confirmando o pagamento com a Stripe e em seguida liberamos sua música.</p>
+            <p className="font-semibold">🟡 CONFIRMANDO SEU PAGAMENTO</p>
+            <p className="mt-1 text-zinc-300">Estamos verificando seu pagamento com segurança. Assim que for confirmado, sua música será liberada automaticamente.</p>
           </div>
         )}
         {paymentReceived && (
           <div className="mt-4 rounded-2xl border border-[#34d399]/30 bg-[#34d399]/10 p-4 text-sm text-[#bbf7d0]">
-            <p className="font-semibold">Pagamento recebido com sucesso</p>
-            <p className="mt-1 text-zinc-200">Pagamento confirmado. Sua música completa será liberada automaticamente em instantes.</p>
+            <p className="font-semibold">🟢 PAGAMENTO CONFIRMADO!</p>
+            <p className="mt-1 text-zinc-200">Sua música completa está sendo liberada. 🎵</p>
             {!order.url_musica && !order.url_musica_segunda_versao && (
               <p className="mt-2 font-medium text-[#ffd7dd]">Estamos finalizando a liberação do arquivo completo para download.</p>
             )}
@@ -892,9 +915,11 @@ function Timeline({
         )}
         {previewReady && !paymentReceived && primaryPreviewUrl && (
           <div className="mt-4 rounded-[28px] border border-[#ff7ae5]/25 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-            <p className="text-sm font-semibold text-[#ffd7e7]">Essa música foi feita especialmente para você.</p>
-            <h3 className="mt-2 font-display text-[1.8rem] leading-none font-semibold text-[#f8f5f2]">Sua prévia está pronta!</h3>
-            <p className="mt-2 text-sm text-zinc-300">Ouça agora uma prévia de até {PREVIEW_LIMIT_SECONDS} segundos da sua música.</p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#ff9fc7]/30 bg-[#ff9fc7]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ffd7e7]">
+              <Headphones className="h-3.5 w-3.5" /> 🎵 SUA PRÉVIA ESTÁ PRONTA
+            </div>
+            <h3 className="mt-4 font-display text-[1.9rem] leading-none font-semibold text-[#f8f5f2] sm:text-[2.2rem]">Essa música foi feita especialmente para você.</h3>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">Ouça agora um trecho da sua história transformada em música.</p>
 
             <OrderAudioPlayer
               src={`${primaryPreviewUrl}#t=0,${PREVIEW_LIMIT_SECONDS}`}
@@ -916,9 +941,55 @@ function Timeline({
 
             {!showSecondPreview && secondaryPreviewUrl && (
               <p className="mt-3 text-xs text-zinc-400">
-                Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">Quero mais uma versão da mesma história</strong>.
+                Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">⭐ QUERO UMA 2ª VERSÃO</strong>.
               </p>
             )}
+
+            <div className="mt-5 rounded-[22px] border border-[#ff7ae5]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.04))] p-4 sm:p-5">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">Gostou do que ouviu? ❤️</p>
+              <h4 className="mt-2 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Imagine ouvir sua história completa em uma música.</h4>
+
+              <div className="mt-4 rounded-[18px] border border-[#d4af69]/30 bg-[#d4af69]/8 p-3 sm:p-4">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f3d59d]">LIBERE SUA MÚSICA COMPLETA</p>
+                <div className="mt-3 flex items-end justify-between gap-4">
+                  <span className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#f8f5f2]">R$ 10,00</span>
+                  <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-300">Pagamento seguro</span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => void openStripeCheckout(secondVersionSelected)}
+                disabled={checkoutLoading}
+                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-sm font-black uppercase tracking-[0.08em] text-white shadow-[0_18px_30px_rgba(217,70,239,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+              >
+                {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                {checkoutLoading ? "PROCESSANDO..." : "🎵 QUERO MINHA MÚSICA COMPLETA"}
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
+              {[
+                "Música completa",
+                "Feita especialmente para sua história",
+                "Qualidade final",
+                "Pagamento seguro",
+                "Liberação automática após confirmação",
+              ].map((benefit) => (
+                <div key={benefit} className="flex items-center gap-2 rounded-full border border-white/10 bg-[#101720] px-3 py-2">
+                  <CheckCircle2 className="h-4 w-4 text-[#8fe8b7]" />
+                  <span>{benefit}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d4af69]/25 bg-[#0f1722] p-3 text-sm text-zinc-300">
+              <ShieldCheck className="h-5 w-5 text-[#f3d59d]" />
+              <div>
+                <p className="font-semibold text-[#f3d59d]">Pagamento seguro</p>
+                <p>Seu pagamento é processado com segurança pela Stripe.</p>
+              </div>
+            </div>
           </div>
         )}
         {paymentReceived && (order.url_musica || order.url_musica_segunda_versao) && (
@@ -1291,9 +1362,10 @@ function Timeline({
                       onClick={() => setSecondVersionSelected((prev) => !prev)}
                       className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d] hover:bg-[#d4af69]/15"}`}
                     >
-                      <span>Quero mais uma versão da mesma história</span>
+                      <span className="flex items-center gap-2"><span aria-hidden>⭐</span> QUERO UMA 2ª VERSÃO</span>
                       <span>+R$ 5,00</span>
                     </button>
+                    <p className="mt-2 text-xs text-zinc-300">Pode ser outro estilo, emoção ou interpretação.</p>
                   </div>
 
                   {checkoutError && <p className="mt-3 text-sm text-[#ffb3bf]">{checkoutError}</p>}
@@ -1330,9 +1402,10 @@ function Timeline({
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
                   className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
-                  <span>Quero mais uma versão da mesma história</span>
+                  <span className="flex items-center gap-2"><span aria-hidden>⭐</span> QUERO UMA 2ª VERSÃO</span>
                   <span>+R$ 5,00</span>
                 </button>
+                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#6b4d00]">Pode ser outro estilo, emoção ou interpretação.</p>
                 <p className="mt-4 text-[0.97rem] font-medium leading-relaxed text-[#1a1400]">
                   A nova versão mantém a sua história base, mas com um estilo diferente, letra reimaginada e nova interpretação musical.
                 </p>

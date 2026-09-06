@@ -31,20 +31,23 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Transforme sua história de fé em uma música gospel exclusiva, criada especialmente para você e sua família. Produção profissional e entrega digital.",
+          "Música personalizada criada a partir da sua história. Receba uma canção exclusiva, feita com emoção, fé e entrega digital.",
       },
       { property: "og:title", content: "Canção de Fé — Músicas Gospel Personalizadas" },
       {
         property: "og:description",
         content:
-          "Sua história merece ser cantada. Crie uma canção gospel única, baseada na sua jornada de fé.",
+          "Sua história merece ser cantada. Crie uma música exclusiva, personalizada e feita para emocionar quem você ama.",
       },
       { property: "og:url", content: "/" },
+      { property: "og:image", content: heroImg },
       { name: "twitter:title", content: "Canção de Fé" },
       {
         name: "twitter:description",
-        content: "Músicas gospel personalizadas, criadas a partir da sua história.",
+        content: "Música personalizada criada a partir da sua história.",
       },
+      { name: "twitter:image", content: heroImg },
+      { name: "theme-color", content: "#081d2c" },
     ],
     links: [{ rel: "canonical", href: "/" }],
   }),
@@ -64,11 +67,13 @@ function Index() {
       <Header />
       <main>
         <Hero />
+        <Badges />
         <SampleSong />
         <EmotionalStory />
         <Occasions />
         <HowItWorks />
         <Testimonials />
+        <ProductHighlights />
         <OfferSection />
         <FAQ />
         <FinalCTA />
@@ -701,6 +706,12 @@ function Hero() {
             </a>
           </div>
 
+          <div className="mt-6 flex flex-wrap items-center justify-center gap-2 text-xs font-medium uppercase tracking-[0.16em] text-sky-100/80 animate-fade-up" style={{ animationDelay: "360ms" }}>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5">🔒 Pagamento seguro</span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5">⚡ Entrega digital</span>
+            <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5">💬 Atendimento no WhatsApp</span>
+          </div>
+
           <div
             className="mt-14 grid w-full max-w-3xl grid-cols-3 gap-4 text-center animate-fade-up"
             style={{ animationDelay: "420ms" }}
@@ -752,6 +763,10 @@ function SampleSong() {
             </button>
           </div>
 
+          <p className="mt-5 text-sm font-medium uppercase tracking-[0.18em] text-[#5c4a75]">
+            Antes de criar a sua, escute como uma história pode se transformar em música.
+          </p>
+
           <div className="mt-6 space-y-3 rounded-[1.5rem] border border-[#eadff8] bg-[#f9f5ff] p-4">
             <div className="flex items-center justify-between gap-3 text-sm text-[#4d3d5f]">
               <span className="font-semibold">Título</span>
@@ -788,6 +803,56 @@ function SampleSong() {
               icon={<Sparkles className="h-4 w-4" />}
             />
           </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function ProductHighlights() {
+  const highlights = [
+    {
+      title: "Música completa e exclusiva",
+      text: "Você recebe uma canção original, criada a partir da sua história e da sua emoção.",
+    },
+    {
+      title: "Letra personalizada",
+      text: "A letra é pensada para refletir a mensagem, os sentimentos e os detalhes que fazem sua história ser única.",
+    },
+    {
+      title: "Entrega digital",
+      text: "A música é entregue de forma digital, pronta para ouvir em qualquer momento.",
+    },
+    {
+      title: "Você participa da criação",
+      text: "A sua história guia o processo e a revisão ajuda a deixar a mensagem mais alinhada com o que você sente.",
+    },
+    {
+      title: "Feita para presente",
+      text: "Uma lembrança emocional que pode ser ouvida novamente em momentos especiais da vida.",
+    },
+  ];
+
+  return (
+    <section className="bg-[#f5edf9] px-5 py-20 md:px-8 md:py-28">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-10 text-center">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5a497f]">O que você recebe</p>
+          <h2 className="mt-3 font-display text-4xl font-semibold leading-tight text-[#1b1c2d] sm:text-5xl">
+            Uma música que carrega sua história.
+          </h2>
+        </div>
+
+        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+          {highlights.map((item) => (
+            <div key={item.title} className="reveal rounded-[1.6rem] border border-[#d7c6f0] bg-white/80 p-5 shadow-[0_10px_25px_rgba(46,36,66,0.06)]">
+              <div className="mb-4 grid h-10 w-10 place-items-center rounded-full bg-[#efe5ff] text-[#5a3ab3]">
+                <CheckCircle2 className="h-5 w-5" />
+              </div>
+              <h3 className="font-display text-xl font-semibold text-[#1d1b2d]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[#514c62]">{item.text}</p>
+            </div>
+          ))}
         </div>
       </div>
     </section>
@@ -865,9 +930,10 @@ function Badges() {
 function HowItWorks() {
   const steps = [
     { n: "01", title: "Você conta sua história", desc: "Compartilhe a emoção, o momento e a pessoa que você quer homenagear." },
-    { n: "02", title: "Nós criamos a letra", desc: "Transformamos sua história em uma mensagem emocional, envolvente e exclusiva." },
-    { n: "03", title: "Você aprova", desc: "Receba a prévia e confirme o resultado com tranquilidade antes da música final." },
-    { n: "04", title: "Você recebe sua música", desc: "Baixe a composição final e compartilhe esse momento especial com quem você ama." },
+    { n: "02", title: "Criamos sua letra", desc: "Transformamos os detalhes da sua história em uma mensagem emocional, envolvente e exclusiva." },
+    { n: "03", title: "Você aprova", desc: "Receba a proposta e confirme o que precisa ser ajustado antes de seguir para a música final." },
+    { n: "04", title: "Produzimos a música", desc: "A canção é feita com cuidado, arranjo e identidade sonora para refletir o momento real." },
+    { n: "05", title: "Você recebe", desc: "A música final chega de forma digital para você ouvir, guardar e compartilhar com quem ama." },
   ];
   return (
     <section id="como-funciona" className="bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_30%),#041827] px-5 py-24 md:px-8 md:py-32">
@@ -877,7 +943,7 @@ function HowItWorks() {
           title="Seu testemunho merece virar uma canção"
           subtitle="Transforme sua história em uma música exclusiva, criada especialmente para você ou para alguém especial."
         />
-        <div className="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="mt-14 grid gap-6 sm:grid-cols-2 xl:grid-cols-5">
           {steps.map((s, i) => (
             <div
               key={s.n}
@@ -1103,6 +1169,12 @@ function OfferSection() {
     "Possibilidade de revisão",
   ];
 
+  const paymentOptions = [
+    "Cartão de crédito e débito",
+    "Pagamento por PIX",
+    "Atendimento por WhatsApp para tirar dúvidas",
+  ];
+
   return (
     <section className="bg-[#f7f0ff] px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl rounded-[2rem] border border-[#d7c6f0] bg-white/80 p-6 shadow-[0_18px_40px_rgba(71,56,101,0.08)] md:p-10">
@@ -1147,6 +1219,31 @@ function OfferSection() {
                 </li>
               ))}
             </ul>
+
+            <div className="mt-6 rounded-[1.2rem] border border-[#d8c9f2] bg-white/70 p-4">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5a497f]">Pagamento e atendimento</p>
+              <ul className="mt-4 space-y-3 text-sm leading-relaxed text-[#4b405d]">
+                {paymentOptions.map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 grid h-5 w-5 place-items-center rounded-full bg-[#e8dcff] text-[#4a2d6d]">
+                      <CheckCircle2 className="h-3.5 w-3.5" />
+                    </span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+
+              <a
+                href={WHATSAPP_URL}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(37,211,102,0.25)] transition-transform hover:-translate-y-0.5"
+              >
+                <MessageCircle className="h-4 w-4" />
+                Falar no WhatsApp
+              </a>
+            </div>
+
             <p className="mt-6 rounded-[1.2rem] border border-[#d8c9f2] bg-white/70 p-4 text-sm leading-relaxed text-[#4b405d]">
               Revisa, aprova e recebe uma canção feita com cuidado, atenção e emoção — sem complicação.
             </p>
@@ -1701,11 +1798,14 @@ function OrderForm() {
 /* ---------------- FAQ ---------------- */
 function FAQ() {
   const items = [
+    { q: "Preciso saber escrever música?", a: "Não. Você só precisa contar a sua história, a emoção e o momento que quer celebrar. A partir disso, a música é criada para você." },
+    { q: "Como envio minha história?", a: "Você relata tudo no formulário do site, incluindo a pessoa, a ocasião e os detalhes que quiser que apareçam na letra e na mensagem da música." },
     { q: "Como recebo a música?", a: "A entrega é 100% digital. Depois do processo, você recebe a música por meio do WhatsApp e do canal de acompanhamento do pedido." },
     { q: "Quanto tempo demora?", a: "O processo é rápido e pensado para ser simples: você conta a história, aprova a letra e a música é produzida de acordo com o processo do projeto." },
     { q: "Posso escolher o estilo?", a: "Sim. Você pode indicar o estilo musical que mais combina com a sua história, como romântico, pop, acústico, sertanejo, forró e outros." },
+    { q: "Posso fazer uma música para outra pessoa?", a: "Sim. O processo foi pensado para música para presente, homenagem, aniversário, casamento, família e qualquer momento especial." },
     { q: "Posso pedir alterações?", a: "Sim. A prévia da música e a revisão da letra fazem parte do processo para você ajustar o que for preciso antes da entrega final." },
-    { q: "Posso fazer para outra pessoa?", a: "Sim. O processo foi pensado para música para presente, homenagem, aniversário, casamento, família e qualquer momento especial." },
+    { q: "Posso usar como presente?", a: "Sim. Essa é uma das principais ideias do serviço: transformar uma história real em um presente emocional, pessoal e inesquecível." },
     { q: "O pagamento é seguro?", a: "O projeto utiliza checkout seguro para processar a compra e mantém o acompanhamento do pedido de forma transparente." },
   ];
   const [open, setOpen] = useState<number | null>(0);
