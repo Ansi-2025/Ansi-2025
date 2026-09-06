@@ -5,6 +5,7 @@ import {
   Play,
   Music,
   Heart,
+  Gift,
   Sparkles,
   CheckCircle2,
   MessageCircle,
@@ -52,6 +53,7 @@ export const Route = createFileRoute("/")({
 
 const WHATSAPP_URL = "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
 const EXAMPLE_AUDIO_URL = "https://coivogokbzizhwfhywkp.supabase.co/storage/v1/object/public/musicas/Cancao%20de%20fe.mp3";
+const STARTING_PRICE = 10;
 const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
 const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
@@ -62,11 +64,12 @@ function Index() {
       <Header />
       <main>
         <Hero />
-        <Badges />
-        <HowItWorks />
+        <SampleSong />
+        <EmotionalStory />
         <Occasions />
-        <Differentials />
+        <HowItWorks />
         <Testimonials />
+        <OfferSection />
         <FAQ />
         <FinalCTA />
       </main>
@@ -135,12 +138,14 @@ function StartMusicWidget({
   label,
   icon,
   initialOpen = false,
+  initialFormState,
 }: {
   buttonClassName?: string;
   buttonStyle?: React.CSSProperties;
   label: string;
   icon?: React.ReactNode;
   initialOpen?: boolean;
+  initialFormState?: Partial<OrderFormState>;
 }) {
   const send = useServerFn(sendOrder);
   const navigate = useNavigate();
@@ -161,15 +166,16 @@ function StartMusicWidget({
     tipo_cantor: "feminino",
     descricao: "",
     bot_field: "",
+    ...initialFormState,
   });
 
   const widgetSteps = [
-    { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6", placeholder: "Ex.: Maria Silva Souza" },
-    { key: "telefone_cliente", label: "Qual é o seu WhatsApp? (obrigatório)", eyebrow: "Passo 2 de 6", placeholder: "(99) 99999-9999" },
-    { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 3 de 6", placeholder: "Ex.: Minha esposa, meu filho" },
-    { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 4 de 6", placeholder: "Ex.: Aniversário, casamento" },
-    { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 5 de 6", placeholder: "" },
-    { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 6 de 6", placeholder: "Ex.: Quero uma música emocionante sobre nossa história..." },
+    { key: "para_quem", label: "Para quem você quer criar essa canção? ❤️", eyebrow: "Etapa 1 de 6", placeholder: "Ex.: Minha esposa, meu filho" },
+    { key: "nome_cliente", label: "Como podemos te chamar?", eyebrow: "Etapa 2 de 6", placeholder: "Ex.: Maria Silva Souza" },
+    { key: "telefone_cliente", label: "Qual é o seu WhatsApp?", eyebrow: "Etapa 3 de 6", placeholder: "(99) 99999-9999" },
+    { key: "ocasiao", label: "Qual é a ocasião especial?", eyebrow: "Etapa 4 de 6", placeholder: "Ex.: Aniversário, casamento, batismo" },
+    { key: "genero_musical", label: "Qual estilo combina com essa história?", eyebrow: "Etapa 5 de 6", placeholder: "" },
+    { key: "descricao", label: "Conte a história em poucas palavras", eyebrow: "Etapa 6 de 6", placeholder: "Ex.: Quero uma música emocionante sobre nossa jornada, fé e amor..." },
   ] as const;
 
   const occasionSuggestions = [
@@ -221,6 +227,7 @@ function StartMusicWidget({
       tipo_cantor: "feminino",
       descricao: "",
       bot_field: "",
+      ...initialFormState,
     });
   };
 
@@ -342,11 +349,12 @@ function StartMusicWidget({
             </div>
           </div>
 
-          <div className="mb-5">
+          <div className="mb-5 flex items-center justify-between gap-3">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#d2c0f3] bg-[#f0e8ff] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b4cb0]">
               <Sparkles className="h-3.5 w-3.5 text-[#8b70df]" />
               Criar minha música
             </div>
+            <span className="text-xs font-medium text-[#655b76]">Leva menos de 3 minutos</span>
           </div>
 
           <div className="mb-6">
@@ -578,6 +586,15 @@ function StartMusicWidget({
 }
 
 /* ---------------- Hero ---------------- */
+const playExampleAudio = () => {
+  const audio = document.getElementById("example-audio") as HTMLAudioElement | null;
+  if (!audio) return;
+
+  audio.volume = 0.15;
+  audio.currentTime = 0;
+  audio.play().catch(() => undefined);
+};
+
 function Hero() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isExamplePlaying, setIsExamplePlaying] = useState(false);
@@ -593,16 +610,8 @@ function Hero() {
 
   const handleExampleClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     event.preventDefault();
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.volume = 0.15;
-    audio.currentTime = 0;
-    audio.play()
-      .then(() => setIsExamplePlaying(true))
-      .catch(() => {
-        setIsExamplePlaying(false);
-      });
+    playExampleAudio();
+    setIsExamplePlaying(true);
 
     const target = document.getElementById("exemplos");
     target?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -625,7 +634,7 @@ function Hero() {
 
   return (
     <>
-      <audio ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" playsInline onPause={() => setIsExamplePlaying(false)} onPlay={() => setIsExamplePlaying(true)} />
+      <audio id="example-audio" ref={audioRef} src={EXAMPLE_AUDIO_URL} preload="auto" playsInline onPause={() => setIsExamplePlaying(false)} onPlay={() => setIsExamplePlaying(true)} />
       <section id="top" className="relative isolate overflow-hidden bg-[#041827]">
         <div className="absolute inset-0 -z-10">
           <img
@@ -647,25 +656,30 @@ function Hero() {
             Música Personalizada
           </span>
 
+          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-1.5 text-[10px] font-semibold uppercase tracking-[0.24em] text-sky-100/90 backdrop-blur animate-fade-up">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
+            Uma história. Uma canção. Uma lembrança para sempre.
+          </span>
+
           <h1
             className="text-balance font-display text-4xl font-semibold leading-[1.05] text-white sm:text-6xl md:text-7xl animate-fade-up"
             style={{ animationDelay: "120ms" }}
           >
-            Sua história pode virar uma <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">canção personalizada</span>
+            Transforme a história de vocês em uma <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">música personalizada</span>
           </h1>
 
           <p
             className="mt-6 max-w-2xl text-balance text-base text-sky-50/85 sm:text-lg animate-fade-up"
             style={{ animationDelay: "220ms" }}
           >
-            Conte sua história e receba uma canção criada especialmente para você ou para alguém especial.
+            Conte os momentos que marcaram sua vida, escolha o estilo e transforme tudo em uma canção feita especialmente para você ou para alguém que você ama.
           </p>
 
           <p
             className="mt-6 max-w-2xl text-balance text-sm text-sky-50/80 animate-fade-up"
             style={{ animationDelay: "310ms" }}
           >
-            Você conta sua história → aprova a letra → ouve a prévia → recebe sua música
+            Feita para celebrar fé, gratidão, amor e a memória de um momento especial.
           </p>
 
           <div
@@ -675,16 +689,15 @@ function Hero() {
             <StartMusicWidget
               buttonClassName="inline-flex items-center gap-2 rounded-full px-8 py-4 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               buttonStyle={GRADIENT_GOLD}
-              label="Criar Minha Canção"
+              label="❤️ Criar Minha Canção"
               icon={<Sparkles className="h-4 w-4" />}
-              initialOpen
             />
             <a
-              href="#exemplos"
+              href="#escute"
               onClick={handleExampleClick}
               className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/5 px-7 py-3.5 text-sm font-semibold text-white backdrop-blur transition-colors hover:bg-white/15"
             >
-              <Play className="h-4 w-4" /> Ouvir um exemplo
+              <Play className="h-4 w-4" /> 🎧 Ouvir um exemplo
             </a>
           </div>
 
@@ -710,6 +723,117 @@ function Stat({ value, label, icon }: { value: string; label: string; icon?: Rea
       </div>
       <div className="mt-1 text-[11px] uppercase tracking-[0.18em] text-sky-100/75">{label}</div>
     </div>
+  );
+}
+
+function SampleSong() {
+  return (
+    <section id="escute" className="bg-[#f6f1fa] px-5 py-20 md:px-8 md:py-28">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
+        <div className="reveal rounded-[2rem] border border-[#d7c7ee] bg-white/80 p-6 shadow-[0_18px_40px_rgba(41,33,63,0.08)] md:p-8">
+          <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-[#d9c8f5] bg-[#f1e9ff] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5a497f]">
+            <Headphones className="h-3.5 w-3.5 text-[#7b5ad8]" />
+            Música de exemplo
+          </div>
+
+          <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6c5c7e]">Canção do projeto</p>
+              <h2 className="mt-2 font-display text-3xl font-semibold leading-tight text-[#1f1a24] sm:text-4xl">
+                História de fé e amor
+              </h2>
+            </div>
+            <button
+              type="button"
+              onClick={playExampleAudio}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[var(--gold)] px-5 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+            >
+              <Play className="h-4 w-4" /> Ouvir áudio
+            </button>
+          </div>
+
+          <div className="mt-6 space-y-3 rounded-[1.5rem] border border-[#eadff8] bg-[#f9f5ff] p-4">
+            <div className="flex items-center justify-between gap-3 text-sm text-[#4d3d5f]">
+              <span className="font-semibold">Título</span>
+              <span>Canção de Fé</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-sm text-[#4d3d5f]">
+              <span className="font-semibold">Estilo</span>
+              <span>Pop gospel / emocional</span>
+            </div>
+            <div className="flex items-center justify-between gap-3 text-sm text-[#4d3d5f]">
+              <span className="font-semibold">Narrativa</span>
+              <span>História real com fé e gratidão</span>
+            </div>
+          </div>
+
+          <p className="mt-6 max-w-xl text-base leading-relaxed text-[#4e465a]">
+            Essa é a mesma ideia por trás do processo: transformar uma história real em uma canção emocional, pessoal e feita para ser guardada para sempre.
+          </p>
+        </div>
+
+        <div className="reveal rounded-[2rem] border border-[#e2d6f7] bg-[linear-gradient(135deg,#0c1a2a,#102844)] p-6 text-white shadow-[0_18px_40px_rgba(11,24,38,0.18)] md:p-8">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-sky-100/80">Experiência</p>
+          <h3 className="mt-3 font-display text-3xl font-semibold leading-tight text-white">
+            Não é apenas uma música.
+          </h3>
+          <p className="mt-4 text-base leading-relaxed text-sky-50/80">
+            É a lembrança de um momento que tocou o coração e agora vira um presente que pode ser ouvido em qualquer lugar.
+          </p>
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+            <StartMusicWidget
+              buttonClassName="inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              buttonStyle={GRADIENT_GOLD}
+              label="❤️ Criar Minha Canção"
+              icon={<Sparkles className="h-4 w-4" />}
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function EmotionalStory() {
+  const points = [
+    "Histórias que merecem ser lembradas",
+    "Momentos que marcaram a vida",
+    "Sentimentos que não cabem em palavras",
+    "Gratidão, fé, amor e homenagem",
+  ];
+
+  return (
+    <section className="bg-[#091b2d] px-5 py-20 md:px-8 md:py-28">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+        <div className="reveal">
+          <div className="inline-flex items-center gap-2 rounded-full border border-[#d6c7f1]/20 bg-white/5 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-sky-100/80">
+            <Heart className="h-3.5 w-3.5 text-[var(--gold)]" />
+            Lembrança eterna
+          </div>
+          <h2 className="mt-5 font-display text-4xl font-semibold leading-tight text-white sm:text-5xl">
+            Não é apenas uma música.
+          </h2>
+          <p className="mt-5 max-w-xl text-lg leading-relaxed text-sky-50/80">
+            É uma lembrança que pode ser ouvida para sempre. Algo que transforma histórias, sentimentos e momentos em um presente emocional de verdade.
+          </p>
+        </div>
+
+        <div className="reveal grid gap-4 sm:grid-cols-2">
+          {points.map((item, index) => (
+            <div
+              key={item}
+              className="rounded-[1.5rem] border border-white/10 bg-white/5 p-5 text-left shadow-[0_12px_30px_rgba(5,12,18,0.15)]"
+              style={{ transitionDelay: `${index * 60}ms` }}
+            >
+              <div className="mb-3 grid h-11 w-11 place-items-center rounded-full bg-[var(--gold)]/15 text-[var(--gold)]">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <p className="text-base font-medium text-white">{item}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
   );
 }
 
@@ -776,34 +900,48 @@ function HowItWorks() {
 /* ---------------- Occasions ---------------- */
 function Occasions() {
   const items = [
-    { emoji: "🙏", label: "Gratidão a Deus" },
-    { emoji: "❤️", label: "Homenagem para Esposa" },
-    { emoji: "👨‍👩‍👧", label: "Família" },
-    { emoji: "👶", label: "Nascimento" },
-    { emoji: "🎂", label: "Aniversário" },
-    { emoji: "💍", label: "Casamento" },
-    { emoji: "🎓", label: "Formatura" },
-    { emoji: "✝️", label: "Batismo" },
-    { emoji: "🌅", label: "Testemunho" },
-    { emoji: "🙌", label: "Ministério" },
+    { emoji: "❤️", label: "Minha esposa", summary: "Uma declaração de amor que conta a história de vocês.", para_quem: "Minha esposa" },
+    { emoji: "💙", label: "Meu marido", summary: "Uma canção feita para representar o amor de vocês.", para_quem: "Meu marido" },
+    { emoji: "🙏", label: "Minha mãe", summary: "Uma homenagem transformando gratidão em música.", para_quem: "Minha mãe" },
+    { emoji: "👨‍👩‍👧", label: "Minha família", summary: "Uma história de família transformada em canção.", para_quem: "Minha família" },
+    { emoji: "👶", label: "Meu filho(a)", summary: "Uma lembrança para guardar para sempre.", para_quem: "Meu filho(a)" },
+    { emoji: "✨", label: "Alguém especial", summary: "Uma mensagem de fé, gratidão e esperança.", para_quem: "Alguém especial" },
+    { emoji: "🎂", label: "Aniversário", summary: "Uma celebração emocionada em forma de música.", para_quem: "Aniversário" },
+    { emoji: "💍", label: "Casamento", summary: "A história do amor que se tornou uma lembrança eterna.", para_quem: "Casamento" },
+    { emoji: "✝️", label: "Batismo", summary: "Uma comemoração de fé e graça em forma de música.", para_quem: "Batismo" },
+    { emoji: "🌅", label: "Testemunho", summary: "Um presente para eternizar a jornada de fé.", para_quem: "Testemunho" },
   ];
+
   return (
     <section id="ocasioes" className="bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.10),transparent_35%),#041827] px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
-          eyebrow="Para cada momento"
-          title="Ocasiões para celebrar"
-          subtitle="Uma canção pode marcar para sempre os momentos que mais importam."
+          eyebrow="Para quem você quer criar?"
+          title="Transforme a história de quem você ama em uma música"
+          subtitle="Cada momento merece uma canção que relembre a emoção, a fé e o amor de verdade."
         />
-        <div className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-12 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
           {items.map((it, i) => (
             <div
               key={it.label}
-              className="reveal group flex flex-col items-center gap-2 rounded-2xl border border-sky-200/10 bg-[#0b1f2d]/80 px-4 py-6 text-center shadow-[0_8px_30px_rgba(7,17,25,0.35)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
+              className="reveal group flex h-full flex-col justify-between rounded-[1.8rem] border border-sky-200/10 bg-[#0b1f2d]/80 p-5 shadow-[0_8px_30px_rgba(7,17,25,0.35)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
               style={{ transitionDelay: `${i * 40}ms` }}
             >
-              <span className="text-3xl transition-transform group-hover:scale-110">{it.emoji}</span>
-              <span className="text-sm font-medium text-white">{it.label}</span>
+              <div>
+                <div className="mb-4 flex items-center gap-3">
+                  <span className="grid h-12 w-12 place-items-center rounded-full bg-[var(--gold)]/12 text-2xl shadow-[var(--shadow-gold)]">{it.emoji}</span>
+                  <span className="text-lg font-semibold text-white">{it.label}</span>
+                </div>
+                <p className="text-sm leading-relaxed text-sky-50/75">{it.summary}</p>
+              </div>
+              <div className="mt-5">
+                <StartMusicWidget
+                  buttonClassName="inline-flex w-full items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-white/10"
+                  label={`Criar para ${it.label}`}
+                  icon={<Sparkles className="h-4 w-4 text-[var(--gold)]" />}
+                  initialFormState={{ para_quem: it.label, ocasiao: it.label }}
+                />
+              </div>
             </div>
           ))}
         </div>
@@ -854,53 +992,165 @@ function Differentials() {
 function Testimonials() {
   const items = [
     {
-      quote: "Eu chorei ao ouvir a música. Eles conseguiram colocar toda a nossa história em uma canção com tanto carinho.",
-      name: "Maria, SP",
+      name: "Marina",
+      location: "São Paulo",
+      message: "Nossa, foi emocionante demais. Parecia a nossa história inteira em música.",
+      align: "left",
     },
     {
-      quote: "Foi o presente mais emocionante que já demos. A letra parecia ter sido escrita exatamente para a nossa família.",
-      name: "Marcos & Júlia",
+      name: "Rafael",
+      location: "Rio",
+      message: "Meu presente foi incrível. Ela chorou ao ouvir a letra e não saiu do replay.",
+      align: "right",
     },
     {
-      quote: "A mensagem ficou tão forte e tão pessoal que até os meus pais ficaram emocionados. Valeu cada detalhe.",
-      name: "Rafael, RJ",
-    },
-    {
-      quote: "A música tocou no coração da minha esposa e ela disse que parecia uma parte da nossa história em forma de música.",
-      name: "Thiago, MG",
+      name: "Júlia",
+      location: "Minas Gerais",
+      message: "A música ficou tão pessoal que até meus pais pediram para ouvir outra vez.",
+      align: "left",
     },
   ];
 
   return (
-    <section className="bg-gradient-to-b from-[var(--soft-gray)] to-background px-5 py-24 md:px-8 md:py-32">
+    <section id="exemplos" className="bg-gradient-to-b from-[var(--soft-gray)] to-background px-5 py-24 md:px-8 md:py-32">
       <div className="mx-auto max-w-6xl">
         <SectionHeader
-          eyebrow="Depoimentos"
-          title="Histórias que viraram canção"
-          subtitle="Pessoas que confiaram na sua história para criar algo que vai ficar marcado para sempre."
+          eyebrow="Provas de clientes"
+          title="Pessoas que compraram e ficaram emocionadas"
+          subtitle="Essas são histórias reais de quem transformou momentos especiais em músicas exclusivas."
         />
 
-        <div className="reveal mt-12 grid gap-6 md:grid-cols-2 xl:grid-cols-4">
-          {items.map((item) => (
-            <div
-              key={item.name}
-              className="flex h-full flex-col rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] transition-all hover:-translate-y-1 hover:border-[var(--gold)]/40"
-            >
-              <div className="flex gap-1 text-[var(--gold)]">
+        <div className="reveal mt-12 grid gap-6 lg:grid-cols-[1.5fr_0.8fr]">
+          <div className="space-y-4 rounded-[2rem] border border-border bg-card p-4 shadow-[var(--shadow-soft)] sm:p-6">
+            {items.map((item) => (
+              <div key={item.name} className={`flex ${item.align === "right" ? "justify-end" : "justify-start"}`}>
+                <div className={`max-w-[80%] ${item.align === "right" ? "items-end" : "items-start"} flex flex-col gap-2`}>
+                  <div className={`flex items-center gap-2 ${item.align === "right" ? "justify-end" : "justify-start"}`}>
+                    {item.align === "left" && (
+                      <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--gold)]/15 text-xs font-bold text-[var(--gold)]">
+                        {item.name.slice(0, 1)}
+                      </div>
+                    )}
+                    <span className="text-[10px] font-medium uppercase tracking-[0.15em] text-muted-foreground">
+                      {item.name} · {item.location}
+                    </span>
+                    {item.align === "right" && (
+                      <div className="grid h-9 w-9 place-items-center rounded-full bg-[var(--sky-blue)]/15 text-xs font-bold text-[var(--sky-blue)]">
+                        {item.name.slice(0, 1)}
+                      </div>
+                    )}
+                  </div>
+
+                  <div
+                    className={`rounded-[1.4rem] border px-4 py-3 text-sm leading-relaxed shadow-sm ${
+                      item.align === "right"
+                        ? "border-[var(--sky-blue)]/15 bg-[var(--sky-blue)]/8 text-primary"
+                        : "border-border bg-[#f8f8fb] text-primary"
+                    }`}
+                  >
+                    {item.message}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex flex-col justify-between rounded-[2rem] border border-[var(--gold)]/30 bg-[radial-gradient(circle_at_top,rgba(255,208,83,0.20),transparent_50%),linear-gradient(135deg,#0d1d30,#091a2c)] p-6 text-white shadow-[var(--shadow-glow)]">
+            <div>
+              <div className="mb-4 flex items-center gap-2 text-[var(--gold)]">
                 {Array.from({ length: 5 }).map((_, k) => (
                   <Star key={k} className="h-4 w-4 fill-current" />
                 ))}
               </div>
 
-              <blockquote className="mt-5 flex-1 text-base leading-relaxed text-primary">
-                “{item.quote}”
-              </blockquote>
-
-              <div className="mt-6 border-t border-border pt-4 text-sm font-medium uppercase tracking-[0.12em] text-muted-foreground">
-                {item.name}
+              <p className="text-[11px] font-medium uppercase tracking-[0.18em] text-sky-100/75">Avaliação média</p>
+              <div className="mt-2 flex items-end gap-2">
+                <span className="font-display text-5xl font-semibold">4,9</span>
+                <span className="pb-2 text-sky-100/80">/ 5</span>
               </div>
             </div>
-          ))}
+
+            <div className="my-8 h-px bg-white/10" />
+
+            <div>
+              <h3 className="font-display text-2xl font-semibold">Ouça um exemplo</h3>
+              <p className="mt-3 text-sm leading-relaxed text-sky-100/80">
+                Experimente a emoção, a qualidade e a personalização do nosso processo.
+              </p>
+
+              <button
+                type="button"
+                onClick={playExampleAudio}
+                className="mt-6 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[var(--gold)] px-5 py-3.5 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+              >
+                <Play className="h-4 w-4" /> Ouvir exemplo
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function OfferSection() {
+  const benefits = [
+    "Música personalizada",
+    "Letra exclusiva",
+    "Voz cantada",
+    "Entrega digital",
+    "Prévia da música",
+    "Possibilidade de revisão",
+  ];
+
+  return (
+    <section className="bg-[#f7f0ff] px-5 py-24 md:px-8 md:py-32">
+      <div className="mx-auto max-w-6xl rounded-[2rem] border border-[#d7c6f0] bg-white/80 p-6 shadow-[0_18px_40px_rgba(71,56,101,0.08)] md:p-10">
+        <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#d7c6f0] bg-[#f1e9ff] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-[#5b4d7c]">
+              <Gift className="h-3.5 w-3.5 text-[#7e5ad8]" />
+              Oferta especial
+            </div>
+
+            <h2 className="mt-5 font-display text-4xl font-semibold leading-tight text-[#20202d] sm:text-5xl">
+              Transforme sua história em um presente memorável.
+            </h2>
+            <p className="mt-4 text-lg leading-relaxed text-[#4f485f]">
+              Uma música feita para celebrar a pessoa certa no momento certo, com emoção, sentimento e identidade própria.
+            </p>
+
+            <div className="mt-7 flex items-end gap-3">
+              <span className="font-display text-5xl font-semibold tracking-[-0.06em] text-[#1d2437]">R$ {STARTING_PRICE.toFixed(2).replace(".", ",")}</span>
+              <span className="pb-2 text-sm font-medium uppercase tracking-[0.18em] text-[#6d697a]">por música</span>
+            </div>
+
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <StartMusicWidget
+                buttonClassName="inline-flex items-center justify-center gap-2 rounded-full px-7 py-3.5 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                buttonStyle={GRADIENT_GOLD}
+                label="🎁 Criar Esse Presente"
+                icon={<Sparkles className="h-4 w-4" />}
+              />
+            </div>
+          </div>
+
+          <div className="rounded-[1.6rem] border border-[#e3d8f7] bg-[#f9f5ff] p-5 md:p-6">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5a497f]">O que você recebe</p>
+            <ul className="mt-5 space-y-4">
+              {benefits.map((benefit) => (
+                <li key={benefit} className="flex items-start gap-3 text-[#2f2a37]">
+                  <span className="mt-0.5 grid h-6 w-6 place-items-center rounded-full bg-[#d9c9ff] text-[#3b2f53]">
+                    <CheckCircle2 className="h-4 w-4" />
+                  </span>
+                  <span className="text-base font-medium">{benefit}</span>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-6 rounded-[1.2rem] border border-[#d8c9f2] bg-white/70 p-4 text-sm leading-relaxed text-[#4b405d]">
+              Revisa, aprova e recebe uma canção feita com cuidado, atenção e emoção — sem complicação.
+            </p>
+          </div>
         </div>
       </div>
     </section>
@@ -958,14 +1208,13 @@ type OrderFormState = {
 };
 
 const STEPS: { key: keyof OrderFormState; label: string; eyebrow: string }[] = [
-  { key: "nome_cliente", label: "Qual é o seu nome completo?", eyebrow: "Passo 1 de 6" },
-  { key: "telefone_cliente", label: "Qual é o seu WhatsApp? (obrigatório)", eyebrow: "Passo 2 de 6" },
-  { key: "para_quem", label: "Quem vai receber a música?", eyebrow: "Passo 3 de 6" },
-  { key: "ocasiao", label: "Qual é a ocasião?", eyebrow: "Passo 4 de 6" },
-  { key: "genero_musical", label: "Qual gênero musical deseja?", eyebrow: "Passo 5 de 6" },
-  { key: "descricao", label: "Conte sua história e o que deve aparecer na música", eyebrow: "Passo 6 de 6" },
-];
-
+    { key: "para_quem", label: "Para quem você quer criar essa canção? ❤️", eyebrow: "Etapa 1 de 6" },
+    { key: "nome_cliente", label: "Como podemos te chamar?", eyebrow: "Etapa 2 de 6" },
+    { key: "telefone_cliente", label: "Qual é o seu WhatsApp?", eyebrow: "Etapa 3 de 6" },
+    { key: "ocasiao", label: "Qual é a ocasião especial?", eyebrow: "Etapa 4 de 6" },
+    { key: "genero_musical", label: "Qual estilo combina com essa história?", eyebrow: "Etapa 5 de 6" },
+    { key: "descricao", label: "Conte a história em poucas palavras", eyebrow: "Etapa 6 de 6" },
+  ];
 function OrderForm() {
   const send = useServerFn(sendOrder);
   const [step, setStep] = useState(0);
@@ -1452,11 +1701,12 @@ function OrderForm() {
 /* ---------------- FAQ ---------------- */
 function FAQ() {
   const items = [
-    { q: "Quanto tempo demora?", a: "Em média, sua música fica pronta em até 12 horas após o envio da sua história." },
-    { q: "Posso escolher o estilo?", a: "Sim! Você pode indicar o estilo que prefere — romântico, pop, acústico, sertanejo, forró, entre outros." },
-    { q: "Posso pedir alterações?", a: "Claro. Enviamos uma prévia para você ouvir e ajustar antes da entrega final." },
-    { q: "Como recebo a música?", a: "A entrega é 100% digital, em alta qualidade, direto no seu e-mail ou WhatsApp." },
-    { q: "É realmente exclusiva?", a: "Sim. Cada canção é criada do zero, inspirada apenas na sua história. Nada de modelos prontos." },
+    { q: "Como recebo a música?", a: "A entrega é 100% digital. Depois do processo, você recebe a música por meio do WhatsApp e do canal de acompanhamento do pedido." },
+    { q: "Quanto tempo demora?", a: "O processo é rápido e pensado para ser simples: você conta a história, aprova a letra e a música é produzida de acordo com o processo do projeto." },
+    { q: "Posso escolher o estilo?", a: "Sim. Você pode indicar o estilo musical que mais combina com a sua história, como romântico, pop, acústico, sertanejo, forró e outros." },
+    { q: "Posso pedir alterações?", a: "Sim. A prévia da música e a revisão da letra fazem parte do processo para você ajustar o que for preciso antes da entrega final." },
+    { q: "Posso fazer para outra pessoa?", a: "Sim. O processo foi pensado para música para presente, homenagem, aniversário, casamento, família e qualquer momento especial." },
+    { q: "O pagamento é seguro?", a: "O projeto utiliza checkout seguro para processar a compra e mantém o acompanhamento do pedido de forma transparente." },
   ];
   const [open, setOpen] = useState<number | null>(0);
   return (
@@ -1515,18 +1765,18 @@ function FinalCTA() {
           <div className="absolute -bottom-20 -right-20 h-72 w-72 rounded-full bg-[var(--gold)]/15 blur-3xl" />
           <div className="relative">
             <span className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-white/90 backdrop-blur">
-              <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" /> Sua canção exclusiva
+              <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" /> Presente que toca o coração
             </span>
             <h2 className="mx-auto mt-6 max-w-3xl text-balance font-display text-4xl font-semibold leading-[1.1] text-white sm:text-5xl md:text-6xl">
-              Transforme sua história em uma música inesquecível.
+              Transforme uma história importante em uma lembrança que pode ser ouvida para sempre.
             </h2>
             <p className="mx-auto mt-5 max-w-xl text-balance text-white/80">
-              Comece agora — basta contar o que vive no seu coração.
+              Comece agora e crie uma música feita para a pessoa que você ama.
             </p>
             <StartMusicWidget
               buttonClassName="mt-10 inline-flex items-center gap-2 rounded-full px-9 py-4 text-base font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               buttonStyle={GRADIENT_GOLD}
-              label="Criar Minha Canção"
+              label="🎵 Transformar Minha História em Música"
               icon={<Sparkles className="h-5 w-5" />}
             />
           </div>
