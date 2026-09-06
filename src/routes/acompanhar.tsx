@@ -221,10 +221,14 @@ function OrderAudioPlayer({
       <div className="mx-auto mt-3 w-[94%] max-w-[700px] sm:w-[88%]">
         <div className="relative overflow-hidden rounded-[18px] border border-[#ff84b6]/40 bg-[linear-gradient(90deg,#ff7d9e,#ef78d2_46%,#b15cea)] shadow-[0_16px_30px_rgba(255,118,173,0.22)] sm:rounded-[24px]">
           {hideDownload ? (
-            <div className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white sm:gap-3 sm:py-4 sm:text-lg">
+            <button
+              type="button"
+              onClick={() => void handleToggle()}
+              className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:brightness-110 sm:gap-3 sm:py-4 sm:text-lg"
+            >
               <Headphones className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
               <span>{actionLabel ?? `OUVIR ${title}`}</span>
-            </div>
+            </button>
           ) : (
             <>
               <a
@@ -756,8 +760,9 @@ function Timeline({
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
   const totalPedido = Number((10 + (secondVersionSelected ? 5 : 0)).toFixed(2));
-  const isStripeProcessing = order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase());
-  const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
+  const stripePaymentStatus = (order.stripe_payment_status ?? "").toLowerCase();
+  const isStripeProcessing = order.status === "pagamento" && Boolean(stripePaymentStatus) && !["paid", "succeeded", "complete"].includes(stripePaymentStatus);
+  const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes(stripePaymentStatus)
     ? "pago"
     : order.status;
   const currentIdx = STATUS_FLOW.indexOf(effectiveStatus);
@@ -867,7 +872,7 @@ function Timeline({
           )}
         </div>
 
-        {isStripeProcessing && (
+        {isStripeProcessing && order.status === "pagamento" && Boolean(order.stripe_payment_status) && (
           <div className="mt-4 rounded-2xl border border-[#d4af69]/30 bg-[#d4af69]/10 p-4 text-sm text-[#f3d59d]">
             <p className="font-semibold">🟡 CONFIRMANDO SEU PAGAMENTO</p>
             <p className="mt-1 text-zinc-300">Estamos verificando seu pagamento com segurança. Assim que for confirmado, sua música será liberada automaticamente.</p>
@@ -940,9 +945,18 @@ function Timeline({
             )}
 
             {!showSecondPreview && secondaryPreviewUrl && (
-              <p className="mt-3 text-xs text-zinc-400">
-                Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">⭐ QUERO UMA 2ª VERSÃO</strong>.
-              </p>
+              <div className="mt-3 space-y-3">
+                <p className="text-xs text-zinc-400">
+                  Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">⭐ QUERO UMA 2ª VERSÃO</strong>.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setSecondVersionSelected((prev) => !prev)}
+                  className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#f3d59d] transition hover:bg-[#d4af69]/15"
+                >
+                  {secondVersionSelected ? "2ª versão selecionada" : "QUERO UMA 2ª VERSÃO"}
+                </button>
+              </div>
             )}
 
             <div className="mt-5 rounded-[22px] border border-[#ff7ae5]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.04))] p-4 sm:p-5">
@@ -973,6 +987,16 @@ function Timeline({
                 {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 {checkoutLoading ? "PROCESSANDO..." : "🎵 QUERO MINHA MÚSICA COMPLETA"}
               </button>
+
+              <a
+                href={buildOrderInterestWhatsAppLink(order)}
+                target="_blank"
+                rel="noreferrer"
+                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#27c06a]/60 bg-[#0d2118] px-5 py-4 text-sm font-black uppercase tracking-[0.08em] text-[#8ef2b0] shadow-[0_12px_24px_rgba(39,192,106,0.12)] transition hover:border-[#27c06a] hover:bg-[#122b1f]"
+              >
+                <MessageCircle className="h-4 w-4" />
+                PAGAR POR PIX
+              </a>
             </div>
 
             <div className="mt-4 grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
@@ -994,7 +1018,7 @@ function Timeline({
               <ShieldCheck className="h-5 w-5 text-[#f3d59d]" />
               <div>
                 <p className="font-semibold text-[#f3d59d]">Pagamento seguro</p>
-                <p>Seu pagamento é processado com segurança pela Stripe.</p>
+                <p>Seu pagamento é processado com segurança.</p>
               </div>
             </div>
           </div>
@@ -1315,7 +1339,7 @@ function Timeline({
             </div>
 
             <div className="rounded-[32px] border border-border bg-[var(--sky-blue)]/10 p-6 shadow-sm">
-              <p className="mt-5 text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro via Stripe</p>
+              <p className="mt-5 text-sm font-semibold text-[var(--sky-blue)]">Pagamento seguro</p>
               <p className="mt-2 text-sm text-slate-700">Sua compra será processada com segurança e você ficará em uma experiência premium, sem sair do acompanhamento.</p>
               {paymentError && <p className="mt-3 text-sm text-destructive">{paymentError}</p>}
               <div className="mt-4">
