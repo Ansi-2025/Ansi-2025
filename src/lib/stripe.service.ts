@@ -15,10 +15,10 @@ const parseMoneyValue = (value: string | undefined, fallback: number) => {
   const parsed = Number(clean);
   return Number.isFinite(parsed) ? parsed : fallback;
 };
-const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 19.9);
+const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 10);
 
 export function getStripePriceForCheckout({ secondVersion }: { secondVersion?: boolean } = {}) {
-  return Number((STRIPE_ITEM_PRICE + (secondVersion ? 9.9 : 0)).toFixed(2));
+  return Number((STRIPE_ITEM_PRICE + (secondVersion ? 5 : 0)).toFixed(2));
 }
 
 function isStripeMarkedAsPaid(status?: string | null) {

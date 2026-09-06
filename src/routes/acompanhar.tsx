@@ -755,7 +755,7 @@ function Timeline({
   setCheckoutCustomer: Dispatch<SetStateAction<{ email: string; phone: string; cpf: string }>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
-  const totalPedido = Number((19.9 + (secondVersionSelected ? 9.9 : 0)).toFixed(2));
+  const totalPedido = Number((10 + (secondVersionSelected ? 5 : 0)).toFixed(2));
   const isStripeProcessing = order.status === "pagamento" && !["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase());
   const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes((order.stripe_payment_status ?? "").toLowerCase())
     ? "pago"
@@ -1222,7 +1222,7 @@ function Timeline({
                       <div className="rounded-[20px] border border-[#25d366]/25 bg-[#062b14] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                         <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bfffe0]">Atendimento via WhatsApp</p>
                         <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_18px_rgba(37,211,102,0.18)]">
-                          {secondVersionSelected ? "2 versões · R$ 29,80" : "1 versão · R$ 19,90"}
+                          {secondVersionSelected ? "2 versões · R$ 15,00" : "1 versão · R$ 10,00"}
                         </p>
                         <p className="mt-2 text-sm text-zinc-300">
                           Fale com a gente pelo WhatsApp e seguimos com o próximo passo da sua música personalizada.
@@ -1295,7 +1295,7 @@ function Timeline({
                       className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d] hover:bg-[#d4af69]/15"}`}
                     >
                       <span>Quero mais uma versão da mesma história</span>
-                      <span>+R$ 9,90</span>
+                      <span>+R$ 5,00</span>
                     </button>
                   </div>
 
@@ -1334,7 +1334,7 @@ function Timeline({
                   className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
                   <span>Quero mais uma versão da mesma história</span>
-                  <span>+R$ 9,90</span>
+                  <span>+R$ 5,00</span>
                 </button>
                 <p className="mt-4 text-[0.97rem] font-medium leading-relaxed text-[#1a1400]">
                   A nova versão mantém a sua história base, mas com um estilo diferente, letra reimaginada e nova interpretação musical.
@@ -1361,7 +1361,7 @@ function Timeline({
                     <StripeCardPaymentForm
                       order={order}
                       clientSecret={paymentIntentClientSecret}
-                      amount={19.9 + (secondVersionSelected ? 9.9 : 0)}
+                      amount={10 + (secondVersionSelected ? 5 : 0)}
                       processing={paymentProcessing}
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}
