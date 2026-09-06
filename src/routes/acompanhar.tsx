@@ -946,8 +946,15 @@ function Timeline({
             )}
 
             <div className="mt-5 rounded-[22px] border border-[#ff7ae5]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.04))] p-4 sm:p-5">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">Gostou do que ouviu? ❤️</p>
-              <h4 className="mt-2 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Imagine ouvir sua história completa em uma música.</h4>
+              <div className="flex items-center gap-3">
+                <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] text-sm font-black text-white shadow-[0_12px_24px_rgba(217,70,239,0.28)]">1</span>
+                <div>
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f4c7dd]">CHECKOUT</p>
+                  <h4 className="mt-1 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Gostou? Libere sua música completa</h4>
+                </div>
+              </div>
+
+              <p className="mt-3 text-sm leading-relaxed text-zinc-300">Pagamento seguro e liberação automática após confirmação.</p>
 
               <div className="mt-4 rounded-[18px] border border-[#d4af69]/30 bg-[#d4af69]/8 p-3 sm:p-4">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f3d59d]">LIBERE SUA MÚSICA COMPLETA</p>
@@ -1255,120 +1262,6 @@ function Timeline({
                       />
                     </div>
                   </div>
-                </div>
-              )}
-              {isCurrent && (step === "previa" || step === "pagamento") && (
-                <div className="mt-3 rounded-[28px] border border-[#d4af69]/20 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
-                  <div className="mb-5 flex items-center gap-3">
-                    <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] to-[#8b5cf6] text-sm font-black text-white">1</span>
-                    <div>
-                      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#ff99a8]">Checkout</p>
-                      <h3 className="font-display text-[2rem] leading-none font-semibold text-[#f8f5f2]">Gostou? Libere sua música completa</h3>
-                      <p className="mt-2 text-sm text-zinc-300">Pagamento seguro e liberação automática após confirmação.</p>
-                    </div>
-                  </div>
-
-                  <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("card")}
-                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "card" ? "border-[#d4af69] bg-[#d4af69] text-[#1a1400] shadow-[0_10px_20px_rgba(212,175,105,0.28)]" : "border-[#d4af69]/30 bg-[#1b1b23] text-[#f3d59d] hover:bg-[#d4af69]/10"}`}
-                    >
-                      CARTÃO
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setPaymentMethod("whatsapp");
-                        window.open(buildOrderInterestWhatsAppLink(order), "_blank", "noopener,noreferrer");
-                      }}
-                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "whatsapp" ? "border-[#25d366] bg-[#25d366] text-[#062b14] shadow-[0_10px_20px_rgba(37,211,102,0.22)]" : "border-[#25d366]/40 bg-[#25d366]/10 text-[#d9ffe9] hover:bg-[#25d366]/15"}`}
-                    >
-                      Gostei, quero minha música
-                    </button>
-                  </div>
-
-                  {paymentMethod === "whatsapp" ? (
-                    <div className="space-y-4">
-                      <div className="rounded-[20px] border border-[#25d366]/25 bg-[#062b14] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bfffe0]">Atendimento via WhatsApp</p>
-                        <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_18px_rgba(37,211,102,0.18)]">
-                          {secondVersionSelected ? "2 versões · R$ 15,00" : "1 versão · R$ 10,00"}
-                        </p>
-                        <p className="mt-2 text-sm text-zinc-300">
-                          Fale com a gente pelo WhatsApp e seguimos com o próximo passo da sua música personalizada.
-                        </p>
-                        <div className="mt-4 flex flex-wrap gap-3">
-                          <a
-                            href={buildOrderInterestWhatsAppLink(order)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 rounded-full border border-[#25d366] bg-[#25d366] px-4 py-2 text-xs font-semibold text-[#062b14] transition hover:brightness-105"
-                          >
-                            <MessageCircle className="h-4 w-4" /> Gostei, quero minha música
-                          </a>
-                          <a
-                            href={buildPaymentSupportWhatsAppLink(order)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2 text-xs font-semibold text-[#f3d59d] transition hover:bg-[#d4af69]/15"
-                          >
-                            <MessageCircle className="h-4 w-4" /> Pagar no Pix
-                          </a>
-                        </div>
-                      </div>
-
-                      <div className="rounded-[18px] border border-[#25d366]/25 bg-[#25d366]/10 p-3 text-sm text-zinc-200">
-                        <p className="font-semibold text-[#d9ffe9]">Seu pedido está salvo</p>
-                        <div className="mt-3 rounded-2xl border border-white/10 bg-[#0d1117] p-3">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Código do pedido</p>
-                          <div className="mt-2 flex items-center justify-between gap-3">
-                            <span className="font-mono text-sm font-bold text-white">{order.id}</span>
-                            <CopyOrderMessageButton order={order} totalValue={totalPedido} />
-                          </div>
-                        </div>
-                        <p className="mt-3 leading-relaxed text-zinc-300">
-                          {secondVersionSelected
-                            ? "Você escolheu 2 versões. Fale com a gente no WhatsApp para finalizar o pedido e prosseguir com a sua música personalizada."
-                            : "Você escolheu 1 versão. Fale com a gente no WhatsApp para finalizar o pedido e prosseguir com a sua música personalizada."}
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      <div className="rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <div className="flex items-start gap-3">
-                          <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#ff5d73] bg-[#ff5d73]/15 text-sm font-black text-[#ffd5dc]">✓</span>
-                          <div>
-                            <p className="text-[1.05rem] font-bold text-[#f8f5f2]">Pagamento seguro</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={() => void openStripeCheckout(secondVersionSelected)}
-                        disabled={checkoutLoading}
-                        className="w-full rounded-[18px] bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-[1.05rem] font-black text-white shadow-[0_12px_30px_rgba(217,70,239,0.28)] disabled:opacity-50"
-                      >
-                        {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="mt-4 rounded-[18px] border border-[#d4af69]/25 bg-[#1b1b23] p-3 text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                    <button
-                      type="button"
-                      onClick={() => setSecondVersionSelected((prev) => !prev)}
-                      className={`flex w-full items-center justify-between rounded-[16px] border px-4 py-4 text-left text-[1rem] font-black transition ${secondVersionSelected ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69] bg-[#d4af69]/10 text-[#f3d59d] hover:bg-[#d4af69]/15"}`}
-                    >
-                      <span className="flex items-center gap-2"><span aria-hidden>⭐</span> QUERO UMA 2ª VERSÃO</span>
-                      <span>+R$ 5,00</span>
-                    </button>
-                    <p className="mt-2 text-xs text-zinc-300">Pode ser outro estilo, emoção ou interpretação.</p>
-                  </div>
-
-                  {checkoutError && <p className="mt-3 text-sm text-[#ffb3bf]">{checkoutError}</p>}
                 </div>
               )}
             </li>
