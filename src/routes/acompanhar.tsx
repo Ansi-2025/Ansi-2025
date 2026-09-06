@@ -875,13 +875,13 @@ function Timeline({
         {isStripeProcessing && order.status === "pagamento" && Boolean(order.stripe_payment_status) && (
           <div className="mt-4 rounded-2xl border border-[#d4af69]/30 bg-[#d4af69]/10 p-4 text-sm text-[#f3d59d]">
             <p className="font-semibold">🟡 CONFIRMANDO SEU PAGAMENTO</p>
-            <p className="mt-1 text-zinc-300">Estamos verificando seu pagamento com segurança. Assim que for confirmado, sua música será liberada automaticamente.</p>
+            <p className="mt-1 text-zinc-300">Estamos verificando seu pagamento. Assim que estiver tudo certo, sua música será liberada.</p>
           </div>
         )}
         {paymentReceived && (
           <div className="mt-4 rounded-2xl border border-[#34d399]/30 bg-[#34d399]/10 p-4 text-sm text-[#bbf7d0]">
             <p className="font-semibold">🟢 PAGAMENTO CONFIRMADO!</p>
-            <p className="mt-1 text-zinc-200">Sua música completa está sendo liberada. 🎵</p>
+            <p className="mt-1 text-zinc-200">Está tudo certo! Sua música completa está sendo liberada. 🎵</p>
             {!order.url_musica && !order.url_musica_segunda_versao && (
               <p className="mt-2 font-medium text-[#ffd7dd]">Estamos finalizando a liberação do arquivo completo para download.</p>
             )}
@@ -921,16 +921,16 @@ function Timeline({
         {previewReady && !paymentReceived && primaryPreviewUrl && (
           <div className="mt-4 rounded-[28px] border border-[#ff7ae5]/25 bg-[#171b22] p-5 shadow-[0_18px_45px_rgba(0,0,0,0.35)]">
             <div className="inline-flex items-center gap-2 rounded-full border border-[#ff9fc7]/30 bg-[#ff9fc7]/10 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.2em] text-[#ffd7e7]">
-              <Headphones className="h-3.5 w-3.5" /> 🎵 SUA PRÉVIA ESTÁ PRONTA
+              <Headphones className="h-3.5 w-3.5" /> � OUÇA UM TRECHO
             </div>
             <h3 className="mt-4 font-display text-[1.9rem] leading-none font-semibold text-[#f8f5f2] sm:text-[2.2rem]">Essa música foi feita especialmente para você.</h3>
-            <p className="mt-3 text-sm leading-relaxed text-zinc-300">Ouça agora um trecho da sua história transformada em música.</p>
+            <p className="mt-3 text-sm leading-relaxed text-zinc-300">Você está ouvindo apenas um trecho da sua música personalizada.</p>
 
             <OrderAudioPlayer
               src={`${primaryPreviewUrl}#t=0,${PREVIEW_LIMIT_SECONDS}`}
               title="Prévia da versão 1"
               hideDownload
-              actionLabel="OUVIR PRÉVIA"
+              actionLabel="OUVIR UM TRECHO"
               previewLimitSeconds={PREVIEW_LIMIT_SECONDS}
             />
 
@@ -939,7 +939,7 @@ function Timeline({
                 src={`${secondaryPreviewUrl}#t=0,${PREVIEW_LIMIT_SECONDS}`}
                 title="Prévia da versão 2"
                 hideDownload
-                actionLabel="OUVIR PRÉVIA 2"
+                actionLabel="OUVIR OUTRA VERSÃO"
                 previewLimitSeconds={PREVIEW_LIMIT_SECONDS}
               />
             )}
@@ -947,78 +947,114 @@ function Timeline({
             {!showSecondPreview && secondaryPreviewUrl && (
               <div className="mt-3 space-y-3">
                 <p className="text-xs text-zinc-400">
-                  Quer ouvir também a prévia da versão 2? Ative a opção <strong className="text-[#f3d59d]">⭐ QUERO UMA 2ª VERSÃO</strong>.
+                  Quer ouvir também a segunda versão? Ela pode ter outra emoção ou estilo.
                 </p>
                 <button
                   type="button"
                   onClick={() => setSecondVersionSelected((prev) => !prev)}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2.5 text-[10px] font-black uppercase tracking-[0.2em] text-[#f3d59d] transition hover:bg-[#d4af69]/15"
                 >
-                  {secondVersionSelected ? "2ª versão selecionada" : "QUERO UMA 2ª VERSÃO"}
+                  {secondVersionSelected ? "2ª VERSÃO SELECIONADA" : "⭐ QUERO UMA 2ª VERSÃO"}
                 </button>
               </div>
             )}
 
-            <div className="mt-5 rounded-[22px] border border-[#ff7ae5]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.04))] p-4 sm:p-5">
-              <div className="flex items-center gap-3">
-                <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] text-sm font-black text-white shadow-[0_12px_24px_rgba(217,70,239,0.28)]">1</span>
-                <div>
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f4c7dd]">CHECKOUT</p>
-                  <h4 className="mt-1 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Gostou? Libere sua música completa</h4>
-                </div>
+            <div className="mt-5 space-y-4">
+              <div className="rounded-[22px] border border-[#ff7ae5]/20 bg-[linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.04))] p-4 sm:p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">❤️ GOSTOU DA SUA MÚSICA?</p>
+                <h4 className="mt-2 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Você ouviu apenas um trecho.</h4>
+                <p className="mt-3 text-sm leading-relaxed text-zinc-300">Receba agora a música completa por <span className="font-semibold text-[#f3d59d]">R$ 10,00</span>.</p>
               </div>
 
-              <p className="mt-3 text-sm leading-relaxed text-zinc-300">Pagamento seguro e liberação automática após confirmação.</p>
+              <div className="rounded-[26px] border border-[#d4af69]/25 bg-[#121b24] p-4 sm:p-5">
+                <div className="flex items-center gap-3">
+                  <span className="grid h-9 w-9 place-items-center rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] text-sm font-black text-white shadow-[0_12px_24px_rgba(217,70,239,0.28)]">🎵</span>
+                  <div>
+                    <p className="text-[10px] font-semibold uppercase tracking-[0.22em] text-[#f4c7dd]">MÚSICA COMPLETA</p>
+                    <h4 className="mt-1 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Sua música completa</h4>
+                  </div>
+                </div>
 
-              <div className="mt-4 rounded-[18px] border border-[#d4af69]/30 bg-[#d4af69]/8 p-3 sm:p-4">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f3d59d]">LIBERE SUA MÚSICA COMPLETA</p>
-                <div className="mt-3 flex items-end justify-between gap-4">
+                <p className="mt-3 text-sm leading-relaxed text-zinc-300">Receba a versão completa da música criada para a sua história.</p>
+
+                <div className="mt-4 flex items-end justify-between gap-4">
                   <span className="font-display text-3xl font-semibold tracking-[-0.06em] text-[#f8f5f2]">R$ 10,00</span>
-                  <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-300">Pagamento seguro</span>
+                  <span className="text-[10px] uppercase tracking-[0.16em] text-zinc-300">Pagamento único</span>
+                </div>
+
+                <div className="mt-4 space-y-2 text-sm text-zinc-200">
+                  {[
+                    "Música completa",
+                    "Feita especialmente para sua história",
+                    "Arquivo para guardar e ouvir quando quiser",
+                    "Pagamento seguro",
+                  ].map((benefit) => (
+                    <div key={benefit} className="flex items-center gap-2 rounded-full border border-white/10 bg-[#101720] px-3 py-2">
+                      <CheckCircle2 className="h-4 w-4 text-[#8fe8b7]" />
+                      <span>{benefit}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={() => void openStripeCheckout(secondVersionSelected)}
-                disabled={checkoutLoading}
-                className="mt-4 inline-flex w-full items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-sm font-black uppercase tracking-[0.08em] text-white shadow-[0_18px_30px_rgba(217,70,239,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
-              >
-                {checkoutLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-                {checkoutLoading ? "PROCESSANDO..." : "🎵 QUERO MINHA MÚSICA COMPLETA"}
-              </button>
+              <div className="rounded-[26px] border border-white/10 bg-[#0d1117] p-4 sm:p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">COMO VOCÊ QUER PAGAR?</p>
 
-              <a
-                href={buildOrderInterestWhatsAppLink(order)}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#27c06a]/60 bg-[#0d2118] px-5 py-4 text-sm font-black uppercase tracking-[0.08em] text-[#8ef2b0] shadow-[0_12px_24px_rgba(39,192,106,0.12)] transition hover:border-[#27c06a] hover:bg-[#122b1f]"
-              >
-                <MessageCircle className="h-4 w-4" />
-                PAGAR POR PIX
-              </a>
-            </div>
+                <div className="mt-4 space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => void openStripeCheckout(secondVersionSelected)}
+                    disabled={checkoutLoading}
+                    className="w-full rounded-[20px] border border-[#ff7ae5]/60 bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] p-4 text-left shadow-[0_18px_30px_rgba(217,70,239,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">💳 CARTÃO</p>
+                        <p className="mt-2 text-lg font-black uppercase text-white">{checkoutLoading ? "FINALIZANDO..." : "PAGAR COM CARTÃO"}</p>
+                        <p className="mt-1 text-xs text-white/80">Pagamento online e seguro.</p>
+                      </div>
+                      <span className="rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">R$ 10,00</span>
+                    </div>
+                  </button>
 
-            <div className="mt-4 grid gap-2 text-sm text-zinc-200 sm:grid-cols-2">
-              {[
-                "Música completa",
-                "Feita especialmente para sua história",
-                "Qualidade final",
-                "Pagamento seguro",
-                "Liberação automática após confirmação",
-              ].map((benefit) => (
-                <div key={benefit} className="flex items-center gap-2 rounded-full border border-white/10 bg-[#101720] px-3 py-2">
-                  <CheckCircle2 className="h-4 w-4 text-[#8fe8b7]" />
-                  <span>{benefit}</span>
+                  <a
+                    href={buildOrderInterestWhatsAppLink(order)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block rounded-[20px] border border-[#27c06a]/60 bg-[#0d2118] p-4 text-left shadow-[0_12px_24px_rgba(39,192,106,0.12)] transition hover:border-[#27c06a] hover:bg-[#122b1f]"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#aef7c5]">💚 PIX</p>
+                        <p className="mt-2 text-lg font-black uppercase text-[#8ef2b0]">QUERO PAGAR COM PIX</p>
+                        <p className="mt-1 text-xs text-[#c8f8d6]">Fale com nosso atendimento para receber as instruções.</p>
+                      </div>
+                      <span className="rounded-full bg-[#1e3a2a] px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-[#8ef2b0]">Atendimento</span>
+                    </div>
+                  </a>
                 </div>
-              ))}
-            </div>
+              </div>
 
-            <div className="mt-4 flex items-center gap-3 rounded-2xl border border-[#d4af69]/25 bg-[#0f1722] p-3 text-sm text-zinc-300">
-              <ShieldCheck className="h-5 w-5 text-[#f3d59d]" />
-              <div>
-                <p className="font-semibold text-[#f3d59d]">Pagamento seguro</p>
-                <p>Seu pagamento é processado com segurança.</p>
+              <div className="rounded-[22px] border border-white/10 bg-[#101720] p-4 sm:p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">COMO FUNCIONA?</p>
+                <ol className="mt-3 space-y-2 text-sm text-zinc-200">
+                  <li>1. Você escolhe como pagar.</li>
+                  <li>2. Faz o pagamento da música completa.</li>
+                  <li>3. Confirmamos o pagamento.</li>
+                  <li>4. Sua música é liberada para você ouvir e guardar.</li>
+                </ol>
+              </div>
+
+              <div className="rounded-[22px] border border-[#d4af69]/25 bg-[#0f1722] p-4 sm:p-5">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">⭐ QUER UMA SEGUNDA VERSÃO?</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-300">Crie outra interpretação da mesma história por apenas +R$ 5,00.</p>
+                <button
+                  type="button"
+                  onClick={() => setSecondVersionSelected((prev) => !prev)}
+                  className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#f3d59d] transition hover:bg-[#d4af69]/15"
+                >
+                  {secondVersionSelected ? "2ª VERSÃO SELECIONADA" : "QUERO UMA 2ª VERSÃO +R$ 5,00"}
+                </button>
               </div>
             </div>
           </div>
