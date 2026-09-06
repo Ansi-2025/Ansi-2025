@@ -85,6 +85,16 @@ const OrderSchema = z
       z.string().trim().min(11).max(14).optional().nullable(),
     ),
     para_quem: z.string().trim().min(2).max(120),
+    nome_receptor: z.preprocess(
+      (value) => {
+        if (typeof value === "string") {
+          const trimmed = value.trim();
+          return trimmed === "" ? undefined : trimmed;
+        }
+        return value;
+      },
+      z.string().trim().max(120).optional().nullable(),
+    ),
     ocasiao: z.string().trim().min(2).max(120),
     descricao: z.string().trim().min(15).max(2000),
     genero_musical: z.string().trim().min(2).max(80),
@@ -120,9 +130,12 @@ const OrderSchema = z
     }
   })
   .transform((data) => {
-    const { bot_field: _botField, form_started_at: _formStartedAt, ...rest } = data;
+    const { bot_field: _botField, form_started_at: _formStartedAt, nome_receptor: _nomeReceptor, ...rest } = data;
+    const paraQuem = [data.para_quem.trim(), data.nome_receptor?.trim()].filter(Boolean).join(" — ");
+
     return {
       ...rest,
+      para_quem: paraQuem || data.para_quem.trim(),
       genero_musical:
         data.genero_musical === "Outro" && data.outro_genero?.trim()
           ? data.outro_genero.trim()

@@ -50,7 +50,6 @@ export const Route = createFileRoute("/")({
   component: Index,
 });
 
-const CREATE_URL = "#pedido";
 const WHATSAPP_URL = "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
 const EXAMPLE_AUDIO_URL = "https://coivogokbzizhwfhywkp.supabase.co/storage/v1/object/public/musicas/Cancao%20de%20fe.mp3";
 const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
@@ -68,7 +67,6 @@ function Index() {
         <Occasions />
         <Differentials />
         <Testimonials />
-        <OrderForm />
         <FAQ />
         <FinalCTA />
       </main>
@@ -154,6 +152,7 @@ function StartMusicWidget({
     telefone_cliente: "",
     email_cliente: "",
     para_quem: "",
+    nome_receptor: "",
     ocasiao: "",
     genero_musical: TIPOS_MUSICA[0],
     outro_genero: "",
@@ -207,6 +206,7 @@ function StartMusicWidget({
       telefone_cliente: "",
       email_cliente: "",
       para_quem: "",
+      nome_receptor: "",
       ocasiao: "",
       genero_musical: TIPOS_MUSICA[0],
       outro_genero: "",
@@ -235,7 +235,9 @@ function StartMusicWidget({
       return null;
     }
     if (current.key === "para_quem") {
-      return form.para_quem.trim().length < 2 ? "Descreva para quem será a música." : null;
+      const hasRecipientRelation = form.para_quem.trim().length >= 2;
+      const hasRecipientName = form.nome_receptor.trim().length >= 2;
+      return hasRecipientRelation || hasRecipientName ? null : "Descreva para quem será a música.";
     }
     if (current.key === "ocasiao") {
       return form.ocasiao.trim().length < 2 ? "Informe a ocasião para continuar." : null;
@@ -317,30 +319,30 @@ function StartMusicWidget({
           {label}
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-[920px] overflow-hidden border border-[var(--sky-blue)]/25 bg-[#031926] p-0 text-white shadow-[0_30px_80px_rgba(1,10,22,0.75)] sm:rounded-[28px]">
-        <div className="max-h-[80vh] overflow-y-auto bg-[radial-gradient(circle_at_top,rgba(103,176,245,0.18),transparent_40%),linear-gradient(180deg,rgba(3,25,38,0.96),rgba(3,20,32,0.98))] px-6 py-6 sm:px-8 sm:py-8">
-          <div className="mb-8">
-            <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.2em] text-sky-100/75">
+      <DialogContent className="max-w-[960px] overflow-hidden border border-[#c7b3ef] bg-[#f3eef9] p-0 text-[#2f2a37] shadow-[0_20px_50px_rgba(116,92,168,0.18)] sm:rounded-[30px]">
+        <div className="max-h-[82vh] overflow-y-auto bg-[#f5f1fb] px-6 py-6 sm:px-8 sm:py-7">
+          <div className="mb-6">
+            <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#655b76]">
               <span>{current.eyebrow}</span>
               <span>{Math.round(progress)}%</span>
             </div>
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-white/10">
+            <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-[#e8def8]">
               <div
-                style={{ ...GRADIENT_GOLD, width: `${progress}%` }}
+                style={{ width: `${progress}%`, background: "linear-gradient(90deg, #b186f3 0%, #8a6ce2 100%)" }}
                 className="h-full rounded-full transition-all duration-500"
               />
             </div>
           </div>
 
-          <div className="mb-6">
-            <div className="inline-flex items-center gap-2 rounded-full border border-sky-100/15 bg-sky-100/5 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-sky-100/80">
-              <Sparkles className="h-3 w-3 text-[var(--gold)]" />
+          <div className="mb-5">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[#d2c0f3] bg-[#f0e8ff] px-3.5 py-2 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#6b4cb0]">
+              <Sparkles className="h-3.5 w-3.5 text-[#8b70df]" />
               Criar minha música
             </div>
           </div>
 
           <div className="mb-6">
-            <h3 className="font-display text-4xl font-semibold leading-[0.95] tracking-[-0.04em] text-[#f5e7d0] sm:text-5xl">
+            <h3 className="font-display text-[2.3rem] font-semibold leading-[0.95] tracking-[-0.06em] text-[#eb4d58] sm:text-[3rem]">
               {current.label}
             </h3>
           </div>
@@ -362,24 +364,48 @@ function StartMusicWidget({
             {current.key === "telefone_cliente" ? (
               <div className="grid gap-4 md:grid-cols-2">
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-sky-100">WhatsApp obrigatório</span>
+                  <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">WhatsApp obrigatório</span>
                   <input
                     autoFocus
                     type="tel"
                     value={form.telefone_cliente}
                     onChange={(e) => setForm({ ...form, telefone_cliente: e.target.value })}
-                    className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                    className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                     placeholder={current.placeholder}
                   />
                 </label>
                 <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-sky-100">E-mail (opcional)</span>
+                  <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">E-mail (opcional)</span>
                   <input
                     type="email"
                     value={form.email_cliente}
                     onChange={(e) => setForm({ ...form, email_cliente: e.target.value })}
-                    className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                    className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                     placeholder="seuemail@email.com"
+                  />
+                </label>
+              </div>
+            ) : current.key === "para_quem" ? (
+              <div className="space-y-4">
+                <label className="block">
+                  <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">Quem vai receber a música?</span>
+                  <input
+                    autoFocus
+                    type="text"
+                    value={form.para_quem}
+                    onChange={(e) => setForm({ ...form, para_quem: e.target.value })}
+                    className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                    placeholder="Ex.: Minha esposa, meu filho"
+                  />
+                </label>
+                <label className="block">
+                  <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">Qual o nome dele(a)?</span>
+                  <input
+                    type="text"
+                    value={form.nome_receptor}
+                    onChange={(e) => setForm({ ...form, nome_receptor: e.target.value })}
+                    className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                    placeholder="Ex.: Maria, João, Ana"
                   />
                 </label>
               </div>
@@ -390,7 +416,7 @@ function StartMusicWidget({
                   type="text"
                   value={form.ocasiao}
                   onChange={(e) => setForm({ ...form, ocasiao: e.target.value })}
-                  className="w-full rounded-2xl border border-[var(--sky-blue)]/60 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                  className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                   placeholder="Ex.: Aniversário de casamento, Dia das Mães, batismo, gratidão por uma bênção"
                 />
                 <div className="grid gap-3 md:grid-cols-2">
@@ -401,8 +427,8 @@ function StartMusicWidget({
                       onClick={() => setForm({ ...form, ocasiao: suggestion })}
                       className={`rounded-full border px-4 py-3 text-left text-base font-medium transition-all ${
                         form.ocasiao === suggestion
-                          ? "border-[var(--sky-blue)] bg-[var(--sky-blue)]/10 text-[#f4e8d8]"
-                          : "border-[var(--sky-blue)]/50 bg-[#071a2d] text-sky-50 hover:border-[var(--gold)]/60"
+                          ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                          : "border-[#d6c4f4] bg-[#f9f6fb] text-[#4c425b] hover:border-[#a98ae9]"
                       }`}
                     >
                       {suggestion}
@@ -420,8 +446,8 @@ function StartMusicWidget({
                       onClick={() => setForm({ ...form, genero_musical: tipo })}
                       className={`rounded-full border px-4 py-4 text-left text-lg font-medium transition-all ${
                         form.genero_musical === tipo
-                          ? "border-[var(--gold)] bg-[rgba(214,171,59,0.12)] text-[#f4e8d8]"
-                          : "border-[var(--sky-blue)]/50 bg-[#071a2d] text-sky-50 hover:border-[var(--gold)]/60"
+                          ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                          : "border-[#d6c4f4] bg-[#f9f6fb] text-[#4c425b] hover:border-[#a98ae9]"
                       }`}
                     >
                       {tipo}
@@ -436,14 +462,14 @@ function StartMusicWidget({
                       type="text"
                       value={form.outro_genero}
                       onChange={(e) => setForm({ ...form, outro_genero: e.target.value })}
-                      className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                      className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                       placeholder="Ex.: R&B / Soul, Pop gospel, Forró gospel"
                     />
                   </label>
                 )}
 
                 <div className="space-y-3 pt-2">
-                  <h4 className="font-display text-2xl font-semibold text-[#f4e8d8]">Qual voz mais combina com a música?</h4>
+                  <h4 className="font-display text-2xl font-semibold text-[#1f1a24]">Qual voz mais combina com a música?</h4>
                   <div className="grid gap-3 md:grid-cols-2">
                     {TIPOS_CANTOR.map(({ value, label }) => (
                       <button
@@ -452,8 +478,8 @@ function StartMusicWidget({
                         onClick={() => setForm({ ...form, tipo_cantor: value })}
                         className={`rounded-full border px-4 py-4 text-left text-lg font-medium transition-all ${
                           form.tipo_cantor === value
-                            ? "border-[var(--sky-blue)] bg-[var(--sky-blue)]/10 text-[#f4e8d8]"
-                            : "border-[var(--sky-blue)]/50 bg-[#071a2d] text-sky-50 hover:border-[var(--gold)]/60"
+                            ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                            : "border-[#d6c4f4] bg-[#f9f6fb] text-[#4c425b] hover:border-[#a98ae9]"
                         }`}
                       >
                         {label}
@@ -463,24 +489,28 @@ function StartMusicWidget({
                 </div>
               </div>
             ) : current.key === "descricao" ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <textarea
                   autoFocus
-                  rows={6}
+                  rows={7}
                   value={form.descricao}
                   onChange={(e) => setForm({ ...form, descricao: e.target.value })}
-                  className="w-full rounded-2xl border border-[var(--sky-blue)]/60 bg-[#071a2d] px-4 py-4 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                  className="min-h-[220px] w-full rounded-[18px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-4 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                   placeholder={current.placeholder}
                 />
-                <div className="rounded-2xl border border-[var(--sky-blue)]/40 bg-[rgba(19,60,82,0.35)] p-4 text-sm leading-relaxed text-sky-100/80">
-                  <h5 className="mb-2 font-semibold text-[#f4e8d8]">Dicas para deixar a música perfeita</h5>
-                  <ul className="list-disc space-y-2 pl-5">
-                    <li>Para quem é a música? Diga o nome da pessoa e sua relação com ela.</li>
-                    <li>Qual sentimento deve prevalecer? Ex.: gratidão, fé, amor, esperança, celebração.</li>
-                    <li>Quais momentos especiais lembrar? Encontros, bênçãos, superações, vitórias ou bênçãos.</li>
-                    <li>Quais palavras ou imagens não podem faltar? Nomes, lugares, símbolos, sonhos ou expressões importantes.</li>
-                    <li>Como quer que a pessoa se sinta ao ouvir? Emocionada, acolhida, tocada, fortalecida ou inspirada.</li>
-                  </ul>
+                <div className="rounded-[18px] border border-[#d9c7f7] bg-[#f7f0ff] p-4 text-left text-[13px] leading-relaxed text-[#2f2a37] shadow-[0_6px_20px_rgba(123,92,175,0.06)]">
+                  <p className="mb-3 font-semibold text-[#3d2d52]">💡 Dicas para deixar sua música ainda mais especial</p>
+                  <div className="space-y-1.5">
+                    <p>Conte os momentos:</p>
+                    <p>❤️ Como vocês se conheceram</p>
+                    <p>✨ Um momento inesquecível juntos</p>
+                    <p>🥰 Apelidos ou frases que vocês costumam dizer</p>
+                    <p>📍 Lugares importantes para vocês</p>
+                    <p>🎂 Uma data ou ocasião especial</p>
+                    <p>💌 O que você mais ama ou admira nessa pessoa</p>
+                    <p>🙏 Um sonho, promessa ou desejo para o futuro</p>
+                  </div>
+                  <p className="mt-3 text-[#3d2d52]">Não precisa escrever bonito — conte do seu jeito. Nós transformamos sua história em música. 🎵</p>
                 </div>
               </div>
             ) : (
@@ -489,7 +519,7 @@ function StartMusicWidget({
                 type="text"
                 value={form[current.key]}
                 onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
-                className="w-full rounded-2xl border border-white/10 bg-[#071a2d] px-4 py-3 text-base text-white outline-none placeholder:text-sky-100/30 focus:border-[var(--gold)]"
+                className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                 placeholder={current.placeholder}
               />
             )}
@@ -506,7 +536,7 @@ function StartMusicWidget({
               type="button"
               onClick={prev}
               disabled={widgetStep === 0 || status === "loading"}
-              className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-6 py-3 text-sm font-semibold text-sky-50 transition-colors hover:border-white/30 disabled:opacity-40"
+              className="inline-flex items-center justify-center rounded-full border border-[#d3c5ee] bg-[#f7f2ff] px-6 py-3 text-sm font-semibold text-[#2d2840] transition-colors hover:border-[#b697eb] disabled:opacity-40"
             >
               Voltar
             </button>
@@ -516,7 +546,7 @@ function StartMusicWidget({
                 type="button"
                 onClick={next}
                 style={GRADIENT_GOLD}
-                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
               >
                 Continuar <Sparkles className="h-4 w-4" />
               </button>
@@ -526,7 +556,7 @@ function StartMusicWidget({
                 onClick={submit}
                 disabled={status === "loading"}
                 style={GRADIENT_GOLD}
-                className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                className="inline-flex items-center gap-2 rounded-full px-8 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
               >
                 {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                 {status === "loading" ? "Enviando..." : "Enviar pedido"}
@@ -603,7 +633,7 @@ function Hero() {
           <div className="absolute -right-12 top-20 h-72 w-72 rounded-full bg-amber-300/10 blur-3xl" />
         </div>
 
-        <div className="mx-auto flex min-h-[100svh] max-w-6xl flex-col items-center justify-center px-5 pb-20 pt-36 text-center md:pt-44">
+        <div className="mx-auto flex min-h-[68svh] max-w-6xl flex-col items-center justify-center px-5 pb-12 pt-28 text-center md:pt-32">
           <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
             <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
             Música Personalizada
@@ -909,6 +939,7 @@ type OrderFormState = {
   telefone_cliente: string;
   email_cliente: string;
   para_quem: string;
+  nome_receptor: string;
   ocasiao: string;
   genero_musical: string;
   outro_genero: string;
@@ -939,6 +970,7 @@ function OrderForm() {
     telefone_cliente: "",
     email_cliente: "",
     para_quem: "",
+    nome_receptor: "",
     ocasiao: "",
     genero_musical: TIPOS_MUSICA[0],
     outro_genero: "",
@@ -967,6 +999,18 @@ function OrderForm() {
     {
       label: "Como quer que ela se sinta?",
       value: "Quero que ela se sinta emocionada, fortalecida e abençoada ao ouvir esta canção.",
+    },
+    {
+      label: "Qual mensagem fica na memória?",
+      value: "Quero que a música deixe uma mensagem de amor, perseverança e agradecimento por tudo o que Deus fez.",
+    },
+    {
+      label: "Qual bênção você quer celebrar?",
+      value: "Quero celebrar a graça de Deus, a cura, a restauração e o cuidado que ele teve conosco em cada etapa.",
+    },
+    {
+      label: "Como a música deve terminar?",
+      value: "Quero uma finalização emocionante, com esperança, fé e um convite para continuar confiando em Deus.",
     },
   ];
 
@@ -1015,9 +1059,16 @@ function OrderForm() {
       return null;
     }
 
+    if (current.key === "para_quem") {
+      const hasRelation = form.para_quem.trim().length >= 2;
+      const hasName = form.nome_receptor.trim().length >= 2;
+      if (!hasRelation && !hasName) return "Preencha este campo para continuar.";
+      return null;
+    }
+
     const value = form[current.key].trim();
     if (current.key === "descricao" && value.length < 15) return "Conte um pouco mais (mínimo 15 caracteres).";
-    if ((current.key === "para_quem" || current.key === "ocasiao") && value.length < 2) return "Preencha este campo para continuar.";
+    if (current.key === "ocasiao" && value.length < 2) return "Preencha este campo para continuar.";
     if (current.key === "genero_musical" && value === "Outro" && !form.outro_genero.trim()) {
       return "Escolha um estilo na lista ou descreva outro gênero.";
     }
@@ -1071,6 +1122,7 @@ function OrderForm() {
       telefone_cliente: "",
       email_cliente: "",
       para_quem: "",
+      nome_receptor: "",
       ocasiao: "",
       genero_musical: TIPOS_MUSICA[0],
       outro_genero: "",
@@ -1091,15 +1143,20 @@ function OrderForm() {
   };
 
   return (
-    <section id="pedido" className="bg-[var(--soft-gray)] px-5 py-24 md:px-8 md:py-32">
-      <div className="mx-auto max-w-2xl">
-        <SectionHeader
-          eyebrow="Criar minha música"
-          title="Conte sua história em poucos passos"
-          subtitle="Responda uma pergunta de cada vez. Leva menos de 2 minutos."
-        />
+    <section id="pedido" className="bg-[#e8e2ef] px-5 py-24 md:px-8 md:py-32">
+      <div className="mx-auto max-w-[980px]">
+        <div className="mx-auto mb-5 max-w-[700px] rounded-[16px] border border-[#d5c3ef] bg-[#f3eef9] px-5 py-3 text-center text-[15px] font-medium text-[#4f4f61] shadow-[0_10px_20px_rgba(86,73,121,0.08)]">
+          O jingle que produziram triplicou o engajamento da campanha. – Agência Nova
+        </div>
 
-        <div className="reveal mt-12 rounded-3xl border border-border bg-card p-6 shadow-[var(--shadow-soft)] md:p-10 max-h-[80vh] overflow-y-auto">
+        <h2 className="text-center font-display text-[clamp(2.7rem,5vw,5rem)] leading-[0.94] tracking-[-0.06em] text-[#ef4557]">
+          Transforme sua história em uma música única
+        </h2>
+        <p className="mx-auto mt-4 max-w-[760px] text-center text-[1.05rem] text-[#544d5f]">
+          Preencha o formulário abaixo e receba um orçamento personalizado em poucas horas.
+        </p>
+
+        <div className="reveal mt-10 rounded-[30px] border-[2px] border-[#b995ef] bg-[#f8f4fb] p-5 shadow-[0_14px_35px_rgba(119,95,170,0.12)] md:p-10 max-h-[80vh] overflow-y-auto">
           {status === "ok" ? (
             <div className="py-10 text-center">
               <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-[var(--sky-blue)]/10 text-[var(--sky-blue)]">
@@ -1144,7 +1201,7 @@ function OrderForm() {
               </div>
 
               <label className="block">
-                <span className="mb-3 block font-display text-xl font-semibold text-primary sm:text-2xl">
+                <span className="mb-3 block font-display text-[clamp(2rem,4vw,3rem)] font-semibold leading-[1.05] text-[#e4374c] sm:text-2xl">
                   {current.label}
                 </span>
 
@@ -1167,7 +1224,7 @@ function OrderForm() {
                       value={form.descricao}
                       onChange={(e) => setForm({ ...form, descricao: e.target.value })}
                       onKeyDown={onKeyDown}
-                      className="w-full resize-y rounded-xl border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-[var(--sky-blue)]"
+                      className="w-full resize-y rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-sm text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                       placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
                     />
                     <div className="sr-only" aria-hidden="true">
@@ -1182,54 +1239,31 @@ function OrderForm() {
                         />
                       </label>
                     </div>
-                    <div className="mt-4 grid gap-3 sm:grid-cols-2">
-                      {descriptionSuggestions.map((suggestion) => (
-                        <button
-                          key={suggestion.label}
-                          type="button"
-                          onClick={() => appendDescriptionSuggestion(suggestion.value)}
-                          className="rounded-2xl border border-border bg-background px-4 py-3 text-left text-sm font-medium text-primary transition hover:border-[var(--sky-blue)]/40 hover:bg-[var(--sky-blue)]/5"
-                        >
-                          <span className="font-semibold">{suggestion.label}</span>
-                          <p className="mt-1 text-xs text-muted-foreground">{suggestion.value}</p>
-                        </button>
-                      ))}
-                    </div>
-                    <div className="mt-4 rounded-2xl border border-[var(--sky-blue)]/30 bg-[var(--sky-blue)]/5 p-4 text-sm text-muted-foreground">
-                      <p className="font-semibold text-primary mb-3">Dicas para deixar a música perfeita</p>
-                      <ul className="list-disc space-y-2 pl-5">
-                        <li><strong>Para quem é a música?</strong> Diga o nome da pessoa e sua relação com ela.</li>
-                        <li><strong>Qual sentimento deve prevalecer?</strong> Ex.: gratidão, fé, amor, esperança, celebração.</li>
-                        <li><strong>Quais momentos especiais lembrar?</strong> Encontros, bênçãos, superações, vitórias ou bênçãos.</li>
-                        <li><strong>Quais palavras ou imagens não podem faltar?</strong> Nomes, lugares, símbolos, sonhos ou expressões importantes.</li>
-                        <li><strong>Como quer que a pessoa se sinta ao ouvir?</strong> Emocionada, acolhida, tocada, fortalecida ou inspirada.</li>
-                      </ul>
-                      <p className="mt-3">Estas informações ajudam nosso sistema a gerar a letra e o roteiro da música com mais precisão.</p>
-                    </div>
+                    <p className="text-sm font-medium text-[#1f1a24]">Quanto mais detalhes, mais linda fica a música.</p>
                   </>
                 ) : current.key === "telefone_cliente" ? (
                   <div className="space-y-5">
                     <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-primary">WhatsApp para entrega</span>
+                      <span className="mb-2 block text-[13px] font-medium text-primary">WhatsApp para entrega</span>
                       <input
                         autoFocus
                         type="tel"
                         value={form.telefone_cliente}
                         onChange={(e) => setForm({ ...form, telefone_cliente: e.target.value })}
                         onKeyDown={onKeyDown}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                        className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                         placeholder="(99) 99999-9999"
                       />
                     </label>
 
                     <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-primary">E-mail para avisos (opcional)</span>
+                      <span className="mb-2 block text-[13px] font-medium text-primary">E-mail para avisos (opcional)</span>
                       <input
                         type="email"
                         value={form.email_cliente}
                         onChange={(e) => setForm({ ...form, email_cliente: e.target.value })}
                         onKeyDown={onKeyDown}
-                        className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                        className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                         placeholder="seuemail@email.com"
                       />
                     </label>
@@ -1237,6 +1271,33 @@ function OrderForm() {
                     <p className="text-sm text-muted-foreground">
                       WhatsApp obrigatório para a entrega. E-mail opcional, apenas para avisos e confirmação.
                     </p>
+                  </div>
+                ) : current.key === "para_quem" ? (
+                  <div className="space-y-4">
+                    <label className="block">
+                      <span className="mb-2 block text-[13px] font-medium text-primary">Quem vai receber a música?</span>
+                      <input
+                        autoFocus
+                        type="text"
+                        value={form.para_quem}
+                        onChange={(e) => setForm({ ...form, para_quem: e.target.value })}
+                        onKeyDown={onKeyDown}
+                        className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                        placeholder="Ex.: Minha esposa, meu filho"
+                      />
+                    </label>
+
+                    <label className="block">
+                      <span className="mb-2 block text-[13px] font-medium text-primary">Qual o nome dele(a)?</span>
+                      <input
+                        type="text"
+                        value={form.nome_receptor}
+                        onChange={(e) => setForm({ ...form, nome_receptor: e.target.value })}
+                        onKeyDown={onKeyDown}
+                        className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                        placeholder="Ex.: Maria, João, Ana"
+                      />
+                    </label>
                   </div>
                 ) : current.key === "genero_musical" ? (
                   <div className="space-y-5">
@@ -1248,10 +1309,10 @@ function OrderForm() {
                             key={t}
                             type="button"
                             onClick={() => setForm({ ...form, genero_musical: t })}
-                            className={`rounded-xl border px-4 py-3 text-left text-sm font-medium transition-all ${
+                            className={`rounded-full border px-4 py-3 text-left text-sm font-medium transition-all ${
                               active
-                                ? "border-[var(--gold)] bg-[var(--gold)]/10 text-primary shadow-[var(--shadow-soft)]"
-                                : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
+                                ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                                : "border-[#d9c8f5] bg-[#f9f6fb] text-[#5a5166] hover:border-[#a98ae9]"
                             }`}
                           >
                             {t}
@@ -1273,7 +1334,7 @@ function OrderForm() {
                     )}
 
                     <div className="rounded-2xl border border-border bg-background p-4">
-                      <span className="mb-3 block text-sm font-medium text-primary">Qual voz mais combina com a música?</span>
+                      <span className="mb-3 block text-sm font-medium text-[#1f1a24]">Qual voz mais combina com a música?</span>
                       <div className="grid gap-2 sm:grid-cols-2">
                         {TIPOS_CANTOR.map(({ value, label }) => {
                           const active = form.tipo_cantor === value;
@@ -1282,10 +1343,10 @@ function OrderForm() {
                               key={value}
                               type="button"
                               onClick={() => setForm({ ...form, tipo_cantor: value })}
-                              className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
+                              className={`rounded-full border px-4 py-3 text-sm font-medium transition-all ${
                                 active
-                                  ? "border-[var(--sky-blue)] bg-[var(--sky-blue)]/10 text-primary"
-                                  : "border-border bg-background text-muted-foreground hover:border-[var(--sky-blue)]/40 hover:text-primary"
+                                  ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                                  : "border-[#d9c8f5] bg-[#f9f6fb] text-[#5a5166] hover:border-[#a98ae9]"
                               }`}
                             >
                               {label}
@@ -1303,7 +1364,7 @@ function OrderForm() {
                       value={form.ocasiao}
                       onChange={(e) => setForm({ ...form, ocasiao: e.target.value })}
                       onKeyDown={onKeyDown}
-                      className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                      className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                       placeholder="Ex.: Aniversário de casamento, Dia das Mães, batismo, gratidão por uma bênção..."
                     />
                     <div className="grid gap-3 sm:grid-cols-2">
@@ -1326,7 +1387,7 @@ function OrderForm() {
                     value={form[current.key]}
                     onChange={(e) => setForm({ ...form, [current.key]: e.target.value })}
                     onKeyDown={onKeyDown}
-                    className="w-full rounded-xl border border-border bg-background px-4 py-3 text-base text-foreground outline-none focus:border-[var(--sky-blue)]"
+                    className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                     placeholder={
                       current.key === "nome_cliente"
                         ? "Ex.: Maria Silva Souza"
@@ -1347,7 +1408,7 @@ function OrderForm() {
                   type="button"
                   onClick={prev}
                   disabled={step === 0 || status === "loading"}
-                  className="inline-flex items-center gap-2 rounded-full border border-border bg-background px-5 py-3 text-sm font-semibold text-primary transition-colors hover:border-[var(--sky-blue)]/40 disabled:opacity-40"
+                  className="inline-flex items-center gap-2 rounded-full border border-[#d7c8ef] bg-[#f2ecfa] px-5 py-3 text-sm font-semibold text-[#4d3d5d] transition-colors hover:border-[#b88fe9] disabled:opacity-40"
                 >
                   Voltar
                 </button>
@@ -1355,8 +1416,7 @@ function OrderForm() {
                   <button
                     type="button"
                     onClick={next}
-                    style={GRADIENT_GOLD}
-                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#b68cff] to-[#7d5ad8] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(125,90,216,0.35)] transition-transform hover:-translate-y-0.5"
                   >
                     Continuar <Sparkles className="h-4 w-4" />
                   </button>
@@ -1365,8 +1425,7 @@ function OrderForm() {
                     type="button"
                     onClick={submit}
                     disabled={status === "loading"}
-                    style={GRADIENT_GOLD}
-                    className="inline-flex items-center gap-2 rounded-full px-7 py-3 text-sm font-semibold text-[#071d2d] shadow-[var(--shadow-gold)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
+                    className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#b68cff] to-[#7d5ad8] px-7 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(125,90,216,0.35)] transition-transform hover:-translate-y-0.5 disabled:opacity-70"
                   >
                     {status === "loading" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
                     {status === "loading" ? "Enviando…" : "Enviar meu pedido"}

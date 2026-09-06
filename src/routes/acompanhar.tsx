@@ -11,7 +11,6 @@ import { z } from "zod";
 const searchSchema = z.object({ id: z.string().optional(), token: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripePublishableKey ? loadStripe(stripePublishableKey) : null;
-const PIX_PAYMENT_CODE = "11287911960";
 const OWNER_WHATSAPP_NUMBER = "5541997232395";
 const PREVIEW_LIMIT_SECONDS = 60;
 const MUSIC_VISUAL_GIF_URL = "https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/47c69a37dc3c0ae5b2480181fa754c05.gif?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV9iNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby80N2M2OWEzN2RjM2MwYWU1YjI0ODAxODFmYTc1NGMwNS5naWYiLCJzY29wZSI6ImRvd25sb2FkIiwiaWF0IjoxNzg3MDE4NzUwLCJleHAiOjE4MTg1NTQ3NTB9.R_obqpB-CgExJIbhfjt6wiC-ijHP4BI_GDDNHwbBbOU";
@@ -27,7 +26,12 @@ const buildPaymentProofWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">
 };
 
 const buildPaymentSupportWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
-  const message = `Olá! Meu nome é ${order.nome_cliente}. Meu pedido é ${order.id}. Gostei da minha música e quero fazer o pagamento via PIX. Pode me orientar sobre a melhor forma de confirmar o pagamento?`;
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Meu pedido é ${order.id}. Gostei da minha música e quero continuar com o próximo passo. Pode me orientar sobre a melhor forma de prosseguir?`;
+  return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+};
+
+const buildOrderInterestWhatsAppLink = (order: Pick<Order, "id" | "nome_cliente">) => {
+  const message = `Olá! Meu nome é ${order.nome_cliente}. Meu pedido é ${order.id}. Gostei, quero minha música. Pode me orientar sobre o próximo passo?`;
   return `https://wa.me/${OWNER_WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
 };
 
@@ -37,8 +41,8 @@ const buildOrderIdentificationMessage = (order: Pick<Order, "id" | "nome_cliente
     `Olá ${order.nome_cliente}! Seu pedido foi registrado com sucesso.`,
     `Código do pedido: ${order.id}`,
     `Seleção: ${versionText} · Total: R$ ${totalValue.toFixed(2).replace(".", ",")}`,
-    `Faça o pagamento por PIX para o CPF ${PIX_PAYMENT_CODE}.`,
-    "Depois envie o comprovante pelo WhatsApp para confirmarmos o pagamento e identificarmos seu pedido rapidamente.",
+    "Se você gostou do resultado, responda por aqui e vamos seguir com o próximo passo.",
+    "Basta clicar no botão 'Gostei, quero minha música' para falar com a gente pelo WhatsApp.",
     "Assim a gente consegue liberar sua música com mais rapidez e sem confusão.",
   ].join("\n");
 };
@@ -370,7 +374,7 @@ function TrackingPage() {
   const [checkoutError, setCheckoutError] = useState("");
   const [paymentError, setPaymentError] = useState("");
   const [paymentIntentClientSecret, setPaymentIntentClientSecret] = useState<string | null>(null);
-  const [paymentMethod, setPaymentMethod] = useState<'pix' | 'card' | 'whatsapp'>('card');
+  const [paymentMethod, setPaymentMethod] = useState<'card' | 'whatsapp'>('card');
   const [checkoutCustomer, setCheckoutCustomer] = useState({ email: "", phone: "", cpf: "11287911960" });
   const [secondVersionSelected, setSecondVersionSelected] = useState(false);
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
@@ -741,8 +745,8 @@ function Timeline({
   setPaymentError: Dispatch<SetStateAction<string>>;
   setPaymentIntentClientSecret: Dispatch<SetStateAction<string | null>>;
   refreshOrder: () => Promise<void>;
-  paymentMethod: "pix" | "card" | "whatsapp";
-  setPaymentMethod: Dispatch<SetStateAction<"pix" | "card" | "whatsapp">>;
+  paymentMethod: "card" | "whatsapp";
+  setPaymentMethod: Dispatch<SetStateAction<"card" | "whatsapp">>;
   selectedStatus: PedidoStatus | null;
   onSelectStatus: Dispatch<SetStateAction<PedidoStatus | null>>;
   historyOpen: boolean;
@@ -1193,14 +1197,7 @@ function Timeline({
                     </div>
                   </div>
 
-                  <div className="mb-4 grid grid-cols-2 gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setPaymentMethod("pix")}
-                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "pix" ? "border-[#ff5d73] bg-[#ff5d73] text-white shadow-[0_10px_20px_rgba(255,93,115,0.28)]" : "border-[#d4af69]/30 bg-[#1b1b23] text-[#f3d59d] hover:bg-[#d4af69]/10"}`}
-                    >
-                      PIX
-                    </button>
+                  <div className="mb-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                     <button
                       type="button"
                       onClick={() => setPaymentMethod("card")}
@@ -1208,39 +1205,50 @@ function Timeline({
                     >
                       CARTÃO
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPaymentMethod("whatsapp");
+                        window.open(buildOrderInterestWhatsAppLink(order), "_blank", "noopener,noreferrer");
+                      }}
+                      className={`rounded-[18px] border px-4 py-3 text-sm font-black transition ${paymentMethod === "whatsapp" ? "border-[#25d366] bg-[#25d366] text-[#062b14] shadow-[0_10px_20px_rgba(37,211,102,0.22)]" : "border-[#25d366]/40 bg-[#25d366]/10 text-[#d9ffe9] hover:bg-[#25d366]/15"}`}
+                    >
+                      Gostei, quero minha música
+                    </button>
                   </div>
 
-                  {paymentMethod === "pix" ? (
+                  {paymentMethod === "whatsapp" ? (
                     <div className="space-y-4">
-                      <div className="rounded-[20px] border border-[#d4af69]/25 bg-[#1f2630] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#f3d59d]">PIX / CPF</p>
-                        <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_18px_rgba(255,255,255,0.18)]">
+                      <div className="rounded-[20px] border border-[#25d366]/25 bg-[#062b14] p-4 text-sm text-zinc-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#bfffe0]">Atendimento via WhatsApp</p>
+                        <p className="mt-3 text-3xl font-black leading-none tracking-[-0.04em] text-white drop-shadow-[0_0_18px_rgba(37,211,102,0.18)]">
                           {secondVersionSelected ? "2 versões · R$ 29,80" : "1 versão · R$ 19,90"}
                         </p>
-                        <p className="mt-2 text-sm text-zinc-300">PIX CPF: <span className="font-semibold text-[#f8f5f2]">{PIX_PAYMENT_CODE}</span></p>
+                        <p className="mt-2 text-sm text-zinc-300">
+                          Fale com a gente pelo WhatsApp e seguimos com o próximo passo da sua música personalizada.
+                        </p>
                         <div className="mt-4 flex flex-wrap gap-3">
-                          <CopyPixButton pixCode={PIX_PAYMENT_CODE} />
+                          <a
+                            href={buildOrderInterestWhatsAppLink(order)}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-2 rounded-full border border-[#25d366] bg-[#25d366] px-4 py-2 text-xs font-semibold text-[#062b14] transition hover:brightness-105"
+                          >
+                            <MessageCircle className="h-4 w-4" /> Gostei, quero minha música
+                          </a>
                           <a
                             href={buildPaymentSupportWhatsAppLink(order)}
                             target="_blank"
                             rel="noreferrer"
                             className="inline-flex items-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-2 text-xs font-semibold text-[#f3d59d] transition hover:bg-[#d4af69]/15"
                           >
-                            <MessageCircle className="h-4 w-4" /> Quero pagar no Pix, Falar com atendente
-                          </a>
-                          <a
-                            href={buildPaymentProofWhatsAppLink(order)}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-2 rounded-full border border-[#25d366] bg-[#25d366]/10 px-4 py-2 text-xs font-semibold text-[#d9ffe9] transition hover:bg-[#25d366]/15"
-                          >
-                            <MessageCircle className="h-4 w-4" /> Enviar comprovante
+                            <MessageCircle className="h-4 w-4" /> Pagar no Pix
                           </a>
                         </div>
                       </div>
 
-                      <div className="rounded-[18px] border border-[#d4af69]/25 bg-[#d4af69]/10 p-3 text-sm text-zinc-200">
-                        <p className="font-semibold text-[#f3d59d]">Seu pedido está salvo</p>
+                      <div className="rounded-[18px] border border-[#25d366]/25 bg-[#25d366]/10 p-3 text-sm text-zinc-200">
+                        <p className="font-semibold text-[#d9ffe9]">Seu pedido está salvo</p>
                         <div className="mt-3 rounded-2xl border border-white/10 bg-[#0d1117] p-3">
                           <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-zinc-400">Código do pedido</p>
                           <div className="mt-2 flex items-center justify-between gap-3">
@@ -1250,8 +1258,8 @@ function Timeline({
                         </div>
                         <p className="mt-3 leading-relaxed text-zinc-300">
                           {secondVersionSelected
-                            ? "Você escolheu 2 versões. Faça o pagamento de R$ 29,80, depois envie o comprovante pelo WhatsApp e mencione o código do pedido para que a gente identifique seu pedido rapidamente."
-                            : "Você escolheu 1 versão. Faça o pagamento de R$ 19,90, depois envie o comprovante pelo WhatsApp e mencione o código do pedido para que a gente identifique seu pedido rapidamente."}
+                            ? "Você escolheu 2 versões. Fale com a gente no WhatsApp para finalizar o pedido e prosseguir com a sua música personalizada."
+                            : "Você escolheu 1 versão. Fale com a gente no WhatsApp para finalizar o pedido e prosseguir com a sua música personalizada."}
                         </p>
                       </div>
                     </div>
@@ -1415,32 +1423,6 @@ function Timeline({
         </div>
       )}
     </div>
-  );
-}
-
-function CopyPixButton({ pixCode }: { pixCode: string }) {
-  const [copied, setCopied] = useState(false);
-  const handleCopy = () => {
-    navigator.clipboard.writeText(pixCode);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  return (
-    <button
-      onClick={handleCopy}
-      className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold text-white transition hover:bg-white/10"
-    >
-      {copied ? (
-        <>
-          <Check className="h-4 w-4" /> Copiado!
-        </>
-      ) : (
-        <>
-          <Copy className="h-4 w-4" /> Copiar chave PIX
-        </>
-      )}
-    </button>
   );
 }
 

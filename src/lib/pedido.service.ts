@@ -13,6 +13,7 @@ export type PedidoEntrada = {
   telefone_cliente?: string | null;
   cpf_cliente?: string | null;
   para_quem: string;
+  nome_receptor?: string | null;
   ocasiao: string;
   descricao: string;
   genero_musical: string;
