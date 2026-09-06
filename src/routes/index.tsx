@@ -134,15 +134,17 @@ function StartMusicWidget({
   buttonStyle,
   label,
   icon,
+  initialOpen = false,
 }: {
   buttonClassName?: string;
   buttonStyle?: React.CSSProperties;
   label: string;
   icon?: React.ReactNode;
+  initialOpen?: boolean;
 }) {
   const send = useServerFn(sendOrder);
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(initialOpen);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [widgetStep, setWidgetStep] = useState(0);
   const [errorMsg, setErrorMsg] = useState("");
@@ -195,6 +197,12 @@ function StartMusicWidget({
 
   const current = widgetSteps[widgetStep];
   const progress = ((widgetStep + 1) / widgetSteps.length) * 100;
+
+  useEffect(() => {
+    if (initialOpen) {
+      setOpen(true);
+    }
+  }, [initialOpen]);
 
   const reset = () => {
     setStatus("idle");
@@ -669,6 +677,7 @@ function Hero() {
               buttonStyle={GRADIENT_GOLD}
               label="Criar Minha Canção"
               icon={<Sparkles className="h-4 w-4" />}
+              initialOpen
             />
             <a
               href="#exemplos"

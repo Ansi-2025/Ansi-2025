@@ -1270,9 +1270,6 @@ function Timeline({
                           <span className="mt-0.5 grid h-7 w-7 place-items-center rounded-full border border-[#ff5d73] bg-[#ff5d73]/15 text-sm font-black text-[#ffd5dc]">✓</span>
                           <div>
                             <p className="text-[1.05rem] font-bold text-[#f8f5f2]">Pagamento seguro</p>
-                            <p className="mt-1 text-[0.98rem] leading-relaxed text-zinc-300">
-                              Você será redirecionado para o ambiente seguro do Stripe, onde o valor final será calculado corretamente e a confirmação acontece oficialmente.
-                            </p>
                           </div>
                         </div>
                       </div>
@@ -1283,7 +1280,7 @@ function Timeline({
                         disabled={checkoutLoading}
                         className="w-full rounded-[18px] bg-gradient-to-r from-[#ff5d73] via-[#d946ef] to-[#8b5cf6] px-5 py-4 text-[1.05rem] font-black text-white shadow-[0_12px_30px_rgba(217,70,239,0.28)] disabled:opacity-50"
                       >
-                        {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `Ir para o Stripe · R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
+                        {checkoutLoading ? <span className="inline-flex items-center gap-2"><Loader2 className="h-4 w-4 animate-spin" /> Processando...</span> : `R$ ${totalPedido.toFixed(2).replace(".", ",")}`}
                       </button>
                     </div>
                   )}
