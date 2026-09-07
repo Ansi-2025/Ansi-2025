@@ -11,6 +11,7 @@ import {
   refazerLetraPedido,
   type PedidoEntrada,
 } from "@/lib/pedido.service";
+import { registerAffiliateAttribution } from "@/lib/affiliate.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
 import { buildLandingCtaTelegramMessage, sendTelegramMessage } from "@/lib/telegram.service";
 import { assertPublicRequest } from "@/lib/public-request";
@@ -111,6 +112,15 @@ const OrderSchema = z
     outro_genero: z.string().trim().max(120).optional(),
     tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
     bot_field: z.string().trim().max(255).optional().default(""),
+    affiliate_code: z
+      .string()
+      .trim()
+      .max(40)
+      .transform((value) => value || null)
+      .optional()
+      .nullable(),
+    affiliate_source: z.string().trim().max(80).optional().nullable(),
+    affiliate_click_id: z.string().trim().max(100).optional().nullable(),
     form_started_at: z.preprocess((value) => {
       if (typeof value === "string") {
         const parsed = Number(value);
@@ -238,11 +248,21 @@ export const sendOrder = createServerFn({ method: "POST" })
       console.log("[sendOrder.handler] Iniciando criação de pedido...", {
         nome: data.nome_cliente,
         telefone: data.telefone_cliente?.substring(0, 3) + "***",
+        affiliate_code: data.affiliate_code ?? null,
       });
 
       const pedidoData: PedidoEntrada = data;
       const pedido = await criarPedido(pedidoData);
       console.log("[sendOrder.handler] Pedido criado com ID:", pedido.id);
+
+      if (pedidoData.affiliate_code) {
+        await registerAffiliateAttribution({
+          orderId: pedido.id,
+          affiliateCode: pedidoData.affiliate_code,
+          source: pedidoData.affiliate_source ?? "landing_ref",
+          clickId: pedidoData.affiliate_click_id ?? null,
+        });
+      }
 
       console.log("[sendOrder.handler] Gerando letra...");
       const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);

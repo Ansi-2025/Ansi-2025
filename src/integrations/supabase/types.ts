@@ -52,6 +52,11 @@ export type Database = {
           stripe_session_id: string | null
           stripe_payment_intent_id: string | null
           stripe_payment_status: string | null
+          affiliate_code: string | null
+          affiliate_source: string | null
+          affiliate_click_id: string | null
+          affiliate_commission_amount: number | null
+          affiliate_commission_status: string | null
         }
         Insert: {
           created_at?: string
@@ -89,6 +94,11 @@ export type Database = {
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_payment_status?: string | null
+          affiliate_code?: string | null
+          affiliate_source?: string | null
+          affiliate_click_id?: string | null
+          affiliate_commission_amount?: number | null
+          affiliate_commission_status?: string | null
         }
         Update: {
           created_at?: string
@@ -126,8 +136,187 @@ export type Database = {
           stripe_session_id?: string | null
           stripe_payment_intent_id?: string | null
           stripe_payment_status?: string | null
+          affiliate_code?: string | null
+          affiliate_source?: string | null
+          affiliate_click_id?: string | null
+          affiliate_commission_amount?: number | null
+          affiliate_commission_status?: string | null
         }
         Relationships: []
+      }
+      affiliates: {
+        Row: {
+          id: string
+          code: string
+          status: string
+          commission_rate: number
+          total_clicks: number
+          total_sales: number
+          total_commissions: number
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          code: string
+          status?: string
+          commission_rate?: number
+          total_clicks?: number
+          total_sales?: number
+          total_commissions?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          code?: string
+          status?: string
+          commission_rate?: number
+          total_clicks?: number
+          total_sales?: number
+          total_commissions?: number
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      affiliate_clicks: {
+        Row: {
+          id: string
+          affiliate_id: string
+          affiliate_code: string
+          source: string | null
+          url: string | null
+          referrer: string | null
+          user_agent: string | null
+          ip_hash: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          affiliate_id: string
+          affiliate_code: string
+          source?: string | null
+          url?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          ip_hash?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          affiliate_id?: string
+          affiliate_code?: string
+          source?: string | null
+          url?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          ip_hash?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_clicks_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      affiliate_attributions: {
+        Row: {
+          id: string
+          order_id: string
+          affiliate_id: string
+          affiliate_code: string
+          source: string | null
+          click_id: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          affiliate_id: string
+          affiliate_code: string
+          source?: string | null
+          click_id?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          affiliate_id?: string
+          affiliate_code?: string
+          source?: string | null
+          click_id?: string | null
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_attributions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_attributions_order_id_fkey"
+            columns: ["order_id"]
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
+      affiliate_commissions: {
+        Row: {
+          id: string
+          order_id: string
+          affiliate_id: string
+          affiliate_code: string
+          gross_amount: number
+          commission_amount: number
+          status: string
+          hold_until: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          affiliate_id: string
+          affiliate_code: string
+          gross_amount: number
+          commission_amount: number
+          status?: string
+          hold_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          affiliate_id?: string
+          affiliate_code?: string
+          gross_amount?: number
+          commission_amount?: number
+          status?: string
+          hold_until?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "affiliate_commissions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "affiliate_commissions_order_id_fkey"
+            columns: ["order_id"]
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          }
+        ]
       }
       status_history: {
         Row: {

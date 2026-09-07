@@ -19,6 +19,9 @@ export type PedidoEntrada = {
   genero_musical: string;
   tipo_cantor?: "feminino" | "masculino";
   duracao_segundos: number;
+  affiliate_code?: string | null;
+  affiliate_source?: string | null;
+  affiliate_click_id?: string | null;
 };
 
 export async function criarPedido(data: PedidoEntrada) {
@@ -37,6 +40,9 @@ export async function criarPedido(data: PedidoEntrada) {
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
     tipo_cantor: data.tipo_cantor ?? "feminino",
+    affiliate_code: data.affiliate_code ?? null,
+    affiliate_source: data.affiliate_source ?? null,
+    affiliate_click_id: data.affiliate_click_id ?? null,
     letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,
@@ -213,7 +219,7 @@ export async function refazerLetraPedido(pedidoId: string, feedback?: string) {
     telefone_cliente: pedido.telefone_cliente ?? "",
     descricao: pedido.descricao,
     genero_musical: pedido.genero_musical ?? "Gospel",
-    tipo_cantor: pedido.tipo_cantor ?? "feminino",
+    tipo_cantor: pedido.tipo_cantor === "masculino" ? "masculino" : "feminino",
     duracao_segundos: pedido.duracao_segundos ?? 45,
     para_quem: pedido.para_quem,
     ocasiao: pedido.ocasiao ?? "",
@@ -309,13 +315,16 @@ export async function gerarMusicaPreview(pedidoId: string) {
 
   const duracaoCompleta = Math.max(pedido.duracao_segundos ?? 90, 90);
 
+  const tipoCantor: PedidoEntrada["tipo_cantor"] =
+    pedido.tipo_cantor === "masculino" ? "masculino" : "feminino";
+
   const { taskId } = await gerarMusicaComSuno(
     letraFinal,
     pedidoId,
     duracaoCompleta,
     pedido.genero_musical ?? "Pop brasileiro moderno",
     undefined,
-    pedido.tipo_cantor ?? "feminino",
+    tipoCantor,
   );
 
   const { data: pedidoAtualizado, error } = await supabaseAdmin
@@ -437,7 +446,7 @@ export async function gerarMusicaFinal(pedidoId: string) {
       telefone_cliente: pedidoAtualizado.telefone_cliente,
       email_cliente: pedidoAtualizado.email_cliente,
       para_quem: pedidoAtualizado.para_quem,
-      ocasiao: pedidoAtualizado.ocasao,
+      ocasiao: pedidoAtualizado.ocasiao,
       descricao: pedidoAtualizado.descricao,
       status: nextStatus,
     },
