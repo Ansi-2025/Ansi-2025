@@ -34,9 +34,17 @@ if (!STRIPE_APP_URL) {
   console.error("STRIPE_APP_URL is not configured.");
 }
 
-const stripe = new Stripe(STRIPE_SECRET_KEY ?? "", {
-  apiVersion: "2026-07-29.dahlia",
-});
+function getStripeClient() {
+  if (!STRIPE_SECRET_KEY) {
+    return null;
+  }
+
+  return new Stripe(STRIPE_SECRET_KEY, {
+    apiVersion: "2026-07-29.dahlia",
+  });
+}
+
+const stripe = getStripeClient();
 
 function getSuccessUrl(orderId: string) {
   if (!STRIPE_APP_URL) {
@@ -53,6 +61,11 @@ function getCancelUrl(orderId: string) {
 }
 
 export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
+  const stripeClient = getStripeClient();
+  if (!stripeClient) {
+    throw new Error("STRIPE_SECRET_KEY não configurado. Configure a variável de ambiente STRIPE_SECRET_KEY.");
+  }
+
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
@@ -91,7 +104,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
 
   const totalItemPrice = getStripePriceForCheckout({ secondVersion });
 
-  const session = await stripe.checkout.sessions.create({
+  const session = await stripeClient.checkout.sessions.create({
     payment_method_types: ["card"],
     mode: "payment",
     line_items: [
@@ -184,6 +197,11 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
 }
 
 export async function criarPaymentIntentStripe(pedidoId: string, secondVersion = false) {
+  const stripeClient = getStripeClient();
+  if (!stripeClient) {
+    throw new Error("STRIPE_SECRET_KEY não configurado. Configure a variável de ambiente STRIPE_SECRET_KEY.");
+  }
+
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
@@ -215,7 +233,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
   const totalAmount = Math.round(getStripePriceForCheckout({ secondVersion }) * 100);
   const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
 
-  const paymentIntent = await stripe.paymentIntents.create({
+  const paymentIntent = await stripeClient.paymentIntents.create({
     amount: totalAmount,
     currency: "brl",
     payment_method_types: ["card"],
@@ -290,6 +308,15 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
 }
 
 export async function handleStripeWebhook(request: Request) {
+  const stripeClient = getStripeClient();
+  if (!stripeClient) {
+    console.error("STRIPE_SECRET_KEY is not configured.");
+    return new Response(JSON.stringify({ error: "Webhook secret not configured" }), {
+      status: 500,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
   if (request.method === "GET") {
     return new Response("ok", { status: 200 });
   }
@@ -314,7 +341,7 @@ export async function handleStripeWebhook(request: Request) {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
+    event = stripeClient.webhooks.constructEvent(payload, signature, STRIPE_WEBHOOK_SECRET);
   } catch (error) {
     console.error("Stripe webhook signature verification failed:", error);
     return new Response(JSON.stringify({ error: "Invalid webhook signature" }), {

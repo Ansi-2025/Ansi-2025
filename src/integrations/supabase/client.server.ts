@@ -30,6 +30,17 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+function createMissingSupabaseProxy(message: string) {
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(message);
+      },
+    },
+  );
+}
+
 function createSupabaseAdminClient() {
   const SUPABASE_URL = resolveSupabaseUrl();
   const SUPABASE_SERVICE_ROLE = resolveSupabaseServiceRoleKey();
@@ -40,8 +51,8 @@ function createSupabaseAdminClient() {
       ...(!SUPABASE_SERVICE_ROLE ? ['SUPABASE_SERVICE_ROLE'] : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Configure Supabase variables in .env.local or deployment settings.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    console.warn(`[Supabase] ${message}`);
+    return createMissingSupabaseProxy(message) as ReturnType<typeof createClient<Database>>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE, {

@@ -27,6 +27,16 @@ function createSupabaseFetch(supabaseKey: string): typeof fetch {
   };
 }
 
+function createMissingSupabaseProxy(message: string) {
+  return new Proxy(
+    {},
+    {
+      get() {
+        throw new Error(message);
+      },
+    },
+  );
+}
 
 function createSupabaseClient() {
   // Use import.meta.env for client-side (Vite build-time replacement)
@@ -46,8 +56,8 @@ function createSupabaseClient() {
       ...(!SUPABASE_ANON_KEY ? ['SUPABASE_ANON_KEY'] : []),
     ];
     const message = `Missing Supabase environment variable(s): ${missing.join(', ')}. Configure Supabase variables in .env.local or in your deployment settings.`;
-    console.error(`[Supabase] ${message}`);
-    throw new Error(message);
+    console.warn(`[Supabase] ${message}`);
+    return createMissingSupabaseProxy(message) as ReturnType<typeof createClient<Database>>;
   }
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
