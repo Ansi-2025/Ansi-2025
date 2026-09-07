@@ -14,7 +14,7 @@ const escapeHtml = (value: string | null | undefined) =>
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;");
+    .replace(/"/g, "&quot;");
 
 const getTelegramConfig = () => {
   const token = process.env.TELEGRAM_BOT_TOKEN || process.env.TELEGRAM_TOKEN || "";
@@ -49,7 +49,11 @@ function normalizeAllowedTelegramStatus(statusLabel: string): string | null {
     return "Pagamento recebido";
   }
 
-  if (/musica em producao|musica em produção|musica em producao|producao|producao da musica|previa|gerando musica|gerando música/.test(normalized)) {
+  if (
+    /musica em producao|musica em produção|musica em producao|producao|producao da musica|previa|gerando musica|gerando música/.test(
+      normalized,
+    )
+  ) {
     return "Música em produção";
   }
 
@@ -84,10 +88,35 @@ export function buildPedidoTelegramMessage(
     ].join("\n");
   }
 
+  return [`${safeCliente}`, `Pedido: ${safeId}`, `Status: ${safeStatus}`].join("\n");
+}
+
+export function buildLandingCtaTelegramMessage({
+  buttonLabel,
+  source,
+  url,
+}: {
+  buttonLabel: string;
+  source: string;
+  url?: string | null;
+}) {
+  const safeLabel = escapeHtml(buttonLabel || "Botão");
+  const safeSource = escapeHtml(source || "home_cta");
+  const safeUrl = escapeHtml(url || "desconhecida");
+  const safeDate = escapeHtml(
+    new Date().toLocaleString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      dateStyle: "short",
+      timeStyle: "medium",
+    }),
+  );
+
   return [
-    `${safeCliente}`,
-    `Pedido: ${safeId}`,
-    `Status: ${safeStatus}`,
+    "Clique no botão 📣",
+    `Botão: ${safeLabel}`,
+    `Origem: ${safeSource}`,
+    `URL: ${safeUrl}`,
+    `Horário: ${safeDate}`,
   ].join("\n");
 }
 
@@ -96,7 +125,9 @@ export async function sendTelegramMessage(text: string, chatIdOverride?: string)
   const finalChatId = chatIdOverride || chatId;
 
   if (!token || !finalChatId) {
-    console.warn("[telegram] Configuração ausente. Defina TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID (ou TELEGRAM_OWNER_CHAT_ID).");
+    console.warn(
+      "[telegram] Configuração ausente. Defina TELEGRAM_BOT_TOKEN e TELEGRAM_CHAT_ID (ou TELEGRAM_OWNER_CHAT_ID).",
+    );
     return { ok: false, reason: "missing_telegram_config" as const };
   }
 

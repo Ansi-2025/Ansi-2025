@@ -2,11 +2,26 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
-import { atualizarDadosClientePedido, criarPedido, gerarLetraPedido, gerarMusicaPreview, marcarLetraAprovada, refazerLetraPedido, type PedidoEntrada } from "@/lib/pedido.service";
+import {
+  atualizarDadosClientePedido,
+  criarPedido,
+  gerarLetraPedido,
+  gerarMusicaPreview,
+  marcarLetraAprovada,
+  refazerLetraPedido,
+  type PedidoEntrada,
+} from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
+import { buildLandingCtaTelegramMessage, sendTelegramMessage } from "@/lib/telegram.service";
+import { assertPublicRequest } from "@/lib/public-request";
 import { isValidPersonName } from "@/lib/utils";
 
-const ORDER_ACCESS_SECRET = process.env.ORDER_ACCESS_SECRET ?? process.env.APP_SECRET ?? process.env.SUPABASE_SERVICE_ROLE ?? process.env.STRIPE_SECRET_KEY ?? "dev-order-access-secret";
+const ORDER_ACCESS_SECRET =
+  process.env.ORDER_ACCESS_SECRET ??
+  process.env.APP_SECRET ??
+  process.env.SUPABASE_SERVICE_ROLE ??
+  process.env.STRIPE_SECRET_KEY ??
+  "dev-order-access-secret";
 
 if (
   !process.env.ORDER_ACCESS_SECRET &&
@@ -14,7 +29,9 @@ if (
   !process.env.SUPABASE_SERVICE_ROLE &&
   !process.env.STRIPE_SECRET_KEY
 ) {
-  console.warn("[order-security] ORDER_ACCESS_SECRET não configurada em produção. Defina ORDER_ACCESS_SECRET para reforçar o controle de acesso ao pedido.");
+  console.warn(
+    "[order-security] ORDER_ACCESS_SECRET não configurada em produção. Defina ORDER_ACCESS_SECRET para reforçar o controle de acesso ao pedido.",
+  );
 }
 
 function generateOrderAccessToken(orderId: string) {
@@ -23,7 +40,9 @@ function generateOrderAccessToken(orderId: string) {
 
 function validateOrderAccess(orderId: string, token?: string | null) {
   if (!token) {
-    throw new Error("Token de acesso do pedido inválido. Reabra o link do acompanhamento do pedido.");
+    throw new Error(
+      "Token de acesso do pedido inválido. Reabra o link do acompanhamento do pedido.",
+    );
   }
 
   const expected = generateOrderAccessToken(orderId);
@@ -42,7 +61,10 @@ function validateOrderAccess(orderId: string, token?: string | null) {
 const orderIdSchema = z
   .string()
   .trim()
-  .regex(/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i, "Código do pedido inválido.")
+  .regex(
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    "Código do pedido inválido.",
+  )
   .transform((value) => value.trim());
 
 const OrderSchema = z
@@ -54,63 +76,48 @@ const OrderSchema = z
       .refine((value) => isValidPersonName(value), {
         message: "Informe um nome real para continuar.",
       }),
-    email_cliente: z.preprocess(
-      (value) => {
-        if (typeof value === "string") {
-          const trimmed = value.trim();
-          return trimmed === "" ? undefined : trimmed;
-        }
-        return value;
-      },
-      z.string().email().optional().nullable(),
-    ),
-    telefone_cliente: z.preprocess(
-      (value) => {
-        if (typeof value === "string") {
-          const trimmed = value.trim();
-          return trimmed === "" ? undefined : trimmed;
-        }
-        return value;
-      },
-      z.string().trim().min(10, "Informe um WhatsApp válido.").max(30),
-    ),
-    cpf_cliente: z.preprocess(
-      (value) => {
-        if (typeof value === "string") {
-          const digits = value.replace(/\D/g, "");
-          return digits === "" ? undefined : digits;
-        }
-        return value;
-      },
-      z.string().trim().min(11).max(14).optional().nullable(),
-    ),
+    email_cliente: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    }, z.string().email().optional().nullable()),
+    telefone_cliente: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    }, z.string().trim().min(10, "Informe um WhatsApp válido.").max(30)),
+    cpf_cliente: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const digits = value.replace(/\D/g, "");
+        return digits === "" ? undefined : digits;
+      }
+      return value;
+    }, z.string().trim().min(11).max(14).optional().nullable()),
     para_quem: z.string().trim().min(2).max(120),
-    nome_receptor: z.preprocess(
-      (value) => {
-        if (typeof value === "string") {
-          const trimmed = value.trim();
-          return trimmed === "" ? undefined : trimmed;
-        }
-        return value;
-      },
-      z.string().trim().max(120).optional().nullable(),
-    ),
+    nome_receptor: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    }, z.string().trim().max(120).optional().nullable()),
     ocasiao: z.string().trim().min(2).max(120),
     descricao: z.string().trim().min(15).max(2000),
     genero_musical: z.string().trim().min(2).max(80),
     outro_genero: z.string().trim().max(120).optional(),
     tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
     bot_field: z.string().trim().max(255).optional().default(""),
-    form_started_at: z.preprocess(
-      (value) => {
-        if (typeof value === "string") {
-          const parsed = Number(value);
-          return Number.isFinite(parsed) ? parsed : undefined;
-        }
-        return value;
-      },
-      z.number().int().optional().nullable(),
-    ),
+    form_started_at: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const parsed = Number(value);
+        return Number.isFinite(parsed) ? parsed : undefined;
+      }
+      return value;
+    }, z.number().int().optional().nullable()),
   })
   .superRefine((data, ctx) => {
     if (data.bot_field?.trim()) {
@@ -130,8 +137,15 @@ const OrderSchema = z
     }
   })
   .transform((data) => {
-    const { bot_field: _botField, form_started_at: _formStartedAt, nome_receptor: _nomeReceptor, ...rest } = data;
-    const paraQuem = [data.para_quem.trim(), data.nome_receptor?.trim()].filter(Boolean).join(" — ");
+    const {
+      bot_field: _botField,
+      form_started_at: _formStartedAt,
+      nome_receptor: _nomeReceptor,
+      ...rest
+    } = data;
+    const paraQuem = [data.para_quem.trim(), data.nome_receptor?.trim()]
+      .filter(Boolean)
+      .join(" — ");
 
     return {
       ...rest,
@@ -174,6 +188,32 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   entregue: "Entregue",
 };
 
+export const trackLandingCta = createServerFn({ method: "POST" })
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        buttonLabel: z.string().trim().min(1).max(120),
+        source: z.string().trim().min(1).max(120),
+        url: z.string().trim().max(500).optional().nullable(),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, ...ctx }) => {
+    const request = (ctx as { request?: Request }).request;
+
+    if (request) {
+      assertPublicRequest(request, { scope: "landing_cta" });
+    }
+
+    const text = buildLandingCtaTelegramMessage({
+      buttonLabel: data.buttonLabel,
+      source: data.source,
+      url: data.url ?? undefined,
+    });
+
+    return sendTelegramMessage(text);
+  });
+
 export const sendOrder = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => {
     try {
@@ -187,21 +227,27 @@ export const sendOrder = createServerFn({ method: "POST" })
       throw error;
     }
   })
-  .handler(async ({ data }) => {
+  .handler(async ({ data, ...ctx }) => {
+    const request = (ctx as { request?: Request }).request;
+
+    if (request) {
+      assertPublicRequest(request, { scope: "order_submission" });
+    }
+
     try {
-      console.log("[sendOrder.handler] Iniciando criação de pedido...", { 
-        nome: data.nome_cliente, 
-        telefone: data.telefone_cliente?.substring(0, 3) + "***" 
+      console.log("[sendOrder.handler] Iniciando criação de pedido...", {
+        nome: data.nome_cliente,
+        telefone: data.telefone_cliente?.substring(0, 3) + "***",
       });
-      
+
       const pedidoData: PedidoEntrada = data;
       const pedido = await criarPedido(pedidoData);
       console.log("[sendOrder.handler] Pedido criado com ID:", pedido.id);
-      
+
       console.log("[sendOrder.handler] Gerando letra...");
       const pedidoComLetra = await gerarLetraPedido(pedido.id, pedidoData);
       console.log("[sendOrder.handler] Letra gerada com sucesso");
-      
+
       return {
         ok: true,
         id: pedido.id,
@@ -217,7 +263,9 @@ export const sendOrder = createServerFn({ method: "POST" })
   });
 
 export const approveLyric = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     validateOrderAccess(data.id, data.token);
     const approvedOrder = await marcarLetraAprovada(data.id);
@@ -302,7 +350,9 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     if (data.token) {
       validateOrderAccess(data.id, data.token);
@@ -353,7 +403,9 @@ export const getOrderStatus = createServerFn({ method: "POST" })
   });
 
 export const getOrderStatusHistory = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data))
+  .inputValidator((data: unknown) =>
+    z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
+  )
   .handler(async ({ data }) => {
     if (data.token) {
       validateOrderAccess(data.id, data.token);
