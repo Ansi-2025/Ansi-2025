@@ -19,9 +19,6 @@ export type PedidoEntrada = {
   genero_musical: string;
   tipo_cantor?: "feminino" | "masculino";
   duracao_segundos: number;
-  affiliate_code?: string | null;
-  affiliate_source?: string | null;
-  affiliate_click_id?: string | null;
 };
 
 export async function criarPedido(data: PedidoEntrada) {
@@ -40,9 +37,6 @@ export async function criarPedido(data: PedidoEntrada) {
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
     tipo_cantor: data.tipo_cantor ?? "feminino",
-    affiliate_code: data.affiliate_code ?? null,
-    affiliate_source: data.affiliate_source ?? null,
-    affiliate_click_id: data.affiliate_click_id ?? null,
     letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,

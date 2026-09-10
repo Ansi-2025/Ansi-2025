@@ -21,7 +21,6 @@ import {
 import heroImg from "@/assets/hero-family.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { sendOrder, trackLandingCta } from "@/lib/order.functions";
-import { trackAffiliateVisitServer } from "@/lib/affiliate.service";
 import {
   Dialog,
   DialogContent,
@@ -72,31 +71,6 @@ const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
 function Index() {
   useReveal();
-  const trackAffiliateVisit = useServerFn(trackAffiliateVisitServer);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const ref = params.get("ref");
-    if (!ref) {
-      return;
-    }
-
-    void trackAffiliateVisit({
-      data: {
-        affiliateCode: ref,
-        source: "landing_ref",
-        url: window.location.href,
-        referrer: document.referrer || null,
-        userAgent: navigator.userAgent || null,
-      },
-    }).catch((error) => {
-      console.warn("[affiliate] Falha ao rastrear visita de afiliado:", error);
-    });
-  }, [trackAffiliateVisit]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">

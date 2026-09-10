@@ -1,7 +1,6 @@
 import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
-import { finalizeAffiliateCommission } from "@/lib/affiliate.service";
 import { notifyPedidoTelegram } from "@/lib/telegram.service";
 
 type PedidoStatus = Database["public"]["Enums"]["pedido_status"];
@@ -418,7 +417,7 @@ export async function handleStripeWebhook(request: Request) {
     const { data: pedido, error: pedidoError } = await supabaseAdmin
       .from("pedidos")
       .select(
-        "id, nome_cliente, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao, affiliate_code, para_quem, ocasiao",
+        "id, nome_cliente, status, stripe_payment_status, stripe_session_id, stripe_payment_intent_id, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao, para_quem, ocasiao",
       )
       .eq("id", resolvedPedidoId)
       .maybeSingle();
@@ -487,22 +486,6 @@ export async function handleStripeWebhook(request: Request) {
               : "Status do pedido atualizado pelo webhook da Stripe.",
         criado_em: new Date().toISOString(),
       });
-    }
-
-    if (novoStatus === "pago" || novoStatus === "musica_pronta") {
-      const affiliateCode = String(pedido.affiliate_code ?? "").trim();
-      const orderValue = getStripePriceForCheckout({
-        secondVersion: Boolean(pedido.segunda_versao),
-      });
-
-      if (affiliateCode) {
-        await finalizeAffiliateCommission({
-          orderId: pedido.id,
-          customerName: pedido.nome_cliente,
-          amount: orderValue,
-          affiliateCode,
-        });
-      }
     }
 
     return new Response(JSON.stringify({ ok: true, message: "Payment processed" }), {
