@@ -176,8 +176,6 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
       para_quem: updatedPedido.para_quem,
       ocasiao: updatedPedido.ocasiao,
       descricao: updatedPedido.descricao,
-      como_conheceu: updatedPedido.como_conheceu,
-      nome_conheceu: updatedPedido.nome_conheceu,
       status: "pagamento",
     },
     "Aguardando pagamento",
