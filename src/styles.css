@@ -101,7 +101,13 @@
 }
 
 @utility text-balance {
-  text-wrap: balance;
+  overflow-wrap: break-word;
+}
+
+@supports (text-wrap: balance) {
+  .text-balance {
+    text-wrap: balance;
+  }
 }
 
 @keyframes fade-up {
@@ -138,9 +144,11 @@
 }
 
 /* Scrollbar customizada com ouro e tons escuros */
-.overflow-y-auto {
-  scrollbar-width: thin;
-  scrollbar-color: oklch(0.80 0.17 90) oklch(0.14 0.03 220);
+@supports (scrollbar-width: thin) {
+  .overflow-y-auto {
+    scrollbar-width: thin;
+    scrollbar-color: #d6b55c #11183a;
+  }
 }
 
 .overflow-y-auto::-webkit-scrollbar {
@@ -148,16 +156,16 @@
 }
 
 .overflow-y-auto::-webkit-scrollbar-track {
-  background: oklch(0.14 0.03 220);
+  background: #11183a;
   border-radius: 4px;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb {
-  background: oklch(0.80 0.17 90);
+  background: #d6b55c;
   border-radius: 4px;
-  border: 2px solid oklch(0.14 0.03 220);
+  border: 2px solid #11183a;
 }
 
 .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: oklch(0.85 0.18 88);
+  background: #e0c06a;
 }

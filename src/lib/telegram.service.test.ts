@@ -27,5 +27,5 @@ test("buildPedidoTelegramMessage includes how the client found us", () => {
   );
 
   assert.match(message, /Como conheceu: Alguém/i);
-  assert.match(message, /Pessoa indicada: Maria/i);
+  assert.match(message, /Nome da pessoa: Maria/i);
 });

@@ -91,7 +91,7 @@ export function buildPedidoTelegramMessage(
     infoLines.push(`Como conheceu: ${safeDiscoveredBy}`);
   }
   if (safeDiscoveredBy === "Alguém" && safePersonName) {
-    infoLines.push(`Pessoa indicada: ${safePersonName}`);
+    infoLines.push(`Nome da pessoa: ${safePersonName}`);
   }
 
   const baseLines = [
