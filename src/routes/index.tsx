@@ -35,13 +35,13 @@ import { isValidPersonName } from "@/lib/utils";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Canção de Fé — Músicas Gospel Personalizadas" },
+      { title: "Canção de Fé" },
       {
         name: "description",
         content:
           "Música personalizada criada a partir da sua história. Receba uma canção exclusiva, feita com emoção, fé e entrega digital.",
       },
-      { property: "og:title", content: "Canção de Fé — Músicas Gospel Personalizadas" },
+      { property: "og:title", content: "Canção de Fé" },
       {
         property: "og:description",
         content:
@@ -70,6 +70,31 @@ const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
 function Index() {
   useReveal();
+  const trackVisit = useServerFn(trackLandingCta);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const sessionKey = "cancao-de-fe:page-visit-tracked";
+
+    if (sessionStorage.getItem(sessionKey) === "1") {
+      return;
+    }
+
+    sessionStorage.setItem(sessionKey, "1");
+
+    void trackVisit({
+      data: {
+        buttonLabel: "Acesso ao site",
+        source: "page_visit",
+        url: window.location.href,
+      },
+    }).catch((error) => {
+      console.warn("[landing-cta] Falha no rastreio da visita ao site:", error);
+    });
+  }, [trackVisit]);
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -853,7 +878,7 @@ function Hero() {
               ⚡ Entrega digital
             </span>
             <span className="rounded-full border border-white/15 bg-white/5 px-3 py-1.5">
-              💬 Atendimento no WhatsApp
+              ✨ Processo simples
             </span>
           </div>
 
@@ -890,8 +915,8 @@ function Badges() {
   const items = [
     { icon: Sparkles, label: "100% Personalizada" },
     { icon: Send, label: "Entrega Digital" },
-    { icon: MessageCircle, label: "Atendimento via WhatsApp" },
     { icon: ShieldCheck, label: "Produção Profissional" },
+    { icon: Heart, label: "Memória para Sempre" },
   ];
   return (
     <section className="border-y border-sky-100/10 bg-[radial-gradient(circle_at_top,rgba(96,165,250,0.12),transparent_35%),#041827]">
@@ -1296,7 +1321,6 @@ function OfferSection() {
   const paymentOptions = [
     "Cartão de crédito e débito",
     "Pagamento por PIX",
-    "Atendimento por WhatsApp para tirar dúvidas",
   ];
 
   return (
@@ -1353,7 +1377,7 @@ function OfferSection() {
 
             <div className="mt-6 rounded-[1.2rem] border border-[#d8c9f2] bg-white/70 p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[#5a497f]">
-                Pagamento e atendimento
+                Pagamento
               </p>
               <ul className="mt-4 space-y-3 text-sm leading-relaxed text-[#4b405d]">
                 {paymentOptions.map((item) => (
@@ -1365,16 +1389,6 @@ function OfferSection() {
                   </li>
                 ))}
               </ul>
-
-              <a
-                href={WHATSAPP_URL}
-                target="_blank"
-                rel="noreferrer"
-                className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-[#25D366] px-5 py-3 text-sm font-semibold text-white shadow-[0_10px_20px_rgba(37,211,102,0.25)] transition-transform hover:-translate-y-0.5"
-              >
-                <MessageCircle className="h-4 w-4" />
-                Falar no WhatsApp
-              </a>
             </div>
 
             <p className="mt-6 rounded-[1.2rem] border border-[#d8c9f2] bg-white/70 p-4 text-sm leading-relaxed text-[#4b405d]">

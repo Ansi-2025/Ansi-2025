@@ -10,8 +10,22 @@ test("buildLandingCtaTelegramMessage includes the clicked button and source", ()
     url: "https://example.com/",
   });
 
-  assert.match(message, /Criar Minha Canção/i);
+  assert.match(message, /CLIQUE NO BOTÃO/i);
+  assert.match(message, /Evento: Criar Minha Canção/i);
   assert.match(message, /home_hero/i);
+  assert.match(message, /https:\/\/example.com\//i);
+});
+
+test("buildLandingCtaTelegramMessage includes a page visit when the visitor lands on the site", () => {
+  const message = buildLandingCtaTelegramMessage({
+    buttonLabel: "Acesso ao site",
+    source: "page_visit",
+    url: "https://example.com/",
+  });
+
+  assert.match(message, /VISITA AO SITE/i);
+  assert.match(message, /Evento: Acesso ao site/i);
+  assert.match(message, /page_visit/i);
   assert.match(message, /https:\/\/example.com\//i);
 });
 

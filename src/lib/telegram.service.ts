@@ -136,9 +136,11 @@ export function buildLandingCtaTelegramMessage({
     }),
   );
 
+  const isVisit = safeSource.toLowerCase() === "page_visit" || safeLabel.toLowerCase() === "acesso ao site";
+
   return [
-    "Clique no botão 📣",
-    `Botão: ${safeLabel}`,
+    isVisit ? "VISITA AO SITE 👀" : "CLIQUE NO BOTÃO 📣",
+    `Evento: ${safeLabel}`,
     `Origem: ${safeSource}`,
     `URL: ${safeUrl}`,
     `Horário: ${safeDate}`,
