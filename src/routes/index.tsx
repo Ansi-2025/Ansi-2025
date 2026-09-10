@@ -446,7 +446,10 @@ function StartMusicWidget({
           {label}
         </button>
       </DialogTrigger>
-      <DialogContent className="max-w-[960px] overflow-hidden border border-[#e7d9ff] bg-[#fffafc] p-0 text-[#2f2a37] shadow-[0_35px_90px_rgba(18,14,31,0.24)] sm:rounded-[30px]">
+      <DialogContent
+        disableOutsideDismiss
+        className="max-w-[960px] overflow-hidden border border-[#e7d9ff] bg-[#fffafc] p-0 text-[#2f2a37] shadow-[0_35px_90px_rgba(18,14,31,0.24)] sm:rounded-[30px]"
+      >
         <div className="max-h-[82vh] overflow-y-auto bg-[#fdf9ff] px-6 py-6 sm:px-8 sm:py-7">
           <div className="mb-6">
             <div className="flex items-center justify-between text-[10px] font-medium uppercase tracking-[0.14em] text-[#655b76]">

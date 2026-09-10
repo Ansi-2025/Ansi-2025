@@ -46,7 +46,7 @@ const DialogOverlay = React.forwardRef<
     <DialogPrimitive.Overlay
       ref={ref}
       className={cn(
-        "fixed inset-0 z-50 bg-[#061b2c]/10 backdrop-blur-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
+        "fixed inset-0 z-40 bg-[#061b2c]/10 backdrop-blur-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0",
         className,
       )}
       {...props}
@@ -57,25 +57,54 @@ DialogOverlay.displayName = DialogPrimitive.Overlay.displayName;
 
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
-  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & { hideCloseButton?: boolean }
->(({ className, children, hideCloseButton = false, ...props }, ref) => {
-  const mounted = useIsMounted();
-
-  if (!mounted) {
-    return null;
+  React.ComponentPropsWithoutRef<typeof DialogPrimitive.Content> & {
+    hideCloseButton?: boolean;
+    disableOutsideDismiss?: boolean;
   }
+>(
+  (
+    { className, children, hideCloseButton = false, disableOutsideDismiss = false, ...props },
+    ref,
+  ) => {
+    const mounted = useIsMounted();
+    const { onPointerDownOutside, onEscapeKeyDown, onInteractOutside, ...restProps } = props;
 
-  return (
-    <DialogPortal>
-      <DialogOverlay />
-      <DialogPrimitive.Content
-        ref={ref}
-        className={cn(
-          "fixed left-[50%] top-[50%] z-50 grid max-h-[90vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
-          className,
-        )}
-        {...props}
-      >
+    if (!mounted) {
+      return null;
+    }
+
+    return (
+      <DialogPortal>
+        <DialogOverlay />
+        <DialogPrimitive.Content
+          ref={ref}
+          className={cn(
+            "fixed left-[50%] top-[50%] z-50 grid max-h-[90vh] w-full max-w-lg translate-x-[-50%] translate-y-[-50%] gap-4 overflow-y-auto border bg-background p-6 shadow-lg duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 sm:rounded-lg",
+            className,
+          )}
+          onInteractOutside={(event) => {
+            if (disableOutsideDismiss) {
+              event.preventDefault();
+              return;
+            }
+            onInteractOutside?.(event);
+          }}
+          onPointerDownOutside={(event) => {
+            if (disableOutsideDismiss) {
+              event.preventDefault();
+              return;
+            }
+            onPointerDownOutside?.(event);
+          }}
+          onEscapeKeyDown={(event) => {
+            if (disableOutsideDismiss) {
+              event.preventDefault();
+              return;
+            }
+            onEscapeKeyDown?.(event);
+          }}
+          {...restProps}
+        >
         {children}
         {!hideCloseButton && (
           <DialogPrimitive.Close className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full border border-[#e7d9ff] bg-white/80 text-[#413a4d] shadow-[0_10px_24px_rgba(38,20,63,0.12)] ring-offset-background cursor-pointer transition-all hover:scale-[1.02] hover:border-[#d1b8ff] hover:bg-white focus:outline-none focus:ring-2 focus:ring-[#a67df0] focus:ring-offset-2 disabled:pointer-events-none data-[state=open]:bg-accent data-[state=open]:text-muted-foreground">
