@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 
-import { buildLandingCtaTelegramMessage } from "./telegram.service.ts";
+import { buildLandingCtaTelegramMessage, buildPedidoTelegramMessage } from "./telegram.service.ts";
 
 test("buildLandingCtaTelegramMessage includes the clicked button and source", () => {
   const message = buildLandingCtaTelegramMessage({
@@ -13,4 +13,19 @@ test("buildLandingCtaTelegramMessage includes the clicked button and source", ()
   assert.match(message, /Criar Minha Canção/i);
   assert.match(message, /home_hero/i);
   assert.match(message, /https:\/\/example.com\//i);
+});
+
+test("buildPedidoTelegramMessage includes how the client found us", () => {
+  const message = buildPedidoTelegramMessage(
+    {
+      id: "123",
+      nome_cliente: "João",
+      como_conheceu: "alguem",
+      nome_conheceu: "Maria",
+    },
+    "Pedido recebido",
+  );
+
+  assert.match(message, /Como conheceu: Alguém/i);
+  assert.match(message, /Pessoa indicada: Maria/i);
 });

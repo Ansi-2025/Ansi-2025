@@ -6,6 +6,8 @@ type TelegramOrderSnapshot = {
   para_quem?: string | null;
   ocasiao?: string | null;
   descricao?: string | null;
+  como_conheceu?: string | null;
+  nome_conheceu?: string | null;
   status?: string | null;
 };
 
@@ -74,21 +76,44 @@ export function buildPedidoTelegramMessage(
   }
 
   const safeStatus = escapeHtml(finalStatus);
+  const sourceMap: Record<string, string> = {
+    facebook: "Facebook",
+    instagram: "Instagram",
+    whatsapp: "WhatsApp",
+    alguem: "Alguém",
+  };
+  const discoveredBy = order.como_conheceu ? sourceMap[order.como_conheceu] ?? order.como_conheceu : null;
+  const safeDiscoveredBy = discoveredBy ? escapeHtml(discoveredBy) : null;
+  const safePersonName = order.nome_conheceu ? escapeHtml(order.nome_conheceu) : null;
+
+  const infoLines: string[] = [];
+  if (safeDiscoveredBy) {
+    infoLines.push(`Como conheceu: ${safeDiscoveredBy}`);
+  }
+  if (safeDiscoveredBy === "Alguém" && safePersonName) {
+    infoLines.push(`Pessoa indicada: ${safePersonName}`);
+  }
+
+  const baseLines = [
+    `${safeCliente}`,
+    `Pedido: ${safeId}`,
+    `Status: ${safeStatus}`,
+    ...infoLines,
+  ];
 
   if (finalStatus === "Pedido recebido") {
-    return `Pedido recebido ✅ ${safeCliente}, ID ${safeId}`;
+    baseLines.unshift("Pedido recebido ✅");
   }
 
   if (finalStatus === "Pagamento recebido") {
-    return [
-      `Pagamento recebido ✅`,
-      `${safeCliente}`,
-      `Pedido: ${safeId}`,
-      `Status: ${safeStatus}`,
-    ].join("\n");
+    baseLines.unshift("Pagamento recebido ✅");
   }
 
-  return [`${safeCliente}`, `Pedido: ${safeId}`, `Status: ${safeStatus}`].join("\n");
+  if (extraMessage) {
+    baseLines.push(`Detalhes: ${escapeHtml(extraMessage)}`);
+  }
+
+  return baseLines.join("\n");
 }
 
 export function buildLandingCtaTelegramMessage({
