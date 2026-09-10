@@ -18,6 +18,8 @@ export type PedidoEntrada = {
   descricao: string;
   genero_musical: string;
   tipo_cantor?: "feminino" | "masculino";
+  como_conheceu?: "facebook" | "instagram" | "whatsapp" | "alguem" | string | null;
+  nome_conheceu?: string | null;
   duracao_segundos: number;
 };
 
@@ -37,6 +39,8 @@ export async function criarPedido(data: PedidoEntrada) {
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
     tipo_cantor: data.tipo_cantor ?? "feminino",
+    como_conheceu: data.como_conheceu ?? null,
+    nome_conheceu: data.nome_conheceu ?? null,
     letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,

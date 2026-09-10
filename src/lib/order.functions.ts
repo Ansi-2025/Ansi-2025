@@ -110,6 +110,20 @@ const OrderSchema = z
     genero_musical: z.string().trim().min(2).max(80),
     outro_genero: z.string().trim().max(120).optional(),
     tipo_cantor: z.enum(["feminino", "masculino"]).optional().default("feminino"),
+    como_conheceu: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    }, z.enum(["facebook", "instagram", "whatsapp", "alguem"]).optional().nullable()),
+    nome_conheceu: z.preprocess((value) => {
+      if (typeof value === "string") {
+        const trimmed = value.trim();
+        return trimmed === "" ? undefined : trimmed;
+      }
+      return value;
+    }, z.string().trim().max(120).optional().nullable()),
     bot_field: z.string().trim().max(255).optional().default(""),
     form_started_at: z.preprocess((value) => {
       if (typeof value === "string") {

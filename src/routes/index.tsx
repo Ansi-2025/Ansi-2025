@@ -325,6 +325,8 @@ function StartMusicWidget({
       outro_genero: "",
       tipo_cantor: "feminino",
       descricao: "",
+      como_conheceu: "",
+      nome_conheceu: "",
       bot_field: "",
       ...initialFormState,
     });
@@ -630,7 +632,7 @@ function StartMusicWidget({
                 </div>
               </div>
             ) : current.key === "descricao" ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <textarea
                   autoFocus
                   rows={7}
@@ -639,6 +641,59 @@ function StartMusicWidget({
                   className="min-h-[220px] w-full rounded-[18px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-4 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                   placeholder={current.placeholder}
                 />
+
+                <div className="rounded-[18px] border border-[#d8c8f4] bg-[#f7f1ff] p-4 text-left">
+                  <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#5c4a77]">
+                    Como você nos conheceu?
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    {[
+                      { value: "facebook", label: "Facebook" },
+                      { value: "instagram", label: "Instagram" },
+                      { value: "whatsapp", label: "WhatsApp" },
+                      { value: "alguem", label: "Alguém" },
+                    ].map((option) => {
+                      const isSelected = form.como_conheceu === option.value;
+
+                      return (
+                        <button
+                          key={option.value}
+                          type="button"
+                          onClick={() =>
+                            setForm({
+                              ...form,
+                              como_conheceu: option.value,
+                              nome_conheceu: option.value === "alguem" ? form.nome_conheceu : "",
+                            })
+                          }
+                          className={`rounded-full border px-4 py-3 text-left text-sm font-medium transition-all ${
+                            isSelected
+                              ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                              : "border-[#d6c4f4] bg-[#f9f6fb] text-[#4c425b] hover:border-[#a98ae9]"
+                          }`}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {form.como_conheceu === "alguem" && (
+                    <label className="mt-3 block">
+                      <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">
+                        Nome da pessoa
+                      </span>
+                      <input
+                        type="text"
+                        value={form.nome_conheceu}
+                        onChange={(e) => setForm({ ...form, nome_conheceu: e.target.value })}
+                        className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                        placeholder="Ex.: Ana, Carlos, João"
+                      />
+                    </label>
+                  )}
+                </div>
+
                 <div className="rounded-[18px] border border-[#d9c7f7] bg-[#f7f0ff] p-4 text-left text-[13px] leading-relaxed text-[#2f2a37] shadow-[0_6px_20px_rgba(123,92,175,0.06)]">
                   <p className="mb-3 font-semibold text-[#3d2d52]">
                     💡 Dicas para deixar sua música ainda mais especial
@@ -1580,6 +1635,8 @@ type OrderFormState = {
   outro_genero: string;
   tipo_cantor: "feminino" | "masculino";
   descricao: string;
+  como_conheceu: "facebook" | "instagram" | "whatsapp" | "alguem" | "";
+  nome_conheceu: string;
   bot_field: string;
 };
 
@@ -1614,6 +1671,8 @@ function OrderForm() {
     outro_genero: "",
     tipo_cantor: "feminino",
     descricao: "",
+    como_conheceu: "",
+    nome_conheceu: "",
     bot_field: "",
   });
 
@@ -1779,6 +1838,8 @@ function OrderForm() {
       outro_genero: "",
       tipo_cantor: "feminino",
       descricao: "",
+      como_conheceu: "",
+      nome_conheceu: "",
       bot_field: "",
     });
     setStep(0);
@@ -1883,6 +1944,59 @@ function OrderForm() {
                       className="w-full resize-y rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-sm text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
                       placeholder="Ex.: Quero uma música que fale sobre nossa história de amor, a fé que nos uniu, o nascimento da nossa filha…"
                     />
+
+                    <div className="rounded-[18px] border border-[#d8c8f4] bg-[#f7f1ff] p-4 text-left">
+                      <p className="mb-3 text-[13px] font-semibold uppercase tracking-[0.16em] text-[#5c4a77]">
+                        Como você nos conheceu?
+                      </p>
+                      <div className="grid gap-2 sm:grid-cols-2">
+                        {[
+                          { value: "facebook", label: "Facebook" },
+                          { value: "instagram", label: "Instagram" },
+                          { value: "whatsapp", label: "WhatsApp" },
+                          { value: "alguem", label: "Alguém" },
+                        ].map((option) => {
+                          const active = form.como_conheceu === option.value;
+
+                          return (
+                            <button
+                              key={option.value}
+                              type="button"
+                              onClick={() =>
+                                setForm({
+                                  ...form,
+                                  como_conheceu: option.value,
+                                  nome_conheceu: option.value === "alguem" ? form.nome_conheceu : "",
+                                })
+                              }
+                              className={`rounded-full border px-4 py-3 text-left text-sm font-medium transition-all ${
+                                active
+                                  ? "border-[#8d69d8] bg-[#efe7ff] text-[#3a2d53]"
+                                  : "border-[#d6c4f4] bg-[#f9f6fb] text-[#4c425b] hover:border-[#a98ae9]"
+                              }`}
+                            >
+                              {option.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+
+                      {form.como_conheceu === "alguem" && (
+                        <label className="mt-3 block">
+                          <span className="mb-2 block text-[13px] font-medium text-[#2f2a37]">
+                            Nome da pessoa
+                          </span>
+                          <input
+                            type="text"
+                            value={form.nome_conheceu}
+                            onChange={(e) => setForm({ ...form, nome_conheceu: e.target.value })}
+                            className="w-full rounded-[14px] border border-[#c8b3f6] bg-[#f9f6fb] px-4 py-3 text-base text-[#2f2a37] outline-none placeholder:text-[#8a7d98] focus:border-[#7e5ad8]"
+                            placeholder="Ex.: Ana, Carlos, João"
+                          />
+                        </label>
+                      )}
+                    </div>
+
                     <div className="sr-only" aria-hidden="true">
                       <label>
                         Campo de verificação

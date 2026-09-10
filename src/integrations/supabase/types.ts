@@ -44,6 +44,8 @@ export type Database = {
           whatsapp: string
           telefone_cliente: string | null
           tipo_cantor: string | null
+          como_conheceu: string | null
+          nome_conheceu: string | null
           letra_gerada: string | null
           letra_aprovada: boolean
           preview_gerada_em: string | null
