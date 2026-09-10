@@ -16,14 +16,18 @@ import { buildLandingCtaTelegramMessage, sendTelegramMessage } from "@/lib/teleg
 import { assertPublicRequest } from "@/lib/public-request";
 import { isValidPersonName } from "@/lib/utils";
 
-const ORDER_ACCESS_SECRET =
-  process.env.ORDER_ACCESS_SECRET ??
-  process.env.APP_SECRET ??
-  process.env.SUPABASE_SERVICE_ROLE ??
-  process.env.STRIPE_SECRET_KEY ??
-  "dev-order-access-secret";
+const isServerRuntime = typeof window === "undefined" && !!process?.versions?.node;
+
+const ORDER_ACCESS_SECRET = isServerRuntime
+  ? (process.env.ORDER_ACCESS_SECRET ??
+      process.env.APP_SECRET ??
+      process.env.SUPABASE_SERVICE_ROLE ??
+      process.env.STRIPE_SECRET_KEY ??
+      "dev-order-access-secret")
+  : "browser-order-access-secret";
 
 if (
+  isServerRuntime &&
   !process.env.ORDER_ACCESS_SECRET &&
   !process.env.APP_SECRET &&
   !process.env.SUPABASE_SERVICE_ROLE &&
