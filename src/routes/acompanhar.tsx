@@ -813,20 +813,20 @@ function Timeline({
         </div>
 
         <div className="mt-4 grid gap-2 rounded-2xl border border-white/10 bg-[#121922] p-3 text-[11px] uppercase tracking-[0.14em] text-zinc-400">
-          <div className="flex items-center justify-between gap-4">
-            <span>Estilo</span>
-            <span className="text-right font-medium text-zinc-200">{order.genero_musical ?? "Estilo personalizado"}</span>
+          <div className="flex items-start justify-between gap-4">
+            <span className="shrink-0">Estilo</span>
+            <span className="min-w-0 max-w-[60%] break-words text-right font-medium leading-relaxed text-zinc-200">{order.genero_musical ?? "Estilo personalizado"}</span>
           </div>
           {order.ocasiao && (
-            <div className="flex items-center justify-between gap-4">
-              <span>Ocasião</span>
-              <span className="max-w-[60%] truncate text-right font-medium text-zinc-200">{order.ocasiao}</span>
+            <div className="flex items-start justify-between gap-4">
+              <span className="shrink-0">Ocasião</span>
+              <span className="min-w-0 max-w-[60%] break-words text-right font-medium leading-relaxed text-zinc-200">{order.ocasiao}</span>
             </div>
           )}
           {order.para_quem && (
-            <div className="flex items-center justify-between gap-4">
-              <span>Para</span>
-              <span className="max-w-[60%] truncate text-right font-medium text-zinc-200">{order.para_quem}</span>
+            <div className="flex items-start justify-between gap-4">
+              <span className="shrink-0">Para</span>
+              <span className="min-w-0 max-w-[60%] break-words text-right font-medium leading-relaxed text-zinc-200">{order.para_quem}</span>
             </div>
           )}
         </div>
