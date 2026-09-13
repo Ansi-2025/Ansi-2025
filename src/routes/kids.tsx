@@ -12,7 +12,7 @@ export const Route = createFileRoute("/kids")({
       {
         name: "description",
         content:
-          "Crie músicas personalizadas para brincar, aprender e interagir com seu pequeno. 2 versões por apenas R$10.",
+          "Crie uma música personalizada para brincar, aprender e interagir com seu pequeno por apenas R$10.",
       },
       { property: "og:title", content: "Canção de Fé Kids — Crie músicas personalizadas para crianças" },
       {
@@ -308,16 +308,6 @@ function KidsPage() {
             <p className="mt-4 max-w-lg text-base leading-relaxed text-slate-600 md:text-lg">
               Crie músicas personalizadas para brincar, interagir, aprender e transformar pequenos momentos da rotina em memórias especiais.
             </p>
-
-            <div className="mt-6 rounded-[24px] border border-rose-200 bg-gradient-to-r from-rose-50 to-orange-50 p-4 shadow-sm">
-              <div className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.2em] text-rose-600">
-                <span>🔥 Oferta especial</span>
-              </div>
-              <div className="mt-3 flex flex-wrap items-end gap-3">
-                <span className="text-4xl font-black tracking-[-0.08em] text-slate-900">R$10</span>
-                <span className="text-sm font-medium text-slate-600">2 versões da música</span>
-              </div>
-            </div>
 
             <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:items-center">
               <button
@@ -626,13 +616,12 @@ function KidsPage() {
                   🎈 Canção de Fé Kids
                 </div>
                 <h3 className="mt-4 font-display text-3xl font-semibold tracking-[-0.06em] text-slate-900 md:text-4xl">
-                  Crie 2 versões da sua música
+                  Crie sua música por apenas R$10
                 </h3>
               </div>
 
-              <div className="flex items-end gap-3">
-                <span className="text-4xl font-black tracking-[-0.08em] text-slate-900">R$10</span>
-                <span className="text-sm font-medium text-slate-600">por apenas</span>
+              <div className="flex items-end gap-2 text-slate-900">
+                <span className="text-4xl font-black tracking-[-0.08em]">R$10</span>
               </div>
             </div>
 
