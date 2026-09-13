@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as TermsOfServiceRouteImport } from './routes/terms-of-service'
 import { Route as SupportRouteImport } from './routes/support'
 import { Route as PrivacyPolicyRouteImport } from './routes/privacy-policy'
+import { Route as KidsRouteImport } from './routes/kids'
 import { Route as AdminRouteImport } from './routes/admin'
 import { Route as AcompanharRouteImport } from './routes/acompanhar'
 import { Route as IndexRouteImport } from './routes/index'
@@ -29,6 +30,11 @@ const SupportRoute = SupportRouteImport.update({
 const PrivacyPolicyRoute = PrivacyPolicyRouteImport.update({
   id: '/privacy-policy',
   path: '/privacy-policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const KidsRoute = KidsRouteImport.update({
+  id: '/kids',
+  path: '/kids',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AdminRoute = AdminRouteImport.update({
@@ -51,6 +57,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/kids': typeof KidsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/kids': typeof KidsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -68,6 +76,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/acompanhar': typeof AcompanharRoute
   '/admin': typeof AdminRoute
+  '/kids': typeof KidsRoute
   '/privacy-policy': typeof PrivacyPolicyRoute
   '/support': typeof SupportRoute
   '/terms-of-service': typeof TermsOfServiceRoute
@@ -78,6 +87,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acompanhar'
     | '/admin'
+    | '/kids'
     | '/privacy-policy'
     | '/support'
     | '/terms-of-service'
@@ -86,6 +96,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acompanhar'
     | '/admin'
+    | '/kids'
     | '/privacy-policy'
     | '/support'
     | '/terms-of-service'
@@ -94,6 +105,7 @@ export interface FileRouteTypes {
     | '/'
     | '/acompanhar'
     | '/admin'
+    | '/kids'
     | '/privacy-policy'
     | '/support'
     | '/terms-of-service'
@@ -103,6 +115,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AcompanharRoute: typeof AcompanharRoute
   AdminRoute: typeof AdminRoute
+  KidsRoute: typeof KidsRoute
   PrivacyPolicyRoute: typeof PrivacyPolicyRoute
   SupportRoute: typeof SupportRoute
   TermsOfServiceRoute: typeof TermsOfServiceRoute
@@ -129,6 +142,13 @@ declare module '@tanstack/react-router' {
       path: '/privacy-policy'
       fullPath: '/privacy-policy'
       preLoaderRoute: typeof PrivacyPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/kids': {
+      id: '/kids'
+      path: '/kids'
+      fullPath: '/kids'
+      preLoaderRoute: typeof KidsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/admin': {
@@ -159,6 +179,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AcompanharRoute: AcompanharRoute,
   AdminRoute: AdminRoute,
+  KidsRoute: KidsRoute,
   PrivacyPolicyRoute: PrivacyPolicyRoute,
   SupportRoute: SupportRoute,
   TermsOfServiceRoute: TermsOfServiceRoute,

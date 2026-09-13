@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import {
@@ -144,6 +144,9 @@ function Header() {
           </span>
         </a>
         <nav className="hidden items-center gap-8 text-sm text-sky-100/85 md:flex">
+          <Link to="/kids" className="transition-colors hover:text-white">
+            🎈 Kids
+          </Link>
           <a href="#como-funciona" className="transition-colors hover:text-white">
             Como funciona
           </a>
@@ -865,6 +868,12 @@ function Hero() {
               label="❤️ Criar Minha Canção"
               icon={<Sparkles className="h-4 w-4" />}
             />
+            <Link
+              to="/kids"
+              className="inline-flex items-center gap-2 rounded-full border border-[#f4d9d1] bg-white/8 px-8 py-4 text-sm font-semibold text-white transition hover:border-[#ffd7bd] hover:bg-white/12"
+            >
+              🎈 Canção de Fé Kids
+            </Link>
           </div>
 
           <div
