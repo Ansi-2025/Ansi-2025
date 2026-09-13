@@ -22,6 +22,7 @@ import {
 import heroImg from "@/assets/hero-family.jpg";
 import { useReveal } from "@/hooks/use-reveal";
 import { sendOrder, trackLandingCta } from "@/lib/order.functions";
+import { getPersistentBrowserFingerprint } from "@/lib/browser-fingerprint";
 import {
   Dialog,
   DialogContent,
@@ -85,11 +86,14 @@ function Index() {
 
     sessionStorage.setItem(sessionKey, "1");
 
+    const fingerprint = getPersistentBrowserFingerprint();
+
     void trackVisit({
       data: {
         buttonLabel: "Acesso ao site",
         source: "page_visit",
         url: window.location.href,
+        fingerprint,
       },
     }).catch((error) => {
       console.warn("[landing-cta] Falha no rastreio da visita ao site:", error);
@@ -169,6 +173,7 @@ function Header() {
                   buttonLabel: "Acompanhar Pedido",
                   source: "header_nav",
                   url: typeof window !== "undefined" ? window.location.href : undefined,
+                  fingerprint: getPersistentBrowserFingerprint(),
                 },
               }).catch((error) => {
                 console.warn("[landing-cta] Falha no rastreio do clique do header:", error);
@@ -328,6 +333,7 @@ function StartMusicWidget({
         buttonLabel: label,
         source: trackingSource,
         url: typeof window !== "undefined" ? window.location.href : undefined,
+        fingerprint: getPersistentBrowserFingerprint(),
       },
     }).catch((error) => {
       console.warn("[landing-cta] Falha no rastreio do clique do CTA:", error);

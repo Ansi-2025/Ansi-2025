@@ -192,6 +192,88 @@ export const STATUS_LABELS: Record<PedidoStatus, string> = {
   entregue: "Entregue",
 };
 
+/**
+ * Extrai o IP real do cliente considerando proxies e CDNs
+ */
+function getClientIp(request: Request | undefined): string {
+  if (!request) return "unknown";
+
+  // Tenta extrair do header X-Forwarded-For (Cloudflare, Vercel, etc)
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) {
+    return forwarded.split(",")[0].trim();
+  }
+
+  // Fallback para CF-Connecting-IP (Cloudflare específico)
+  const cloudflareIp = request.headers.get("cf-connecting-ip");
+  if (cloudflareIp) {
+    return cloudflareIp;
+  }
+
+  return "unknown";
+}
+
+/**
+ * Verifica se há uma visita duplicada recente do mesmo fingerprint/IP
+ * Implementa rate limiting: máx 1 visita por minuto
+ */
+async function isDuplicateVisit(
+  fingerprint: string,
+  clientIp: string,
+  source: string,
+): Promise<boolean> {
+  try {
+    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+
+    const { data, error } = await supabaseAdmin
+      .from("landing_cta_tracking")
+      .select("id")
+      .eq("browser_fingerprint", fingerprint)
+      .eq("source", source)
+      .gte("created_at", oneMinuteAgo.toISOString())
+      .limit(1);
+
+    if (error) {
+      console.warn("[tracking] Erro ao consultar duplicatas:", error);
+      // Se falhar, permite a requisição passar
+      return false;
+    }
+
+    return (data?.length ?? 0) > 0;
+  } catch (error) {
+    console.warn("[tracking] Exceção ao verificar duplicatas:", error);
+    // Fallback: permite a requisição se o banco falhar
+    return false;
+  }
+}
+
+/**
+ * Registra a visita no Supabase para auditoria e deduplicação
+ */
+async function recordLandingCtaVisit(
+  fingerprint: string,
+  clientIp: string,
+  buttonLabel: string,
+  source: string,
+  url: string | undefined,
+): Promise<void> {
+  try {
+    await supabaseAdmin.from("landing_cta_tracking").insert([
+      {
+        browser_fingerprint: fingerprint,
+        client_ip: clientIp,
+        button_label: buttonLabel,
+        source,
+        url: url ?? null,
+        created_at: new Date().toISOString(),
+      },
+    ]);
+  } catch (error) {
+    console.warn("[tracking] Erro ao registrar visita:", error);
+    // Silenciosamente falha para não afetar a requisição principal
+  }
+}
+
 export const trackLandingCta = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) =>
     z
@@ -199,6 +281,7 @@ export const trackLandingCta = createServerFn({ method: "POST" })
         buttonLabel: z.string().trim().min(1).max(120),
         source: z.string().trim().min(1).max(120),
         url: z.string().trim().max(500).optional().nullable(),
+        fingerprint: z.string().trim().min(1).max(128).optional(),
       })
       .parse(data),
   )
@@ -208,6 +291,29 @@ export const trackLandingCta = createServerFn({ method: "POST" })
     if (request) {
       assertPublicRequest(request, { scope: "landing_cta" });
     }
+
+    const clientIp = getClientIp(request);
+    const fingerprint = data.fingerprint || "unknown";
+
+    // Verifica duplicata e rate limiting
+    const isDuplicate = await isDuplicateVisit(fingerprint, clientIp, data.source);
+
+    if (isDuplicate) {
+      console.info("[tracking] Visita duplicada detectada:", {
+        fingerprint,
+        source: data.source,
+        ip: clientIp,
+      });
+
+      return {
+        ok: false,
+        reason: "duplicate_visit",
+        message: "Visita já foi registrada recentemente",
+      };
+    }
+
+    // Registra a visita para auditoria
+    void recordLandingCtaVisit(fingerprint, clientIp, data.buttonLabel, data.source, data.url);
 
     const text = buildLandingCtaTelegramMessage({
       buttonLabel: data.buttonLabel,
