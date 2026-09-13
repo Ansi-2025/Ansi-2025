@@ -39,6 +39,8 @@ test("buildKidsOrderData reaproveita o mesmo fluxo de pedido atual", () => {
   assert.equal(payload.nome_cliente, "Laura");
   assert.equal(payload.para_quem, "Laura");
   assert.equal(payload.genero_musical, "Infantil");
+  assert.equal("como_conheceu" in payload, false);
+  assert.equal("nome_conheceu" in payload, false);
   assert.match(payload.ocasiao, /aprendizado|brincadeira/i);
   assert.match(payload.descricao, /Laura/i);
   assert.match(payload.descricao, /Animais/i);

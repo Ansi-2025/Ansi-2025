@@ -18,8 +18,6 @@ export type PedidoEntrada = {
   descricao: string;
   genero_musical: string;
   tipo_cantor?: "feminino" | "masculino";
-  como_conheceu?: "facebook" | "instagram" | "whatsapp" | "alguem" | string | null;
-  nome_conheceu?: string | null;
   duracao_segundos: number;
 };
 
@@ -39,8 +37,6 @@ export async function criarPedido(data: PedidoEntrada) {
     para_quem: data.para_quem,
     ocasiao: data.ocasiao,
     tipo_cantor: data.tipo_cantor ?? "feminino",
-    como_conheceu: data.como_conheceu ?? null,
-    nome_conheceu: data.nome_conheceu ?? null,
     letra_refazer_contador: 0,
     status: "recebido",
     created_at: agora,
@@ -78,8 +74,6 @@ export async function criarPedido(data: PedidoEntrada) {
       para_quem: inserted.para_quem,
       ocasiao: inserted.ocasiao,
       descricao: inserted.descricao,
-      como_conheceu: inserted.como_conheceu,
-      nome_conheceu: inserted.nome_conheceu,
       status: "recebido",
     },
     "Recebido",
@@ -166,8 +160,6 @@ export async function gerarLetraPedido(pedidoId: string, data: PedidoEntrada) {
       para_quem: pedido.para_quem,
       ocasiao: pedido.ocasiao,
       descricao: pedido.descricao,
-      como_conheceu: pedido.como_conheceu,
-      nome_conheceu: pedido.nome_conheceu,
       status: "aguardando_aprovacao_letra",
     },
     "Aguardando aprovação da letra",
@@ -181,7 +173,7 @@ async function obterPedidoParaRoteiro(pedidoId: string) {
   const { data: pedido, error } = await supabaseAdmin
     .from("pedidos")
     .select(
-      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, tipo_cantor, como_conheceu, nome_conheceu, duracao_segundos, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, suno_task_id, preview_gerada_em, musica_gerada_em, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao"
+      "id, nome_cliente, email_cliente, telefone_cliente, descricao, genero_musical, tipo_cantor, duracao_segundos, para_quem, ocasiao, letra_refazer_contador, letra_aprovada, letra_gerada, roteiro_ia, status, suno_task_id, preview_gerada_em, musica_gerada_em, url_previa, url_previa_segunda_versao, url_musica, url_musica_segunda_versao, segunda_versao"
     )
     .eq("id", pedidoId)
     .maybeSingle();
@@ -368,8 +360,6 @@ export async function gerarMusicaPreview(pedidoId: string) {
       para_quem: pedidoAtualizado.para_quem,
       ocasiao: pedidoAtualizado.ocasiao,
       descricao: pedidoAtualizado.descricao,
-      como_conheceu: pedidoAtualizado.como_conheceu,
-      nome_conheceu: pedidoAtualizado.nome_conheceu,
       status: "gerando_musica",
     },
     "Prévia em produção",
@@ -452,8 +442,6 @@ export async function gerarMusicaFinal(pedidoId: string) {
       para_quem: pedidoAtualizado.para_quem,
       ocasiao: pedidoAtualizado.ocasiao,
       descricao: pedidoAtualizado.descricao,
-      como_conheceu: pedidoAtualizado.como_conheceu,
-      nome_conheceu: pedidoAtualizado.nome_conheceu,
       status: nextStatus,
     },
     "Música liberada",
@@ -517,8 +505,6 @@ export async function marcarLetraAprovada(pedidoId: string) {
       para_quem: pedidoAtualizado.para_quem,
       ocasiao: pedidoAtualizado.ocasiao,
       descricao: pedidoAtualizado.descricao,
-      como_conheceu: pedidoAtualizado.como_conheceu,
-      nome_conheceu: pedidoAtualizado.nome_conheceu,
       status: "letra_aprovada",
     },
     "Letra aprovada",

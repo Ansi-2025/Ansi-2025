@@ -64,8 +64,6 @@ export function buildKidsOrderData(
     genero_musical: "Infantil",
     tipo_cantor: "feminino" as const,
     duracao_segundos: 90,
-    como_conheceu: "whatsapp" as const,
-    nome_conheceu: contact.responsibleName?.trim() || undefined,
     bot_field: "",
     form_started_at: Date.now(),
     objetivo_principal: objectiveText,
