@@ -108,6 +108,7 @@ function Index() {
         <Badges />
         <HowItWorks />
         <Testimonials />
+        <VideoSection />
         <OfferSection />
       </main>
       <Footer />
@@ -1316,6 +1317,119 @@ function Testimonials() {
                 }`}
               />
             ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+/* ---------------- Premium Video Section ---------------- */
+function VideoSection() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  return (
+    <section className="relative isolate overflow-hidden bg-gradient-to-b from-[#041827] to-[#0a2d42] py-20 md:py-32">
+      {/* Background Effects */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(96,165,250,0.15),transparent_60%)]" />
+        <div className="absolute -left-20 top-1/4 h-80 w-80 rounded-full bg-blue-500/10 blur-3xl" />
+        <div className="absolute -right-20 bottom-1/4 h-96 w-96 rounded-full bg-amber-300/5 blur-3xl" />
+      </div>
+
+      <div className="mx-auto max-w-5xl px-5 md:px-8">
+        {/* Header */}
+        <div className="mb-12 text-center">
+          <span className="mb-4 inline-flex items-center gap-2 rounded-full border border-sky-200/25 bg-sky-100/8 px-4 py-1.5 text-xs font-medium uppercase tracking-[0.2em] text-sky-100 backdrop-blur animate-fade-up">
+            <Sparkles className="h-3.5 w-3.5 text-[var(--gold)]" />
+            Conheça o Processo
+          </span>
+          <h2 className="mt-6 text-balance font-display text-3xl font-semibold leading-tight text-white sm:text-4xl md:text-5xl">
+            Veja como criamos sua{" "}
+            <span className="bg-gradient-to-r from-[var(--gold-soft)] via-white to-[var(--gold)] bg-clip-text text-transparent">
+              canção perfeita
+            </span>
+          </h2>
+          <p className="mt-5 text-balance text-base text-sky-100/85">
+            Assista nosso portfólio de criações e descubra a magia da transformação musical
+          </p>
+        </div>
+
+        {/* Video Player Container */}
+        <div className="group relative mx-auto">
+          {/* Glow Effect Background */}
+          <div className="absolute -inset-1 rounded-3xl bg-gradient-to-r from-[var(--gold)]/30 via-sky-400/20 to-[var(--gold)]/30 blur-2xl opacity-75 transition-all duration-500 group-hover:opacity-100" />
+
+          {/* Video Container */}
+          <div className="relative overflow-hidden rounded-3xl border border-sky-200/20 bg-black/80 backdrop-blur-xl">
+            <div className="relative aspect-video overflow-hidden bg-black">
+              <video
+                ref={videoRef}
+                src="https://vfesffetlwtqqmrgxiis.supabase.co/storage/v1/object/sign/Video/New%20Music%20(2).mp4?token=eyJraWQiOiJiNmJkMDAxYi0xM2VjLTRmOGItYjIxNy01ODNjYTc0MzU5MGQiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJWaWRlby9OZXcgTXVzaWMgKDIpLm1wNCIsInNjb3BlIjoiZG93bmxvYWQiLCJpYXQiOjE3ODkzNDM4MTgsImV4cCI6MTgyMDg3OTgxOH0.RAv6Q1sWz1ENezF6D9NJRRVjaRwNBXAFw_AoP--TOsE"
+                className="h-full w-full object-cover"
+                controls
+                controlsList="nodownload"
+                playsInline
+                onPlay={() => setIsPlaying(true)}
+                onPause={() => setIsPlaying(false)}
+              />
+
+              {/* Play Button Overlay */}
+              {!isPlaying && (
+                <div
+                  className="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-all duration-300 group-hover:bg-black/50"
+                  onClick={togglePlay}
+                >
+                  <div className="relative">
+                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-[var(--gold)] to-amber-400 blur-xl opacity-60" />
+                    <button
+                      onClick={togglePlay}
+                      className="relative flex h-24 w-24 items-center justify-center rounded-full bg-gradient-to-r from-[var(--gold)] via-amber-300 to-yellow-400 shadow-2xl transition-transform hover:scale-110 md:h-28 md:w-28"
+                    >
+                      <Play className="h-8 w-8 fill-black text-black md:h-10 md:w-10" />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Video Info Bar */}
+            <div className="border-t border-sky-200/10 bg-gradient-to-r from-black/60 to-transparent px-6 py-4 backdrop-blur-sm">
+              <p className="text-sm font-medium text-sky-100">
+                ✨ Veja exemplos de nossas melhores criações musicais
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Features Below Video */}
+        <div className="mt-12 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-xl border border-sky-200/15 bg-white/5 p-4 backdrop-blur-sm">
+            <div className="text-[var(--gold)] text-lg mb-2">🎬</div>
+            <h3 className="font-semibold text-white">Produção Premium</h3>
+            <p className="mt-1 text-sm text-sky-100/75">Qualidade de estúdio profissional</p>
+          </div>
+          <div className="rounded-xl border border-sky-200/15 bg-white/5 p-4 backdrop-blur-sm">
+            <div className="text-[var(--gold)] text-lg mb-2">🎵</div>
+            <h3 className="font-semibold text-white">Personalização Total</h3>
+            <p className="mt-1 text-sm text-sky-100/75">Cada letra feita exclusivamente para você</p>
+          </div>
+          <div className="rounded-xl border border-sky-200/15 bg-white/5 p-4 backdrop-blur-sm">
+            <div className="text-[var(--gold)] text-lg mb-2">⚡</div>
+            <h3 className="font-semibold text-white">Entrega Rápida</h3>
+            <p className="mt-1 text-sm text-sky-100/75">Sua música pronta em poucos dias</p>
           </div>
         </div>
       </div>
