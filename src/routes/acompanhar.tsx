@@ -666,39 +666,6 @@ function TrackingPage() {
   );
 }
 
-function buildMusicBriefSections(roteiro: string | null) {
-  if (!roteiro) return [] as Array<{ label: string; value: string }>;
-
-  const sections = new Map<string, string>();
-  const lines = roteiro.split(/\n+/);
-  let activeLabel: string | null = null;
-
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line) continue;
-    const match = line.match(/^([A-Za-zÀ-ÿ /()-]+):\s*(.*)$/);
-    if (match) {
-      const [, label, value] = match;
-      activeLabel = label.trim();
-      sections.set(activeLabel, value.trim());
-      continue;
-    }
-
-    if (activeLabel) {
-      const current = sections.get(activeLabel) ?? "";
-      sections.set(activeLabel, `${current} ${line}`.trim());
-    }
-  }
-
-  return [
-    { label: "Tema", value: sections.get("Tema") ?? "" },
-    { label: "Narrativa", value: sections.get("Narrativa") ?? "" },
-    { label: "Tom", value: sections.get("Tom") ?? "" },
-    { label: "Estilo", value: sections.get("Estilo") ?? "" },
-    { label: "Estrutura", value: sections.get("Estrutura") ?? "" },
-  ].filter((item) => item.value);
-}
-
 function Timeline({
   order,
   history,
@@ -777,10 +744,8 @@ function Timeline({
 
     return STATUS_LABELS[step];
   };
-  const briefSections = buildMusicBriefSections(order.roteiro_ia);
   const lyricPreview = order.letra_gerada ? order.letra_gerada.trim() : "";
   const excerpt = lyricPreview.length > 1200 ? `${lyricPreview.slice(0, 1200).trim()}...` : lyricPreview;
-  const [showFullBrief, setShowFullBrief] = useState(false);
   const [showFullLyric, setShowFullLyric] = useState(true);
   const [revealed, setRevealed] = useState(0);
   const [generationMessageIndex, setGenerationMessageIndex] = useState(0);
@@ -852,12 +817,6 @@ function Timeline({
             <span>Estilo</span>
             <span className="text-right font-medium text-zinc-200">{order.genero_musical ?? "Estilo personalizado"}</span>
           </div>
-          {shouldShowDuration && (
-            <div className="flex items-center justify-between gap-4">
-              <span>Duração</span>
-              <span className="text-right font-medium text-zinc-200">{order.duracao_segundos}s</span>
-            </div>
-          )}
           {order.ocasiao && (
             <div className="flex items-center justify-between gap-4">
               <span>Ocasião</span>
@@ -1162,31 +1121,6 @@ function Timeline({
                 <div className="mt-3 rounded-2xl border border-[#d4af69]/25 bg-[#d4af69]/5 p-4">
                   <p className="mb-3 text-xs font-semibold text-[#f3d59d] uppercase tracking-[0.18em]">Sua letra está pronta</p>
                   <p className="text-sm text-zinc-300">Confira o roteiro e a letra da música, e escolha se você aprova ou pede uma revisão.</p>
-
-                  {briefSections.length > 0 && (
-                    <div className="mt-4 rounded-2xl border border-border bg-background/60 p-4">
-                      <div className="mb-3 flex items-center justify-between gap-2">
-                        <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">Roteiro da música</p>
-                        {briefSections.length > 3 && (
-                          <button
-                            type="button"
-                            onClick={() => setShowFullBrief((value) => !value)}
-                            className="text-xs font-semibold text-[var(--sky-blue)]"
-                          >
-                            {showFullBrief ? "Ver menos" : "Ver mais"}
-                          </button>
-                        )}
-                      </div>
-                      <div className="space-y-3 text-sm text-muted-foreground">
-                        {(showFullBrief ? briefSections : briefSections.slice(0, 3)).map((item) => (
-                          <div key={item.label} className="rounded-xl border border-border/60 bg-card/40 p-3">
-                            <p className="mb-1 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">{item.label}</p>
-                            <p className="leading-6">{item.value}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {excerpt && (
                     <div className="mt-4 rounded-2xl border border-border bg-[var(--card)] p-4">
