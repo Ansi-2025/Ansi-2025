@@ -608,35 +608,6 @@ function KidsPage() {
           </div>
         </section>
 
-        <section className="mt-12">
-          <div className="rounded-[32px] border border-rose-200 bg-gradient-to-r from-[#fffaf6] via-[#fff1ee] to-[#fdf1f9] p-6 shadow-[0_18px_40px_rgba(244,114,182,0.08)] md:p-8">
-            <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
-              <div>
-                <div className="inline-flex items-center gap-2 rounded-full border border-rose-200 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.18em] text-rose-600">
-                  🎈 Canção de Fé Kids
-                </div>
-                <h3 className="mt-4 font-display text-3xl font-semibold tracking-[-0.06em] text-slate-900 md:text-4xl">
-                  Crie sua música por apenas R$10
-                </h3>
-              </div>
-
-              <div className="flex items-end gap-2 text-slate-900">
-                <span className="text-4xl font-black tracking-[-0.08em]">R$10</span>
-              </div>
-            </div>
-
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-              <button
-                type="button"
-                onClick={() => setStep(0)}
-                className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ffbf69] via-[#ff8f71] to-[#f7769c] px-6 py-3.5 text-base font-semibold text-white shadow-[0_16px_35px_rgba(247,118,156,0.22)] transition hover:-translate-y-0.5"
-              >
-                Quero criar agora 🎵
-              </button>
-            </div>
-          </div>
-        </section>
-
         <section className="mt-12 rounded-[30px] border border-slate-200 bg-white p-6 shadow-[0_18px_40px_rgba(15,23,42,0.04)] md:p-8">
           <SectionHeader eyebrow="Pronto para criar?" title="Qual vai ser a primeira música do seu pequeno?" />
           <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600">
