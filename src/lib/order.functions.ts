@@ -214,6 +214,33 @@ function getClientIp(request: Request | undefined): string {
 }
 
 /**
+ * Notifica no Telegram sobre visita duplicada (suspeita de fraude/spam)
+ */
+async function notifyDuplicateVisitTelegram(
+  fingerprint: string,
+  clientIp: string,
+  source: string,
+  duplicateCount: number,
+): Promise<void> {
+  try {
+    const message = [
+      "🚨 VISITA DUPLICADA DETECTADA",
+      "",
+      `📍 IP: ${clientIp}`,
+      `🔑 Fingerprint: ${fingerprint.slice(0, 16)}...`,
+      `📌 Origem: ${source}`,
+      `⚡ Tentativas: ${duplicateCount} em 60s`,
+      "",
+      duplicateCount > 3 ? "⚠️ Comportamento suspeito! Possível bot/fraude" : "ℹ️ Recarregamento do usuário",
+    ].join("\n");
+
+    await sendTelegramMessage(message);
+  } catch (error) {
+    console.warn("[tracking] Erro ao notificar duplicata no Telegram:", error);
+  }
+}
+
+/**
  * Verifica se há uma visita duplicada recente do mesmo fingerprint/IP
  * Implementa rate limiting: máx 1 visita por minuto
  */
@@ -221,7 +248,7 @@ async function isDuplicateVisit(
   fingerprint: string,
   clientIp: string,
   source: string,
-): Promise<boolean> {
+): Promise<{ isDuplicate: boolean; count: number }> {
   try {
     const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
 
@@ -230,20 +257,27 @@ async function isDuplicateVisit(
       .select("id")
       .eq("browser_fingerprint", fingerprint)
       .eq("source", source)
-      .gte("created_at", oneMinuteAgo.toISOString())
-      .limit(1);
+      .gte("created_at", oneMinuteAgo.toISOString());
 
     if (error) {
       console.warn("[tracking] Erro ao consultar duplicatas:", error);
       // Se falhar, permite a requisição passar
-      return false;
+      return { isDuplicate: false, count: 0 };
     }
 
-    return (data?.length ?? 0) > 0;
+    const count = data?.length ?? 0;
+    const isDuplicate = count > 0;
+
+    // Se é duplicata e tem 3+ tentativas, notifica
+    if (isDuplicate && count >= 3) {
+      void notifyDuplicateVisitTelegram(fingerprint, clientIp, source, count);
+    }
+
+    return { isDuplicate, count };
   } catch (error) {
     console.warn("[tracking] Exceção ao verificar duplicatas:", error);
     // Fallback: permite a requisição se o banco falhar
-    return false;
+    return { isDuplicate: false, count: 0 };
   }
 }
 
@@ -296,19 +330,24 @@ export const trackLandingCta = createServerFn({ method: "POST" })
     const fingerprint = data.fingerprint || "unknown";
 
     // Verifica duplicata e rate limiting
-    const isDuplicate = await isDuplicateVisit(fingerprint, clientIp, data.source);
+    const { isDuplicate, count } = await isDuplicateVisit(fingerprint, clientIp, data.source);
 
     if (isDuplicate) {
       console.info("[tracking] Visita duplicada detectada:", {
         fingerprint,
         source: data.source,
         ip: clientIp,
+        tentativas: count,
       });
 
+      const fraude = count >= 3;
       return {
         ok: false,
-        reason: "duplicate_visit",
-        message: "Visita já foi registrada recentemente",
+        reason: fraude ? "suspicious_activity" : "duplicate_visit",
+        message: fraude 
+          ? `Atividade suspeita detectada: ${count} tentativas em 60s`
+          : "Visita já foi registrada recentemente. Aguarde um minuto.",
+        attempts: count,
       };
     }
 
