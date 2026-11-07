@@ -22,7 +22,7 @@ Este guia detalha como migrar o projeto "Canção de Fé" do Lovable para Supaba
    ```
    VITE_SUPABASE_URL=https://xxxx.supabase.co
    VITE_SUPABASE_ANON_KEY=eyJ...
-   VITE_SUPABASE_SERVICE_ROLE_KEY=eyJ... (NUNCA compartilhe publicamente)
+   SUPABASE_SERVICE_ROLE=eyJ... (somente no servidor)
    ```
 
 ---
@@ -119,11 +119,11 @@ ON CONFLICT (id) DO NOTHING;
 ALTER TABLE public.pedidos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.status_history ENABLE ROW LEVEL SECURITY;
 
--- Políticas para PEDIDOS
--- Qualquer um pode LER seus próprios pedidos (pelo email)
-CREATE POLICY "Clientes veem seus próprios pedidos"
-  ON public.pedidos FOR SELECT
-  USING (true);
+-- Apenas as funções do servidor podem acessar pedidos e histórico.
+REVOKE ALL ON TABLE public.pedidos FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON TABLE public.status_history FROM PUBLIC, anon, authenticated;
+GRANT ALL ON TABLE public.pedidos TO service_role;
+GRANT ALL ON TABLE public.status_history TO service_role;
 
 -- Service role pode fazer tudo (usado por funções server-side)
 CREATE POLICY "Service role gerencia pedidos"
@@ -132,10 +132,6 @@ CREATE POLICY "Service role gerencia pedidos"
   WITH CHECK (true);
 
 -- Políticas para STATUS_HISTORY
-CREATE POLICY "Público lê histórico de status"
-  ON public.status_history FOR SELECT
-  USING (true);
-
 CREATE POLICY "Service role gerencia histórico"
   ON public.status_history FOR ALL
   TO service_role
@@ -166,15 +162,25 @@ CREATE POLICY "Service role deleta músicas"
 # Supabase
 VITE_SUPABASE_URL=https://[SEU_PROJECT_ID].supabase.co
 VITE_SUPABASE_ANON_KEY=[SEU_ANON_KEY]
-VITE_SUPABASE_SERVICE_ROLE_KEY=[SEU_SERVICE_ROLE_KEY]
+SUPABASE_SERVICE_ROLE=[SEU_SERVICE_ROLE_KEY]
 
 # Telegram (se usar)
 TELEGRAM_BOT_TOKEN=seu_token_aqui
 TELEGRAM_CHAT_ID=seu_chat_id
 
-# Outros
-VITE_APP_PASSWORD=sua_senha_admin_aqui
 ```
+
+Nunca use o prefixo `VITE_` para chaves administrativas ou tokens: ele expõe variáveis ao
+navegador. Remova qualquer variável `VITE_SUPABASE_SERVICE_ROLE*` antiga e revogue a chave
+caso tenha sido exposta. Configure `SUPABASE_SERVICE_ROLE` somente no servidor antes do deploy.
+
+Em bancos existentes, aplique `supabase/migrations/20261107190000_restrict_order_table_access.sql`
+para remover o acesso direto público a pedidos e históricos. O acompanhamento continua pelas
+funções do servidor, mediante o token do pedido.
+
+Configure também `ORDER_ACCESS_SECRET` no servidor com uma chave aleatória e estável. Se o
+segredo utilizado anteriormente para assinar os links mudar, os links antigos deixarão de
+funcionar; um administrador poderá gerar novos links pelo painel após verificar o cliente.
 
 ### 3.2 Arquivo `.env.production`
 ```env

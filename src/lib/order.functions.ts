@@ -1,5 +1,5 @@
-import { createHmac, timingSafeEqual } from "node:crypto";
 import { createServerFn } from "@tanstack/react-start";
+import { getRequest } from "@tanstack/react-start/server";
 import { z } from "zod";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import {
@@ -12,55 +12,9 @@ import {
   type PedidoEntrada,
 } from "@/lib/pedido.service";
 import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
-import { buildLandingCtaTelegramMessage, sendTelegramMessage } from "@/lib/telegram.service";
 import { assertPublicRequest } from "@/lib/public-request";
 import { isValidPersonName } from "@/lib/utils";
-
-const isServerRuntime = typeof window === "undefined" && !!process?.versions?.node;
-
-const ORDER_ACCESS_SECRET = isServerRuntime
-  ? (process.env.ORDER_ACCESS_SECRET ??
-      process.env.APP_SECRET ??
-      process.env.SUPABASE_SERVICE_ROLE ??
-      process.env.STRIPE_SECRET_KEY ??
-      "dev-order-access-secret")
-  : "browser-order-access-secret";
-
-if (
-  isServerRuntime &&
-  !process.env.ORDER_ACCESS_SECRET &&
-  !process.env.APP_SECRET &&
-  !process.env.SUPABASE_SERVICE_ROLE &&
-  !process.env.STRIPE_SECRET_KEY
-) {
-  console.warn(
-    "[order-security] ORDER_ACCESS_SECRET não configurada em produção. Defina ORDER_ACCESS_SECRET para reforçar o controle de acesso ao pedido.",
-  );
-}
-
-function generateOrderAccessToken(orderId: string) {
-  return createHmac("sha256", ORDER_ACCESS_SECRET).update(orderId).digest("hex");
-}
-
-function validateOrderAccess(orderId: string, token?: string | null) {
-  if (!token) {
-    throw new Error(
-      "Token de acesso do pedido inválido. Reabra o link do acompanhamento do pedido.",
-    );
-  }
-
-  const expected = generateOrderAccessToken(orderId);
-  if (token.length !== expected.length) {
-    throw new Error("Token de acesso do pedido inválido.");
-  }
-
-  const provided = Buffer.from(token);
-  const expectedBuffer = Buffer.from(expected);
-
-  if (!timingSafeEqual(provided, expectedBuffer)) {
-    throw new Error("Token de acesso do pedido inválido.");
-  }
-}
+import { generateOrderAccessToken, validateOrderAccess } from "@/lib/order-access.server";
 
 const orderIdSchema = z
   .string()
@@ -214,71 +168,28 @@ function getClientIp(request: Request | undefined): string {
 }
 
 /**
- * Notifica no Telegram sobre visita duplicada (suspeita de fraude/spam)
- */
-async function notifyDuplicateVisitTelegram(
-  fingerprint: string,
-  clientIp: string,
-  source: string,
-  duplicateCount: number,
-): Promise<void> {
-  try {
-    const message = [
-      "🚨 VISITA DUPLICADA DETECTADA",
-      "",
-      `📍 IP: ${clientIp}`,
-      `🔑 Fingerprint: ${fingerprint.slice(0, 16)}...`,
-      `📌 Origem: ${source}`,
-      `⚡ Tentativas: ${duplicateCount} em 60s`,
-      "",
-      duplicateCount > 3 ? "⚠️ Comportamento suspeito! Possível bot/fraude" : "ℹ️ Recarregamento do usuário",
-    ].join("\n");
-
-    await sendTelegramMessage(message);
-  } catch (error) {
-    console.warn("[tracking] Erro ao notificar duplicata no Telegram:", error);
-  }
-}
-
-/**
- * Verifica se há uma visita duplicada recente do mesmo fingerprint/IP
+ * Verifica se há uma visita duplicada recente do mesmo fingerprint.
  * Implementa rate limiting: máx 1 visita por minuto
  */
 async function isDuplicateVisit(
   fingerprint: string,
-  clientIp: string,
   source: string,
 ): Promise<{ isDuplicate: boolean; count: number }> {
-  try {
-    const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const oneMinuteAgo = new Date(Date.now() - 60 * 1000);
+  const { data, error } = await supabaseAdmin
+    .from("landing_cta_tracking")
+    .select("id")
+    .eq("browser_fingerprint", fingerprint)
+    .eq("source", source)
+    .gte("created_at", oneMinuteAgo.toISOString());
 
-    const { data, error } = await supabaseAdmin
-      .from("landing_cta_tracking")
-      .select("id")
-      .eq("browser_fingerprint", fingerprint)
-      .eq("source", source)
-      .gte("created_at", oneMinuteAgo.toISOString());
-
-    if (error) {
-      console.warn("[tracking] Erro ao consultar duplicatas:", error);
-      // Se falhar, permite a requisição passar
-      return { isDuplicate: false, count: 0 };
-    }
-
-    const count = data?.length ?? 0;
-    const isDuplicate = count > 0;
-
-    // Se é duplicata e tem 3+ tentativas, notifica
-    if (isDuplicate && count >= 3) {
-      void notifyDuplicateVisitTelegram(fingerprint, clientIp, source, count);
-    }
-
-    return { isDuplicate, count };
-  } catch (error) {
-    console.warn("[tracking] Exceção ao verificar duplicatas:", error);
-    // Fallback: permite a requisição se o banco falhar
-    return { isDuplicate: false, count: 0 };
+  if (error) {
+    console.error("[tracking] Erro ao consultar duplicatas:", error);
+    throw new Error("Não foi possível verificar o rastreamento da visita.");
   }
+
+  const count = data?.length ?? 0;
+  return { isDuplicate: count > 0, count };
 }
 
 /**
@@ -291,20 +202,19 @@ async function recordLandingCtaVisit(
   source: string,
   url: string | undefined,
 ): Promise<void> {
-  try {
-    await supabaseAdmin.from("landing_cta_tracking").insert([
-      {
-        browser_fingerprint: fingerprint,
-        client_ip: clientIp,
-        button_label: buttonLabel,
-        source,
-        url: url ?? null,
-        created_at: new Date().toISOString(),
-      },
-    ]);
-  } catch (error) {
+  const { error } = await supabaseAdmin.from("landing_cta_tracking").insert([
+    {
+      browser_fingerprint: fingerprint,
+      client_ip: clientIp,
+      button_label: buttonLabel,
+      source,
+      url: url ?? null,
+      created_at: new Date().toISOString(),
+    },
+  ]);
+  if (error) {
     console.warn("[tracking] Erro ao registrar visita:", error);
-    // Silenciosamente falha para não afetar a requisição principal
+    throw new Error("Não foi possível registrar a visita.");
   }
 }
 
@@ -314,23 +224,23 @@ export const trackLandingCta = createServerFn({ method: "POST" })
       .object({
         buttonLabel: z.string().trim().min(1).max(120),
         source: z.string().trim().min(1).max(120),
-        url: z.string().trim().max(500).optional().nullable(),
+        url: z.string().trim().max(500).url().transform((value) => {
+          const parsed = new URL(value);
+          return `${parsed.origin}${parsed.pathname}`;
+        }).optional().nullable(),
         fingerprint: z.string().trim().min(1).max(128).optional(),
       })
       .parse(data),
   )
-  .handler(async ({ data, ...ctx }) => {
-    const request = (ctx as { request?: Request }).request;
-
-    if (request) {
-      assertPublicRequest(request, { scope: "landing_cta" });
-    }
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    assertPublicRequest(request, { scope: "landing_cta" });
 
     const clientIp = getClientIp(request);
     const fingerprint = data.fingerprint || "unknown";
 
     // Verifica duplicata e rate limiting
-    const { isDuplicate, count } = await isDuplicateVisit(fingerprint, clientIp, data.source);
+    const { isDuplicate, count } = await isDuplicateVisit(fingerprint, data.source);
 
     if (isDuplicate) {
       console.info("[tracking] Visita duplicada detectada:", {
@@ -352,15 +262,9 @@ export const trackLandingCta = createServerFn({ method: "POST" })
     }
 
     // Registra a visita para auditoria
-    void recordLandingCtaVisit(fingerprint, clientIp, data.buttonLabel, data.source, data.url);
+    await recordLandingCtaVisit(fingerprint, clientIp, data.buttonLabel, data.source, data.url ?? undefined);
 
-    const text = buildLandingCtaTelegramMessage({
-      buttonLabel: data.buttonLabel,
-      source: data.source,
-      url: data.url ?? undefined,
-    });
-
-    return sendTelegramMessage(text);
+    return { ok: true, reason: "tracked" as const };
   });
 
 export const sendOrder = createServerFn({ method: "POST" })
@@ -376,12 +280,9 @@ export const sendOrder = createServerFn({ method: "POST" })
       throw error;
     }
   })
-  .handler(async ({ data, ...ctx }) => {
-    const request = (ctx as { request?: Request }).request;
-
-    if (request) {
-      assertPublicRequest(request, { scope: "order_submission" });
-    }
+  .handler(async ({ data }) => {
+    const request = getRequest();
+    assertPublicRequest(request, { scope: "order_submission" });
 
     try {
       console.log("[sendOrder.handler] Iniciando criação de pedido...", {
@@ -503,9 +404,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
     z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
   )
   .handler(async ({ data }) => {
-    if (data.token) {
-      validateOrderAccess(data.id, data.token);
-    }
+    validateOrderAccess(data.id, data.token);
 
     const { data: row, error } = await supabaseAdmin
       .from("pedidos")
@@ -517,10 +416,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Pedido não encontrado.");
-    return {
-      ...row,
-      access_token: generateOrderAccessToken(data.id),
-    } as {
+    return row as {
       id: string;
       nome_cliente: string;
       email_cliente: string;
@@ -547,7 +443,6 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       stripe_payment_status: string | null;
       created_at: string;
       status_atualizado_em: string;
-      access_token: string;
     };
   });
 
@@ -556,9 +451,7 @@ export const getOrderStatusHistory = createServerFn({ method: "POST" })
     z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
   )
   .handler(async ({ data }) => {
-    if (data.token) {
-      validateOrderAccess(data.id, data.token);
-    }
+    validateOrderAccess(data.id, data.token);
 
     const { data: rows, error } = await supabaseAdmin
       .from("status_history")

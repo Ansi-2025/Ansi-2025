@@ -19,7 +19,7 @@ echo "🔑 PASSO 2: Copie as credenciais"
 echo "   → Settings → API"
 echo "   → Copie VITE_SUPABASE_URL"
 echo "   → Copie VITE_SUPABASE_ANON_KEY"
-echo "   → Copie VITE_SUPABASE_SERVICE_ROLE_KEY"
+echo "   → Copie a chave de serviço para SUPABASE_SERVICE_ROLE (somente servidor)"
 echo ""
 
 # Step 3
@@ -30,12 +30,12 @@ echo ""
 cat > .env.local.template << 'EOF'
 VITE_SUPABASE_URL=https://[SEU_PROJECT_ID].supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJ...
-VITE_APP_PASSWORD=sua_senha_admin_aqui
+SUPABASE_SERVICE_ROLE=eyJ...
 TELEGRAM_BOT_TOKEN=seu_token_aqui
 TELEGRAM_CHAT_ID=seu_chat_id
 EOF
 echo "   ✓ Arquivo .env.local.template criado como referência"
+echo "   ⚠️ Nunca use prefixo VITE_ em chaves secretas ou tokens."
 echo ""
 
 # Step 4

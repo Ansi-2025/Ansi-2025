@@ -368,8 +368,8 @@ function TrackingPage() {
   const updateCustomerInfo = useServerFn(updateCheckoutCustomerInfo);
   const approveLyricFn = useServerFn(approveLyric);
   const requestRevisionFn = useServerFn(requestLyricRevision);
-  const [id, setId] = useState(initialId ?? "");
-  const [orderToken, setOrderToken] = useState(initialToken ?? "");
+  const [trackingLink, setTrackingLink] = useState("");
+  const orderToken = initialToken ?? "";
   const [order, setOrder] = useState<Order | null>(null);
   const [history, setHistory] = useState<Array<any>>([]);
   const [loading, setLoading] = useState(false);
@@ -410,6 +410,13 @@ function TrackingPage() {
       return;
     }
 
+    if (!orderToken) {
+      setErr("Para proteger seus dados, abra o link completo do pedido. Se precisar, solicite um novo link pelo WhatsApp.");
+      setOrder(null);
+      setHistory([]);
+      return;
+    }
+
     if (!preserveExisting) {
       setLoading(true);
       setErr("");
@@ -420,10 +427,9 @@ function TrackingPage() {
     }
 
     try {
-      const row = (await fetchStatus({ data: { id: trimmedId, token: orderToken || initialToken || undefined } })) as unknown as Order & { access_token?: string };
+      const row = (await fetchStatus({ data: { id: trimmedId, token: orderToken } })) as unknown as Order;
       setOrder(row);
-      setOrderToken(row.access_token ?? (orderToken || initialToken || ""));
-      const hist = await fetchHistory({ data: { id: trimmedId, token: row.access_token ?? (orderToken || initialToken || undefined) } });
+      const hist = await fetchHistory({ data: { id: trimmedId, token: orderToken } });
       setHistory(hist);
     } catch (e) {
       setErr(e instanceof Error ? e.message : "Erro ao buscar o pedido.");
@@ -432,7 +438,24 @@ function TrackingPage() {
         setLoading(false);
       }
     }
-  }, [fetchStatus, fetchHistory]);
+  }, [fetchStatus, fetchHistory, orderToken]);
+
+  const openTrackingLink = () => {
+    try {
+      const url = new URL(trackingLink);
+      if (
+        url.origin !== window.location.origin ||
+        url.pathname !== "/acompanhar" ||
+        !url.searchParams.get("id") ||
+        !url.searchParams.get("token")
+      ) {
+        throw new Error("Link inválido.");
+      }
+      window.location.assign(url.toString());
+    } catch {
+      setErr("Cole o link completo de acompanhamento recebido ou solicite um novo pelo WhatsApp.");
+    }
+  };
 
   const refreshOrder = useCallback(async () => {
     if (!order?.id) return;
@@ -607,24 +630,31 @@ function TrackingPage() {
       <main className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-5 py-12 md:px-8">
         <div className="w-full max-w-3xl rounded-3xl border border-white/10 bg-[#111821]/90 p-6 shadow-[0_0_0_1px_rgba(255,255,255,0.02),0_28px_80px_rgba(0,0,0,0.55)] md:p-8">
           <label className="block">
-            <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">Código do pedido</span>
+            <span className="text-xs uppercase tracking-[0.18em] text-zinc-400">Link completo do pedido</span>
             <div className="mt-2 flex gap-2">
               <input
-                value={id}
-                onChange={(e) => setId(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && id && search(id)}
-                placeholder="Cole aqui o código que você recebeu"
+                value={trackingLink}
+                onChange={(e) => setTrackingLink(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && trackingLink && openTrackingLink()}
+                placeholder="Cole aqui o link completo que você recebeu"
                 className="flex-1 rounded-xl border border-white/10 bg-[#0d1117] px-4 py-3 font-mono text-sm text-zinc-50 outline-none placeholder:text-zinc-500 focus:border-[#ff5d73]"
               />
               <button
-                onClick={() => id && search(id)}
-                disabled={!id || loading}
+                onClick={openTrackingLink}
+                disabled={!trackingLink || loading}
+                aria-label="Abrir link do pedido"
                 className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-[#ff4d6d] via-[#d946ef] to-[#8b5cf6] px-5 py-3 text-sm font-semibold text-white shadow-[0_12px_24px_rgba(217,70,239,0.35)] disabled:opacity-50"
               >
                 {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Search className="h-4 w-4" />}
               </button>
             </div>
           </label>
+          <p className="mt-3 text-sm text-zinc-400">
+            Guarde o link do pedido. Se não o tiver,{" "}
+            <a href={`https://wa.me/${OWNER_WHATSAPP_NUMBER}`} className="text-[#ff7a8d] underline">
+              solicite um novo pelo WhatsApp
+            </a>.
+          </p>
           {err && <p className="mt-4 rounded-xl border border-[#ff5d73]/30 bg-[#ff5d73]/10 px-4 py-3 text-sm text-[#ffb3bf]">{err}</p>}
         </div>
 

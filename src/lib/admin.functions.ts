@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { gerarMusicaFinal } from "@/lib/pedido.service";
+import { generateOrderAccessToken } from "@/lib/order-access.server";
 
 const ADMIN_EMAILS = (process.env.ADMIN_EMAILS ?? process.env.ADMIN_EMAIL ?? "")
   .split(",")
@@ -98,7 +99,10 @@ export const adminListOrders = createServerFn({ method: "POST" })
       throw new Error(error.message);
     }
 
-    return rows ?? [];
+    return (rows ?? []).map((row) => ({
+      ...row,
+      order_access_token: generateOrderAccessToken(row.id),
+    }));
   });
 
 async function confirmPagamentoPedido(pedidoId: string, accessToken: string) {

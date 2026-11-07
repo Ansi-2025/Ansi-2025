@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { notifyPedidoTelegram } from "@/lib/telegram.service";
+import { generateOrderAccessToken } from "@/lib/order-access.server";
 
 type PedidoStatus = Database["public"]["Enums"]["pedido_status"];
 
@@ -49,14 +50,14 @@ function getSuccessUrl(orderId: string) {
   if (!STRIPE_APP_URL) {
     throw new Error("STRIPE_APP_URL não configurado.");
   }
-  return `${STRIPE_APP_URL}/acompanhar?id=${orderId}&session_id={CHECKOUT_SESSION_ID}`;
+  return `${STRIPE_APP_URL}/acompanhar?id=${encodeURIComponent(orderId)}&token=${generateOrderAccessToken(orderId)}&session_id={CHECKOUT_SESSION_ID}`;
 }
 
 function getCancelUrl(orderId: string) {
   if (!STRIPE_APP_URL) {
     throw new Error("STRIPE_APP_URL não configurado.");
   }
-  return `${STRIPE_APP_URL}/acompanhar?id=${orderId}`;
+  return `${STRIPE_APP_URL}/acompanhar?id=${encodeURIComponent(orderId)}&token=${generateOrderAccessToken(orderId)}`;
 }
 
 export async function criarCheckoutStripe(pedidoId: string, secondVersion = false) {
@@ -500,5 +501,4 @@ export async function handleStripeWebhook(request: Request) {
     });
   }
 }
-
 

@@ -9,19 +9,20 @@ export const Route = createFileRoute("/admin")({
   component: AdminPage,
 });
 
-const buildCustomerOrderUrl = (orderId: string) => {
-  if (typeof window === "undefined") return `/acompanhar?id=${encodeURIComponent(orderId)}`;
-  return new URL(`/acompanhar?id=${encodeURIComponent(orderId)}`, window.location.origin).toString();
+const buildCustomerOrderUrl = (orderId: string, token: string) => {
+  const path = `/acompanhar?id=${encodeURIComponent(orderId)}&token=${encodeURIComponent(token)}`;
+  if (typeof window === "undefined") return path;
+  return new URL(path, window.location.origin).toString();
 };
 
 const PIX_PAYMENT_CODE = "11287911960";
 
-const buildClientWhatsAppUrl = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null }) => {
+const buildClientWhatsAppUrl = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null; order_access_token: string }) => {
   const rawPhone = (order.telefone_cliente ?? "").replace(/\D/g, "");
   if (!rawPhone) return null;
 
   const normalizedPhone = rawPhone.startsWith("55") ? rawPhone : `55${rawPhone}`;
-  const orderUrl = buildCustomerOrderUrl(order.id);
+  const orderUrl = buildCustomerOrderUrl(order.id, order.order_access_token);
   const message = [
     `Olá ${order.nome_cliente}! Seu pedido ${order.id} foi registrado com sucesso.`,
     `Código do pedido: ${order.id}`,
@@ -52,11 +53,11 @@ function AdminPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const openCustomerOrder = (orderId: string) => {
-    window.open(buildCustomerOrderUrl(orderId), "_blank", "noopener,noreferrer");
+  const openCustomerOrder = (orderId: string, token: string) => {
+    window.open(buildCustomerOrderUrl(orderId, token), "_blank", "noopener,noreferrer");
   };
 
-  const openClientWhatsApp = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null }) => {
+  const openClientWhatsApp = (order: { id: string; nome_cliente: string; telefone_cliente?: string | null; order_access_token: string }) => {
     const url = buildClientWhatsAppUrl(order);
     if (!url) return;
     window.open(url, "_blank", "noopener,noreferrer");
@@ -369,7 +370,7 @@ function AdminPage() {
                         <div className="flex flex-wrap gap-2">
                           <button
                             type="button"
-                            onClick={() => openCustomerOrder(order.id)}
+                            onClick={() => openCustomerOrder(order.id, order.order_access_token)}
                             className="inline-flex items-center justify-center rounded-full border border-border bg-background px-3 py-2 text-xs font-semibold text-foreground"
                           >
                             Abrir pedido

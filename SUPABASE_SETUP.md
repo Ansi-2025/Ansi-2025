@@ -17,7 +17,7 @@ Settings → API → Copie as 3 chaves para .env.local:
 
 VITE_SUPABASE_URL=https://[ID].supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJ...
+SUPABASE_SERVICE_ROLE=eyJ...
 ```
 
 ### 3️⃣ Configure Banco de Dados
@@ -74,13 +74,17 @@ storage.musicas/
 # .env.local (DEV)
 VITE_SUPABASE_URL=https://[ID].supabase.co
 VITE_SUPABASE_ANON_KEY=eyJ...
-VITE_SUPABASE_SERVICE_ROLE_KEY=eyJ...
-VITE_APP_PASSWORD=admin123
+SUPABASE_SERVICE_ROLE=eyJ...
 TELEGRAM_BOT_TOKEN=123456:ABC...
 TELEGRAM_CHAT_ID=123456789
 ```
 
 > ⚠️ Nunca commite `.env.local` - está em `.gitignore`
+>
+> Variáveis `VITE_` ficam disponíveis ao navegador. A chave administrativa do Supabase e
+> o token do Telegram devem ser configurados somente no servidor, sem esse prefixo.
+> Remova antigas variáveis `VITE_SUPABASE_SERVICE_ROLE*` antes de iniciar ou gerar o build.
+> Se alguma chave administrativa ou token tiver sido exposto, revogue-o e configure um novo.
 
 ---
 

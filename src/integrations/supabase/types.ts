@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      landing_cta_tracking: {
+        Row: {
+          id: number
+          browser_fingerprint: string
+          client_ip: string
+          button_label: string | null
+          source: string
+          url: string | null
+          created_at: string
+        }
+        Insert: {
+          id?: number
+          browser_fingerprint: string
+          client_ip: string
+          button_label?: string | null
+          source: string
+          url?: string | null
+          created_at?: string
+        }
+        Update: {
+          id?: number
+          browser_fingerprint?: string
+          client_ip?: string
+          button_label?: string | null
+          source?: string
+          url?: string | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       pedidos: {
         Row: {
           created_at: string

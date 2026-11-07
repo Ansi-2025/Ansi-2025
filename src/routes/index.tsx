@@ -92,7 +92,7 @@ function Index() {
       data: {
         buttonLabel: "Acesso ao site",
         source: "page_visit",
-        url: window.location.href,
+        url: `${window.location.origin}${window.location.pathname}`,
         fingerprint,
       },
     }).catch((error) => {
@@ -173,7 +173,7 @@ function Header() {
                 data: {
                   buttonLabel: "Acompanhar Pedido",
                   source: "header_nav",
-                  url: typeof window !== "undefined" ? window.location.href : undefined,
+                  url: typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}` : undefined,
                   fingerprint: getPersistentBrowserFingerprint(),
                 },
               }).catch((error) => {
@@ -333,7 +333,7 @@ function StartMusicWidget({
       data: {
         buttonLabel: label,
         source: trackingSource,
-        url: typeof window !== "undefined" ? window.location.href : undefined,
+        url: typeof window !== "undefined" ? `${window.location.origin}${window.location.pathname}` : undefined,
         fingerprint: getPersistentBrowserFingerprint(),
       },
     }).catch((error) => {
@@ -1592,6 +1592,7 @@ function OrderForm() {
   const [step, setStep] = useState(0);
   const [status, setStatus] = useState<"idle" | "loading" | "ok" | "error">("idle");
   const [orderId, setOrderId] = useState<string>("");
+  const [orderToken, setOrderToken] = useState<string>("");
   const [errorMsg, setErrorMsg] = useState("");
   const navigate = useNavigate();
   const [formStartedAt, setFormStartedAt] = useState<number>(() => Date.now());
@@ -1743,6 +1744,7 @@ function OrderForm() {
     try {
       const res = await send({ data: { ...form, form_started_at: formStartedAt } });
       setOrderId(res.id);
+      setOrderToken(res.token);
       setStatus("ok");
     } catch (e) {
       setStatus("error");
@@ -1751,14 +1753,14 @@ function OrderForm() {
   };
 
   useEffect(() => {
-    if (status === "ok" && orderId) {
+    if (status === "ok" && orderId && orderToken) {
       const timer = window.setTimeout(() => {
-        navigate({ to: "/acompanhar", search: { id: orderId } });
+        navigate({ to: "/acompanhar", search: { id: orderId, token: orderToken } });
       }, 500);
 
       return () => window.clearTimeout(timer);
     }
-  }, [status, orderId, navigate]);
+  }, [status, orderId, orderToken, navigate]);
 
   const reset = () => {
     setFormStartedAt(Date.now());
@@ -1822,7 +1824,7 @@ function OrderForm() {
               <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
                 <button
                   onClick={() =>
-                    orderId && navigate({ to: "/acompanhar", search: { id: orderId } })
+                    orderId && orderToken && navigate({ to: "/acompanhar", search: { id: orderId, token: orderToken } })
                   }
                   style={GRADIENT_GOLD}
                   className="inline-flex items-center gap-2 rounded-full px-6 py-3 text-sm font-semibold text-primary shadow-[var(--shadow-gold)]"
