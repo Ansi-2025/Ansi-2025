@@ -1,20 +1,22 @@
 import OpenAI from "openai";
 
-const client = new OpenAI({
-  apiKey: process.env.FLATKEY_API_KEY,
-  baseURL: "https://router.flatkey.ai/v1",
-});
-
 export async function gerarLetraComFlatkey(prompt: string) {
-  if (!process.env.FLATKEY_API_KEY) {
+  const apiKey = process.env.FLATKEY_API_KEY;
+  if (!apiKey) {
     console.error("[gerarLetraComFlatkey] FLATKEY_API_KEY não configurada!");
     throw new Error("Variável de ambiente FLATKEY_API_KEY não está configurada.");
   }
 
+  const model = process.env.FLATKEY_MODEL?.trim() || "gpt-6-luna-pro";
+  const client = new OpenAI({
+    apiKey,
+    baseURL: "https://router.flatkey.ai/v1",
+  });
+
   console.log("[gerarLetraComFlatkey] Chamando API Flatkey...");
   try {
     const response = await client.chat.completions.create({
-      model: "gpt-4.1-mini",
+      model,
       temperature: 0.8,
       messages: [
         {
@@ -55,7 +57,10 @@ ESTRUTURA:
       ],
     });
 
-    const letra = response.choices[0].message.content;
+    const letra = response.choices[0]?.message.content?.trim();
+    if (!letra) {
+      throw new Error("A Flatkey não retornou uma letra.");
+    }
     console.log("[gerarLetraComFlatkey] Letra gerada com sucesso, tokens:", response.usage?.total_tokens);
     
     return {

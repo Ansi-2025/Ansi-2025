@@ -77,6 +77,8 @@ VITE_SUPABASE_ANON_KEY=eyJ...
 SUPABASE_SERVICE_ROLE=eyJ...
 TELEGRAM_BOT_TOKEN=123456:ABC...
 TELEGRAM_CHAT_ID=123456789
+FLATKEY_API_KEY=sua_chave_flatkey
+FLATKEY_MODEL=gpt-6-luna-pro
 ```
 
 > ⚠️ Nunca commite `.env.local` - está em `.gitignore`
@@ -85,6 +87,8 @@ TELEGRAM_CHAT_ID=123456789
 > o token do Telegram devem ser configurados somente no servidor, sem esse prefixo.
 > Remova antigas variáveis `VITE_SUPABASE_SERVICE_ROLE*` antes de iniciar ou gerar o build.
 > Se alguma chave administrativa ou token tiver sido exposto, revogue-o e configure um novo.
+> `FLATKEY_MODEL` é opcional; se omitido, a aplicação usa `gpt-6-luna-pro`. Configure um modelo
+> disponível na conta Flatkey e consulte as condições de uso e cobrança do provedor.
 
 ---
 
