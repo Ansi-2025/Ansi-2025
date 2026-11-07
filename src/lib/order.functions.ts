@@ -219,7 +219,7 @@ async function recordLandingCtaVisit(
 }
 
 export const trackLandingCta = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         buttonLabel: z.string().trim().min(1).max(120),
@@ -268,7 +268,7 @@ export const trackLandingCta = createServerFn({ method: "POST" })
   });
 
 export const sendOrder = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) => {
+  .validator((data: unknown) => {
     try {
       console.log("[sendOrder.validator] Validando dados:", { hasData: Boolean(data) });
       const validated = OrderSchema.parse(data);
@@ -313,7 +313,7 @@ export const sendOrder = createServerFn({ method: "POST" })
   });
 
 export const approveLyric = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -329,7 +329,7 @@ export const approveLyric = createServerFn({ method: "POST" })
   });
 
 export const requestLyricRevision = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: orderIdSchema,
@@ -349,7 +349,7 @@ export const requestLyricRevision = createServerFn({ method: "POST" })
   });
 
 export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: orderIdSchema,
@@ -370,7 +370,7 @@ export const updateCheckoutCustomerInfo = createServerFn({ method: "POST" })
   });
 
 export const createStripeCheckout = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: orderIdSchema,
@@ -385,7 +385,7 @@ export const createStripeCheckout = createServerFn({ method: "POST" })
   });
 
 export const createStripePaymentIntent = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: orderIdSchema,
@@ -400,7 +400,7 @@ export const createStripePaymentIntent = createServerFn({ method: "POST" })
   });
 
 export const getOrderStatus = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
   )
   .handler(async ({ data }) => {
@@ -447,7 +447,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
   });
 
 export const getOrderStatusHistory = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z.object({ id: orderIdSchema, token: z.string().optional() }).parse(data),
   )
   .handler(async ({ data }) => {

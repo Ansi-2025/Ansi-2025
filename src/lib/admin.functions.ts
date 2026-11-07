@@ -63,7 +63,7 @@ async function validateAdminAccess(accessToken?: string) {
 }
 
 export const adminCheckAccess = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         accessToken: z.string().min(10),
@@ -80,7 +80,7 @@ export const adminCheckAccess = createServerFn({ method: "POST" })
   });
 
 export const adminListOrders = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         accessToken: z.string().min(10),
@@ -212,7 +212,7 @@ async function releaseMusicPedido(pedidoId: string, accessToken: string) {
 }
 
 export const adminConfirmPayment = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: z.string().uuid(),
@@ -225,7 +225,7 @@ export const adminConfirmPayment = createServerFn({ method: "POST" })
   });
 
 export const adminReleaseMusic = createServerFn({ method: "POST" })
-  .inputValidator((data: unknown) =>
+  .validator((data: unknown) =>
     z
       .object({
         id: z.string().uuid(),
