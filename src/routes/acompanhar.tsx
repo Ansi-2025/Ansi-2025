@@ -7,6 +7,9 @@ import { loadStripe } from "@stripe/stripe-js";
 import { approveLyric, createStripeCheckout, createStripePaymentIntent, getOrderStatus, getOrderStatusHistory, requestLyricRevision, STATUS_FLOW, STATUS_LABELS, updateCheckoutCustomerInfo, type PedidoStatus } from "@/lib/order.functions";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { z } from "zod";
+import { formatPrice, getMusicPriceCents, SECOND_VERSION_PRICE_CENTS } from "@/lib/pricing";
+import { GuidanceToggle } from "@/components/guidance-toggle";
+import { playGuidance, stopGuidance } from "@/lib/audio-guidance";
 
 const searchSchema = z.object({ id: z.string().optional(), token: z.string().optional() });
 const stripePublishableKey = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
@@ -102,7 +105,10 @@ type Order = {
   stripe_payment_intent_id: string | null;
   stripe_payment_status: string | null;
   cpf_cliente: string | null;
+  basePriceCents: number;
 };
+
+let activePreviewAudio: HTMLAudioElement | null = null;
 
 function OrderAudioPlayer({
   src,
@@ -124,6 +130,17 @@ function OrderAudioPlayer({
   const [visualPopupOpen, setVisualPopupOpen] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [guiding, setGuiding] = useState(false);
+  const [playbackError, setPlaybackError] = useState("");
+  const attemptRef = useRef(0);
+  const guidingRef = useRef(false);
+  const skipGuidanceOnRetry = useRef(false);
+
+  useEffect(() => () => {
+    attemptRef.current++;
+    if (guidingRef.current) stopGuidance();
+    if (activePreviewAudio === audioRef.current) activePreviewAudio = null;
+  }, []);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -192,18 +209,42 @@ function OrderAudioPlayer({
     const audio = audioRef.current;
     if (!audio) return;
 
+    if (guidingRef.current) {
+      attemptRef.current++;
+      guidingRef.current = false;
+      setGuiding(false);
+      stopGuidance();
+      return;
+    }
+
     if (audio.paused) {
+      setPlaybackError("");
+      if (previewLimitSeconds && !skipGuidanceOnRetry.current) {
+        if (activePreviewAudio && activePreviewAudio !== audio) activePreviewAudio.pause();
+        activePreviewAudio = audio;
+        const attempt = ++attemptRef.current;
+        guidingRef.current = true;
+        setGuiding(true);
+        const result = await playGuidance("preview");
+        if (attempt !== attemptRef.current) return;
+        guidingRef.current = false;
+        setGuiding(false);
+        if (result === "cancelled") return;
+      }
       if (previewLimitSeconds && audio.currentTime >= previewLimitSeconds) {
         audio.currentTime = 0;
       }
 
       try {
         await audio.play();
+        skipGuidanceOnRetry.current = false;
         setIsPlaying(true);
         setVisualPopupOpen(true);
       } catch {
+        skipGuidanceOnRetry.current = Boolean(previewLimitSeconds);
         setIsPlaying(false);
         setVisualPopupOpen(false);
+        setPlaybackError("Não foi possível iniciar a música. Toque novamente para ouvir.");
       }
       return;
     }
@@ -227,7 +268,7 @@ function OrderAudioPlayer({
               className="relative flex w-full items-center justify-center gap-2 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white transition hover:brightness-110 sm:gap-3 sm:py-4 sm:text-lg"
             >
               <Headphones className="h-3.5 w-3.5 sm:h-5 sm:w-5" />
-              <span>{actionLabel ?? `OUVIR ${title}`}</span>
+              <span>{guiding ? "CANCELAR ORIENTAÇÃO" : actionLabel ?? `OUVIR ${title}`}</span>
             </button>
           ) : (
             <>
@@ -254,7 +295,7 @@ function OrderAudioPlayer({
         <div className="flex items-center gap-2 rounded-[999px] border border-white/10 bg-[#16202d]/80 px-2 py-1.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.04),0_12px_22px_rgba(0,0,0,0.25)] sm:gap-3 sm:px-3.5 sm:py-3">
           <button
             type="button"
-            aria-label={isPlaying ? "Pausar música" : "Tocar música"}
+            aria-label={guiding ? "Cancelar orientação" : isPlaying ? "Pausar música" : "Tocar música"}
             onClick={() => void handleToggle()}
             className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-[3px] border-[#ffbfd3] bg-[#111821] text-[#f8f5f2] shadow-[0_0_0_6px_rgba(255,94,140,0.15)] transition-transform hover:scale-[1.02] sm:h-12 sm:w-12"
           >
@@ -288,6 +329,7 @@ function OrderAudioPlayer({
       </div>
 
       <audio ref={audioRef} src={src} preload="auto" />
+      {playbackError && <p role="alert" className="mt-2 text-center text-sm text-red-200">{playbackError}</p>}
 
       <Dialog open={visualPopupOpen} onOpenChange={(open) => {
         setVisualPopupOpen(open);
@@ -625,6 +667,7 @@ function TrackingPage() {
             <p className="text-[11px] uppercase tracking-[0.18em] text-zinc-400">Canção de Fé</p>
           </div>
         </div>
+        <div className="mx-auto max-w-3xl px-5 pb-4 text-zinc-200"><GuidanceToggle /></div>
       </header>
 
       <main className="mx-auto flex w-full max-w-4xl flex-col items-center gap-8 px-5 py-12 md:px-8">
@@ -756,7 +799,8 @@ function Timeline({
   setCheckoutCustomer: Dispatch<SetStateAction<{ email: string; phone: string; cpf: string }>>;
 }) {
   const [revisionFeedback, setRevisionFeedback] = useState("");
-  const totalPedido = Number((10 + (secondVersionSelected ? 5 : 0)).toFixed(2));
+  const totalCents = getMusicPriceCents(secondVersionSelected, order.basePriceCents);
+  const totalPedido = totalCents / 100;
   const stripePaymentStatus = (order.stripe_payment_status ?? "").toLowerCase();
   const isStripeProcessing = order.status === "pagamento" && Boolean(stripePaymentStatus) && !["paid", "succeeded", "complete"].includes(stripePaymentStatus);
   const effectiveStatus = order.status === "pagamento" && ["paid", "succeeded", "complete"].includes(stripePaymentStatus)
@@ -939,7 +983,7 @@ function Timeline({
                   <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">❤️ GOSTOU DA SUA MÚSICA?</p>
                   <span className="rounded-full border border-[#f3d59d]/30 bg-[#f3d59d]/10 px-2.5 py-1 text-[9px] font-black uppercase tracking-[0.18em] text-[#f3d59d]">Somente hoje</span>
                 </div>
-                <h4 className="mt-3 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Receba a música completa por R$ 10,00.</h4>
+                <h4 className="mt-3 font-display text-[1.8rem] leading-none text-[#f8f5f2]">Receba a música completa por {formatPrice(order.basePriceCents)}.</h4>
 
                 <div className="mt-4 space-y-2 text-sm text-zinc-200">
                   {[
@@ -969,10 +1013,10 @@ function Timeline({
                     <div className="flex items-center justify-between gap-3">
                       <div>
                         <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-white/80">💳 CARTÃO</p>
-                        <p className="mt-2 text-lg font-black uppercase text-white">{checkoutLoading ? "FINALIZANDO..." : secondVersionSelected ? "2 VERSÕES POR R$ 15,00" : "SOMENTE HOJE POR R$ 10,00"}</p>
+                        <p className="mt-2 text-lg font-black uppercase text-white">{checkoutLoading ? "FINALIZANDO..." : `${secondVersionSelected ? "2 VERSÕES" : "SOMENTE HOJE"} POR ${formatPrice(totalCents)}`}</p>
                         <p className="mt-1 text-xs text-white/80">Pagamento online e seguro.</p>
                       </div>
-                      <span className="rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">{secondVersionSelected ? "R$ 15,00" : "R$ 10,00"}</span>
+                      <span className="rounded-full bg-white/12 px-3 py-1.5 text-[10px] font-black uppercase tracking-[0.16em] text-white">{formatPrice(totalCents)}</span>
                     </div>
                   </button>
 
@@ -995,13 +1039,16 @@ function Timeline({
 
               <div className="rounded-[22px] border border-[#d4af69]/25 bg-[#0f1722] p-4 sm:p-5">
                 <p className="text-[10px] font-semibold uppercase tracking-[0.2em] text-[#f4c7dd]">⭐ SEGUNDA VERSÃO</p>
-                <p className="mt-2 text-sm leading-relaxed text-zinc-300">Crie outra interpretação da mesma história por apenas +R$ 5,00.</p>
+                <p className="mt-2 text-sm leading-relaxed text-zinc-300">Crie outra interpretação da mesma história por apenas +{formatPrice(SECOND_VERSION_PRICE_CENTS)}.</p>
                 <button
                   type="button"
-                  onClick={() => setSecondVersionSelected((prev) => !prev)}
+                  onClick={() => {
+                    if (!secondVersionSelected) void playGuidance("secondVersion");
+                    setSecondVersionSelected((prev) => !prev);
+                  }}
                   className="mt-3 inline-flex w-full items-center justify-center gap-2 rounded-full border border-[#d4af69]/40 bg-[#d4af69]/10 px-4 py-3 text-[10px] font-black uppercase tracking-[0.2em] text-[#f3d59d] transition hover:bg-[#d4af69]/15"
                 >
-                  {secondVersionSelected ? "2ª VERSÃO SELECIONADA — R$ 15,00" : "QUERO UMA 2ª VERSÃO +R$ 5,00"}
+                  {secondVersionSelected ? `2ª VERSÃO SELECIONADA — ${formatPrice(totalCents)}` : `QUERO UMA 2ª VERSÃO +${formatPrice(SECOND_VERSION_PRICE_CENTS)}`}
                 </button>
               </div>
             </div>
@@ -1275,11 +1322,14 @@ function Timeline({
               <div className="mt-4 rounded-[28px] border-[3px] border-[#d2a410] bg-[#f9d34d] p-5 shadow-[0_14px_28px_rgba(245,186,39,0.22)]">
                 <button
                   type="button"
-                  onClick={() => setSecondVersionSelected((prev) => !prev)}
+                  onClick={() => {
+                    if (!secondVersionSelected) void playGuidance("secondVersion");
+                    setSecondVersionSelected((prev) => !prev);
+                  }}
                   className={`flex w-full items-center justify-between rounded-[20px] border px-5 py-5 text-left text-[1.08rem] font-black transition ${secondVersionSelected ? "border-[#8a0d18] bg-[#d7232d] text-white shadow-[0_10px_20px_rgba(215,35,45,0.28)]" : "border-[#b98c00] bg-[#f7d655] text-[#1a1400] hover:bg-[#f6d15a]"}`}
                 >
                   <span className="flex items-center gap-2"><span aria-hidden>⭐</span> QUERO UMA 2ª VERSÃO</span>
-                  <span>+R$ 5,00</span>
+                  <span>+{formatPrice(SECOND_VERSION_PRICE_CENTS)}</span>
                 </button>
                 <p className="mt-2 text-xs font-semibold uppercase tracking-[0.12em] text-[#6b4d00]">Pode ser outro estilo, emoção ou interpretação.</p>
                 <p className="mt-4 text-[0.97rem] font-medium leading-relaxed text-[#1a1400]">
@@ -1307,7 +1357,7 @@ function Timeline({
                     <StripeCardPaymentForm
                       order={order}
                       clientSecret={paymentIntentClientSecret}
-                      amount={10 + (secondVersionSelected ? 5 : 0)}
+                      amount={totalPedido}
                       processing={paymentProcessing}
                       onProcessingChange={setPaymentProcessing}
                       onError={setPaymentError}

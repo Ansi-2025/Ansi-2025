@@ -3,6 +3,8 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import type { Database } from "@/integrations/supabase/types";
 import { notifyPedidoTelegram } from "@/lib/telegram.service";
 import { generateOrderAccessToken } from "@/lib/order-access.server";
+import { getMusicPriceCents } from "@/lib/pricing";
+import { getOrderBasePriceCents } from "@/lib/stripe-pricing.server";
 
 type PedidoStatus = Database["public"]["Enums"]["pedido_status"];
 
@@ -10,18 +12,6 @@ const STRIPE_SECRET_KEY = process.env.STRIPE_SECRET_KEY;
 const STRIPE_WEBHOOK_SECRET = process.env.STRIPE_WEBHOOK_SECRET;
 const STRIPE_APP_URL = process.env.STRIPE_APP_URL ?? process.env.APP_URL;
 const STRIPE_ITEM_TITLE = process.env.STRIPE_ITEM_TITLE ?? "Canção de Fé Exclusiva";
-const parseMoneyValue = (value: string | undefined, fallback: number) => {
-  if (!value) return fallback;
-  const clean = value.trim().replace("R$", "").replace(" ", "").replace(",", ".");
-  const parsed = Number(clean);
-  return Number.isFinite(parsed) ? parsed : fallback;
-};
-const STRIPE_ITEM_PRICE = parseMoneyValue(process.env.STRIPE_ITEM_PRICE, 10);
-
-export function getStripePriceForCheckout({ secondVersion }: { secondVersion?: boolean } = {}) {
-  return Number((STRIPE_ITEM_PRICE + (secondVersion ? 5 : 0)).toFixed(2));
-}
-
 function isStripeMarkedAsPaid(status?: string | null) {
   return ["paid", "succeeded", "complete"].includes(String(status ?? "").toLowerCase());
 }
@@ -45,6 +35,16 @@ function getStripeClient() {
 }
 
 const stripe = getStripeClient();
+
+export async function getOrderPriceBase(order: Parameters<typeof getOrderBasePriceCents>[1]) {
+  if (!["previa", "pagamento"].includes(order.status) ||
+      (!order.stripe_session_id && !order.stripe_payment_intent_id && !order.stripe_checkout_url)) {
+    return getMusicPriceCents();
+  }
+  const stripeClient = getStripeClient();
+  if (!stripeClient) throw new Error("STRIPE_SECRET_KEY não configurado.");
+  return getOrderBasePriceCents(stripeClient, order);
+}
 
 function getSuccessUrl(orderId: string) {
   if (!STRIPE_APP_URL) {
@@ -82,14 +82,6 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("Pedido não encontrado.");
   }
 
-  if ((pedido.status as string) === "pagamento" && pedido.stripe_checkout_url && !secondVersion && !pedido.segunda_versao) {
-    return {
-      checkoutUrl: pedido.stripe_checkout_url,
-      sessionId: pedido.stripe_session_id,
-      status: pedido.status,
-    };
-  }
-
   if (!["previa", "pagamento"].includes(pedido.status as string)) {
     throw new Error("O pedido precisa ter a prévia pronta antes de criar o checkout.");
   }
@@ -102,7 +94,22 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalItemPrice = getStripePriceForCheckout({ secondVersion });
+  const totalAmount = getMusicPriceCents(secondVersion, await getOrderBasePriceCents(stripeClient, pedido));
+
+  if (pedido.status === "pagamento" && pedido.stripe_checkout_url && pedido.stripe_session_id?.startsWith("cs_")) {
+    const existing = await stripeClient.checkout.sessions.retrieve(pedido.stripe_session_id);
+    if (existing.payment_status === "paid") {
+      throw new Error("Este checkout já foi pago. Aguarde a confirmação do pagamento.");
+    }
+    if (existing.status === "open" && existing.amount_total === totalAmount &&
+        (existing.metadata?.segunda_versao === "true") === secondVersion) {
+      return {
+        checkoutUrl: pedido.stripe_checkout_url,
+        sessionId: pedido.stripe_session_id,
+        status: pedido.status,
+      };
+    }
+  }
 
   const session = await stripeClient.checkout.sessions.create({
     payment_method_types: ["card"],
@@ -114,7 +121,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
           product_data: {
             name: `${STRIPE_ITEM_TITLE}${secondVersion ? " + Segunda versão" : ""} - ${pedido.nome_cliente ?? "Cliente"}`,
           },
-          unit_amount: Math.round(totalItemPrice * 100),
+          unit_amount: totalAmount,
         },
         quantity: 1,
       },
@@ -167,7 +174,7 @@ export async function criarCheckoutStripe(pedidoId: string, secondVersion = fals
     criado_em: agora,
   });
 
-  const totalValue = getStripePriceForCheckout({ secondVersion: updatedPedido.segunda_versao ?? secondVersion });
+  const totalValue = totalAmount / 100;
   await notifyPedidoTelegram(
     {
       id: updatedPedido.id,
@@ -230,7 +237,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     throw new Error("STRIPE_APP_URL não configurado. Configure a URL pública do app em STRIPE_APP_URL.");
   }
 
-  const totalAmount = Math.round(getStripePriceForCheckout({ secondVersion }) * 100);
+  const totalAmount = getMusicPriceCents(secondVersion, await getOrderBasePriceCents(stripeClient, pedido));
   const description = `${STRIPE_ITEM_TITLE}${secondVersion ? ' + Segunda versão' : ''} - ${pedido.nome_cliente ?? 'Cliente'}`;
 
   const paymentIntent = await stripeClient.paymentIntents.create({
@@ -277,7 +284,7 @@ export async function criarPaymentIntentStripe(pedidoId: string, secondVersion =
     criado_em: agora,
   });
 
-  const totalValue = getStripePriceForCheckout({ secondVersion: updatedPedido.segunda_versao ?? secondVersion });
+  const totalValue = totalAmount / 100;
   await notifyPedidoTelegram(
     {
       id: updatedPedido.id,
@@ -359,10 +366,10 @@ export async function handleStripeWebhook(request: Request) {
   const metadata = "metadata" in object ? object.metadata : undefined;
   const pedidoId = metadata?.pedido_id ? String(metadata.pedido_id) : "";
   const requestedSecondVersion = String(metadata?.segunda_versao ?? "").toLowerCase() === "true";
-  const sessionId = event.type === "checkout.session.completed" && "id" in object ? object.id : undefined;
+  const sessionId = event.type.startsWith("checkout.session.") && "id" in object ? object.id : undefined;
   const paymentIntentId = "payment_intent" in object && typeof object.payment_intent === "string"
     ? object.payment_intent
-    : "id" in object && object.id
+    : event.type.startsWith("payment_intent.") && "id" in object && object.id
       ? object.id
       : undefined;
   const isSuccessfulPayment = event.type === "checkout.session.completed" || event.type === "payment_intent.succeeded";
@@ -443,7 +450,10 @@ export async function handleStripeWebhook(request: Request) {
     } as any;
 
     if (isSuccessfulPayment && (isStripeMarkedAsPaid(paymentStatus) || event.type === "payment_intent.succeeded")) {
-      const shouldReleaseSecondVersion = Boolean((requestedSecondVersion || pedido.segunda_versao) && pedido.url_previa_segunda_versao);
+      const shouldReleaseSecondVersion = Boolean(
+        (metadata?.segunda_versao === undefined ? pedido.segunda_versao : requestedSecondVersion) &&
+        pedido.url_previa_segunda_versao,
+      );
       const releasedPrimaryTrack = pedido.url_previa ?? pedido.url_musica;
 
       updates.status = releasedPrimaryTrack ? "musica_pronta" : "pago";
@@ -501,4 +511,3 @@ export async function handleStripeWebhook(request: Request) {
     });
   }
 }
-

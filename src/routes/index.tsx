@@ -32,6 +32,10 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { isValidPersonName } from "@/lib/utils";
+import { formatPrice, MUSIC_PRICE_CENTS } from "@/lib/pricing";
+import { MusicExamples } from "@/components/music-examples";
+import { GuidanceToggle } from "@/components/guidance-toggle";
+import { initializeGuidance, playGuidance, stopGuidance, type GuidanceName } from "@/lib/audio-guidance";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -65,13 +69,14 @@ export const Route = createFileRoute("/")({
 
 const WHATSAPP_URL =
   "https://wa.me/5541997232395?text=Quero%20criar%20minha%20Can%C3%A7%C3%A3o%20de%20F%C3%A9";
-const STARTING_PRICE = 10;
 const GRADIENT_GOLD = { backgroundImage: "var(--gradient-gold)" } as const;
 const GRADIENT_HERO = { backgroundImage: "var(--gradient-hero)" } as const;
 
 function Index() {
   useReveal();
   const trackVisit = useServerFn(trackLandingCta);
+
+  useEffect(() => { initializeGuidance(); }, []);
 
   useEffect(() => {
     if (typeof window === "undefined") {
@@ -415,11 +420,21 @@ function StartMusicWidget({
       return;
     }
     setErrorMsg("");
+    const nextStep = widgetStep + 1;
+    const guidance: GuidanceName | null = nextStep === 3 ? "occasion" : nextStep === 4 ? "style" : null;
+    void playGuidance("advance").then((result) => {
+      if (result === "ended" && guidance) void playGuidance(guidance);
+    });
     setWidgetStep((value) => Math.min(value + 1, widgetSteps.length - 1));
   };
 
   const prev = () => {
     setErrorMsg("");
+    const previousStep = widgetStep - 1;
+    const guidance: GuidanceName | null = previousStep === 3 ? "occasion" : previousStep === 4 ? "style" : null;
+    void playGuidance("back").then((result) => {
+      if (result === "ended" && guidance) void playGuidance(guidance);
+    });
     setWidgetStep((value) => Math.max(value - 1, 0));
   };
 
@@ -437,6 +452,7 @@ function StartMusicWidget({
     }
     setErrorMsg("");
     setStatus("loading");
+    void playGuidance("create");
 
     try {
       console.log("[submit] Enviando pedido...", {
@@ -464,7 +480,11 @@ function StartMusicWidget({
       open={open}
       onOpenChange={(nextOpen) => {
         setOpen(nextOpen);
-        if (!nextOpen) reset();
+        if (nextOpen) void playGuidance("start");
+        else {
+          stopGuidance();
+          reset();
+        }
       }}
     >
       <DialogTrigger asChild>
@@ -504,6 +524,7 @@ function StartMusicWidget({
               <Sparkles className="h-3.5 w-3.5 text-[#8b70df]" />
               Criar minha música
             </div>
+            <div className="mb-5 text-[#6b4cb0]"><GuidanceToggle /></div>
             <span className="text-xs font-medium text-[#655b76]">Leva menos de 3 minutos</span>
           </div>
 
@@ -875,6 +896,7 @@ function Hero() {
               label="❤️ Criar Minha Canção"
               icon={<Sparkles className="h-4 w-4" />}
             />
+            <MusicExamples />
             <Link
               to="/kids"
               className="inline-flex items-center gap-2 rounded-full border border-[#f4d9d1] bg-white/8 px-8 py-4 text-sm font-semibold text-white transition hover:border-[#ffd7bd] hover:bg-white/12"
@@ -1472,7 +1494,7 @@ function OfferSection() {
 
             <div className="mt-7 flex items-end gap-3">
               <span className="font-display text-5xl font-semibold tracking-[-0.06em] text-[#1d2437]">
-                R$ {STARTING_PRICE.toFixed(2).replace(".", ",")}
+                {formatPrice(MUSIC_PRICE_CENTS)}
               </span>
               <span className="pb-2 text-sm font-medium uppercase tracking-[0.18em] text-[#6d697a]">
                 por música

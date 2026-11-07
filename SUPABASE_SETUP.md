@@ -78,7 +78,7 @@ SUPABASE_SERVICE_ROLE=eyJ...
 TELEGRAM_BOT_TOKEN=123456:ABC...
 TELEGRAM_CHAT_ID=123456789
 FLATKEY_API_KEY=sua_chave_flatkey
-FLATKEY_MODEL=gpt-6-luna-pro
+FLATKEY_MODEL=gpt-6-luna
 ```
 
 > ⚠️ Nunca commite `.env.local` - está em `.gitignore`
@@ -87,8 +87,28 @@ FLATKEY_MODEL=gpt-6-luna-pro
 > o token do Telegram devem ser configurados somente no servidor, sem esse prefixo.
 > Remova antigas variáveis `VITE_SUPABASE_SERVICE_ROLE*` antes de iniciar ou gerar o build.
 > Se alguma chave administrativa ou token tiver sido exposto, revogue-o e configure um novo.
-> `FLATKEY_MODEL` é opcional; se omitido, a aplicação usa `gpt-6-luna-pro`. Configure um modelo
+> `FLATKEY_MODEL` é opcional; se omitido, a aplicação usa `gpt-6-luna`. Configure um modelo
 > disponível na conta Flatkey e consulte as condições de uso e cobrança do provedor.
+>
+> O preço de novos pedidos é definido em `src/lib/pricing.ts`: R$ 19,90 pela música e
+> R$ 5,00 pela segunda versão opcional. A variável antiga `STRIPE_ITEM_PRICE` não é
+> mais utilizada. Para pedidos com pagamento já iniciado, o valor anterior é consultado
+> no Stripe e mantido, inclusive ao alterar a seleção da segunda versão.
+>
+> Para o botão **Ver Exemplos**, configure `VITE_EXAMPLE_MUSIC_1`,
+> `VITE_EXAMPLE_MUSIC_2` e `VITE_EXAMPLE_MUSIC_3` com os links dos três áudios
+> no `.env.local` e nas variáveis do ambiente de produção. Variáveis `VITE_` e
+> links assinados ficam visíveis aos visitantes; use apenas links destinados ao
+> acesso público e substitua-os quando expirarem. Após alterar as variáveis,
+> gere e publique um novo build.
+>
+> As orientações em áudio usam `VITE_GUIDE_START`, `VITE_GUIDE_ADVANCE`,
+> `VITE_GUIDE_BACK`, `VITE_GUIDE_CREATE`, `VITE_GUIDE_OCCASION`,
+> `VITE_GUIDE_STYLE`, `VITE_GUIDE_PREVIEW` e `VITE_GUIDE_SECOND_VERSION`.
+> Configure os links no `.env.local` e na Vercel como variáveis públicas de
+> configuração, não como segredos. Eles ficam visíveis no navegador e devem ser
+> renovados ao expirar. Os clientes podem silenciar as orientações; a reprodução
+> dos exemplos e da música não é silenciada por essa opção.
 
 ---
 

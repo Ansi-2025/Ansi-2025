@@ -7,7 +7,7 @@ export async function gerarLetraComFlatkey(prompt: string) {
     throw new Error("Variável de ambiente FLATKEY_API_KEY não está configurada.");
   }
 
-  const model = process.env.FLATKEY_MODEL?.trim() || "gpt-6-luna-pro";
+  const model = process.env.FLATKEY_MODEL?.trim() || "gpt-6-luna";
   const client = new OpenAI({
     apiKey,
     baseURL: "https://router.flatkey.ai/v1",

@@ -4,6 +4,7 @@ import { ArrowRight, CheckCircle2, Heart, Loader2, Music4, Sparkles, Volume2, Wa
 import { useMemo, useState, type ReactNode } from "react";
 import { sendOrder } from "@/lib/order.functions";
 import { buildKidsOrderData, type KidsFormData } from "@/lib/kids-briefing";
+import { formatPrice, MUSIC_PRICE_CENTS } from "@/lib/pricing";
 
 export const Route = createFileRoute("/kids")({
   head: () => ({
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/kids")({
       {
         name: "description",
         content:
-          "Crie uma música personalizada para brincar, aprender e interagir com seu pequeno por apenas R$10.",
+          `Crie uma música personalizada para brincar, aprender e interagir com seu pequeno por apenas ${formatPrice(MUSIC_PRICE_CENTS)}.`,
       },
       { property: "og:title", content: "Canção de Fé Kids — Crie músicas personalizadas para crianças" },
       {
@@ -315,7 +316,7 @@ function KidsPage() {
                 onClick={() => setStep(0)}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ffbf69] via-[#ff8f71] to-[#f7769c] px-6 py-3.5 text-base font-semibold text-white shadow-[0_16px_35px_rgba(247,118,156,0.22)] transition hover:-translate-y-0.5"
               >
-                🎵 Criar minha música por R$10
+                🎵 Criar minha música por {formatPrice(MUSIC_PRICE_CENTS)}
               </button>
             </div>
 
@@ -620,7 +621,7 @@ function KidsPage() {
               onClick={() => setStep(0)}
               className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#ffbf69] via-[#ff8f71] to-[#f7769c] px-6 py-3.5 text-base font-semibold text-white shadow-[0_16px_35px_rgba(247,118,156,0.22)] transition hover:-translate-y-0.5"
             >
-              🎵 Criar minha música por R$10
+              🎵 Criar minha música por {formatPrice(MUSIC_PRICE_CENTS)}
             </button>
           </div>
         </section>
@@ -674,4 +675,3 @@ function InputField({
     </label>
   );
 }
-

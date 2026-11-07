@@ -23,7 +23,7 @@ test("uses the chosen Flatkey model and accepts a server-side override", async (
     assert.equal((await gerarLetraComFlatkey("História de teste")).letra, "Uma canção especial");
     process.env.FLATKEY_MODEL = "outro-modelo-disponivel";
     assert.equal((await gerarLetraComFlatkey("História de teste")).letra, "Uma canção especial");
-    assert.deepEqual(models, ["gpt-6-luna-pro", "outro-modelo-disponivel"]);
+    assert.deepEqual(models, ["gpt-6-luna", "outro-modelo-disponivel"]);
   } finally {
     globalThis.fetch = originalFetch;
     if (originalKey === undefined) delete process.env.FLATKEY_API_KEY;

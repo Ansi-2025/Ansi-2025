@@ -11,7 +11,7 @@ import {
   refazerLetraPedido,
   type PedidoEntrada,
 } from "@/lib/pedido.service";
-import { criarCheckoutStripe, criarPaymentIntentStripe } from "@/lib/stripe.service";
+import { criarCheckoutStripe, criarPaymentIntentStripe, getOrderPriceBase } from "@/lib/stripe.service";
 import { assertPublicRequest } from "@/lib/public-request";
 import { isValidPersonName } from "@/lib/utils";
 import { generateOrderAccessToken, validateOrderAccess } from "@/lib/order-access.server";
@@ -416,7 +416,8 @@ export const getOrderStatus = createServerFn({ method: "POST" })
 
     if (error) throw new Error(error.message);
     if (!row) throw new Error("Pedido não encontrado.");
-    return row as {
+    const basePriceCents = await getOrderPriceBase(row);
+    return { ...row, basePriceCents } as typeof row & {
       id: string;
       nome_cliente: string;
       email_cliente: string;
@@ -443,6 +444,7 @@ export const getOrderStatus = createServerFn({ method: "POST" })
       stripe_payment_status: string | null;
       created_at: string;
       status_atualizado_em: string;
+      basePriceCents: number;
     };
   });
 
