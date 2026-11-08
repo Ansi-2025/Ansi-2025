@@ -35,6 +35,7 @@ import { isValidPersonName } from "@/lib/utils";
 import { formatPrice, MUSIC_PRICE_CENTS } from "@/lib/pricing";
 import { MusicExamples } from "@/components/music-examples";
 import { GuidanceToggle } from "@/components/guidance-toggle";
+import { WelcomeGuidance } from "@/components/welcome-guidance";
 import { initializeGuidance, playGuidance, stopGuidance, type GuidanceName } from "@/lib/audio-guidance";
 
 export const Route = createFileRoute("/")({
@@ -885,6 +886,8 @@ function Hero() {
             Feita para celebrar fé, gratidão, amor e a memória de um momento especial.
           </p>
 
+          <WelcomeGuidance />
+
           <div
             className="mt-9 flex flex-col items-center gap-3 sm:flex-row animate-fade-up"
             style={{ animationDelay: "320ms" }}
@@ -1355,6 +1358,7 @@ function VideoSection() {
       if (isPlaying) {
         videoRef.current.pause();
       } else {
+        stopGuidance("cancelled", "welcome");
         videoRef.current.play();
       }
       setIsPlaying(!isPlaying);

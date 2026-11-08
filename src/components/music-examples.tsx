@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
 import { Headphones, Play } from "lucide-react";
+import { stopGuidance } from "@/lib/audio-guidance";
 import {
   Dialog,
   DialogContent,
@@ -43,6 +44,7 @@ export function MusicExamples() {
   };
 
   const handleOpenChange = (open: boolean) => {
+    if (open) stopGuidance("cancelled", "welcome");
     if (!open) {
       playAttempt.current++;
       audioRef.current?.pause();

@@ -1,4 +1,5 @@
 const urls = {
+  welcome: import.meta.env.VITE_GUIDE_WELCOME,
   start: import.meta.env.VITE_GUIDE_START,
   create: import.meta.env.VITE_GUIDE_CREATE,
   occasion: import.meta.env.VITE_GUIDE_OCCASION,
@@ -10,10 +11,10 @@ const urls = {
 };
 
 export type GuidanceName = keyof typeof urls;
-type Result = "ended" | "cancelled" | "muted" | "failed";
+type Result = "ended" | "cancelled" | "muted" | "failed" | "blocked";
 const storageKey = "cancao-de-fe:mute-guidance";
 let muted = false;
-let current: { audio: HTMLAudioElement; finish: (result: Result) => void } | null = null;
+let current: { name: GuidanceName; audio: HTMLAudioElement; finish: (result: Result) => void } | null = null;
 const listeners = new Set<() => void>();
 let errorMessage = "";
 
@@ -34,8 +35,8 @@ export function subscribeGuidance(listener: () => void) {
 export function isGuidanceMuted() { return muted; }
 export function getGuidanceError() { return errorMessage; }
 
-export function stopGuidance(result: Result = "cancelled") {
-  if (current) current.finish(result);
+export function stopGuidance(result: Result = "cancelled", name?: GuidanceName) {
+  if (current && (!name || current.name === name)) current.finish(result);
 }
 
 export function setGuidanceMuted(value: boolean) {
@@ -85,9 +86,16 @@ export function playGuidance(name: GuidanceName): Promise<Result> {
       finish("failed");
     };
     const timeout = setTimeout(onError, 30000);
-    current = { audio, finish };
+    current = { name, audio, finish };
     audio.addEventListener("ended", onEnded);
     audio.addEventListener("error", onError);
-    void audio.play().catch(() => { if (!finished) onError(); });
+    void audio.play().catch((error: unknown) => {
+      if (finished) return;
+      if (name === "welcome" && error instanceof DOMException && error.name === "NotAllowedError") {
+        finish("blocked");
+      } else {
+        onError();
+      }
+    });
   });
 }

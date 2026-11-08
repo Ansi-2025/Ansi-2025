@@ -102,13 +102,15 @@ FLATKEY_MODEL=gpt-6-luna
 > acesso público e substitua-os quando expirarem. Após alterar as variáveis,
 > gere e publique um novo build.
 >
-> As orientações em áudio usam `VITE_GUIDE_START`, `VITE_GUIDE_STORY`,
+> As orientações em áudio usam `VITE_GUIDE_WELCOME`, `VITE_GUIDE_START`, `VITE_GUIDE_STORY`,
 > `VITE_GUIDE_BACK`, `VITE_GUIDE_CREATE`, `VITE_GUIDE_OCCASION`,
 > `VITE_GUIDE_STYLE`, `VITE_GUIDE_PREVIEW` e `VITE_GUIDE_SECOND_VERSION`.
 > Configure os links no `.env.local` e na Vercel como variáveis públicas de
 > configuração, não como segredos. Eles ficam visíveis no navegador e devem ser
 > renovados ao expirar. Os clientes podem silenciar as orientações; a reprodução
 > dos exemplos e da música não é silenciada por essa opção.
+> A mensagem de boas-vindas tenta tocar ao entrar na página, mas pode ser
+> bloqueada pela política de reprodução automática do navegador.
 
 ---
 
