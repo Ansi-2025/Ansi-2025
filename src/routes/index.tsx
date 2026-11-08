@@ -421,10 +421,9 @@ function StartMusicWidget({
     }
     setErrorMsg("");
     const nextStep = widgetStep + 1;
-    const guidance: GuidanceName | null = nextStep === 3 ? "occasion" : nextStep === 4 ? "style" : null;
-    void playGuidance("advance").then((result) => {
-      if (result === "ended" && guidance) void playGuidance(guidance);
-    });
+    const guidance: GuidanceName | null = nextStep === 3 ? "occasion" : nextStep === 4 ? "style" : nextStep === 5 ? "story" : null;
+    if (guidance) void playGuidance(guidance);
+    else stopGuidance();
     setWidgetStep((value) => Math.min(value + 1, widgetSteps.length - 1));
   };
 

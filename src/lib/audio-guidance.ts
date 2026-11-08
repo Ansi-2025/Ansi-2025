@@ -1,9 +1,9 @@
 const urls = {
-  advance: import.meta.env.VITE_GUIDE_ADVANCE,
   start: import.meta.env.VITE_GUIDE_START,
   create: import.meta.env.VITE_GUIDE_CREATE,
   occasion: import.meta.env.VITE_GUIDE_OCCASION,
   style: import.meta.env.VITE_GUIDE_STYLE,
+  story: import.meta.env.VITE_GUIDE_STORY,
   preview: import.meta.env.VITE_GUIDE_PREVIEW,
   secondVersion: import.meta.env.VITE_GUIDE_SECOND_VERSION,
   back: import.meta.env.VITE_GUIDE_BACK,

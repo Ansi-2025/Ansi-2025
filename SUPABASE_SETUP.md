@@ -102,7 +102,7 @@ FLATKEY_MODEL=gpt-6-luna
 > acesso público e substitua-os quando expirarem. Após alterar as variáveis,
 > gere e publique um novo build.
 >
-> As orientações em áudio usam `VITE_GUIDE_START`, `VITE_GUIDE_ADVANCE`,
+> As orientações em áudio usam `VITE_GUIDE_START`, `VITE_GUIDE_STORY`,
 > `VITE_GUIDE_BACK`, `VITE_GUIDE_CREATE`, `VITE_GUIDE_OCCASION`,
 > `VITE_GUIDE_STYLE`, `VITE_GUIDE_PREVIEW` e `VITE_GUIDE_SECOND_VERSION`.
 > Configure os links no `.env.local` e na Vercel como variáveis públicas de
